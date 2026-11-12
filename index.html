@@ -48,6 +48,8 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .plate::before,.sheet::before,.voice::before,.primary::before,.seg::before,.toggle::before,.x::before,.danger::before,.daypart::before{
   content:"";position:absolute;inset:0;z-index:-1;background:var(--paper-bg);box-shadow:0 0 0 2.5px var(--ink),3px 5px 0 #0007;filter:url(#rough)}
 .sheet::before{filter:url(#roughL)}
+/* 大きな紙は破れた縁を一度だけ画像に焼いて使い回す（中身が動くたびにフィルタを再計算させない） */
+.sheet.baked::before{filter:none;box-shadow:none;inset:-14px;background:var(--baked) 0 0/100% 100% no-repeat}
 
 .hud{display:flex;align-items:center;padding:6px 4px}
 .hi{flex:1 1 auto;display:flex;align-items:center;justify-content:center;gap:5px;padding:0 8px;min-width:0}
@@ -353,7 +355,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.4.1 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.4.2 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -1650,7 +1652,7 @@ function loop(now){
   wasPhase=S.phase;
   if(GFX&&!townHidden())GFX.draw(now,dt);
   updVoice(now);
-  if(now-panelClock>300){panelClock=now; updateHud(); if(!sel)renderPanel();}
+  if(now-panelClock>300&&!townHidden()){panelClock=now; updateHud(); if(!sel)renderPanel();}
   requestAnimationFrame(loop);
 }
 $('resLbl').textContent=RES;
@@ -1667,4 +1669,33 @@ if(/\bLine\//i.test(navigator.userAgent)){
   el('lineCopy').addEventListener('click',()=>{navigator.clipboard.writeText(location.href).then(()=>{el('lineCopy').textContent='コピーした';}).catch(()=>{el('lineUrl').select();});});
   el('lineClose').addEventListener('click',()=>{el('lineModal').hidden=true;});
 }
+
+/* ===== 破れた紙を画像に焼く ===== */
+(function(){
+  const P=14;
+  function svgFor(w,h){
+    const W=w+P*2,H=h+P*2;
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`+
+    `<defs><radialGradient id="pg" cx=".5" cy=".45" r="1" gradientTransform="translate(.5 .45) scale(1.2 .9) translate(-.5 -.45)">`+
+    `<stop offset="0" stop-color="#f4ebd5"/><stop offset=".62" stop-color="#e9dcbd"/><stop offset="1" stop-color="#d2bf96"/></radialGradient>`+
+    `<filter id="r" filterUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}">`+
+    `<feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="3" seed="3" result="t"/>`+
+    `<feDisplacementMap in="SourceGraphic" in2="t" scale="9" result="d"/>`+
+    `<feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" result="g"/>`+
+    `<feColorMatrix in="g" values="0 0 0 0 .14  0 0 0 0 .11  0 0 0 0 .08  0 0 0 .22 0" result="g2"/>`+
+    `<feComposite in="g2" in2="d" operator="in" result="g3"/>`+
+    `<feMerge><feMergeNode in="d"/><feMergeNode in="g3"/></feMerge></filter></defs>`+
+    `<g filter="url(#r)"><rect x="${P+3}" y="${P+5}" width="${w}" height="${h}" fill="#000" fill-opacity=".47"/>`+
+    `<rect x="${P-1.25}" y="${P-1.25}" width="${w+2.5}" height="${h+2.5}" fill="url(#pg)" stroke="#241c14" stroke-width="2.5"/></g></svg>`;
+  }
+  function bake(el){
+    const w=el.offsetWidth,h=el.offsetHeight; if(!w||!h)return;
+    if(el._bw===w&&el._bh===h)return; el._bw=w; el._bh=h;
+    el.style.setProperty('--baked','url("data:image/svg+xml,'+encodeURIComponent(svgFor(w,h))+'")');
+    el.classList.add('baked');
+  }
+  const pend=new Set(); let raf=0;
+  const ro=new ResizeObserver(es=>{for(const e of es)pend.add(e.target); if(!raf)raf=requestAnimationFrame(()=>{raf=0; pend.forEach(bake); pend.clear();});});
+  document.querySelectorAll('.sheet').forEach(el=>ro.observe(el));
+})();
 </script>
