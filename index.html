@@ -131,7 +131,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 
 <div class="wrap">
   <header class="hud">
-    <div class="brand"><h1>Tiny Crown Town</h1><span class="ver">v0.2.1</span></div>
+    <div class="brand"><h1>Tiny Crown Town</h1><span class="ver">v0.2.2</span></div>
     <div class="stat plate"><span class="lbl">日</span><b id="day">1</b></div>
     <div class="stat plate clock"><span class="lbl">時刻</span><b id="clock">06:00</b><div class="sunbar"><i id="sun"></i></div></div>
     <div class="stat plate"><span class="lbl">精霊石</span><b id="elem">0</b></div>
@@ -163,7 +163,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.2.1 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.2.2 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -448,6 +448,8 @@ async function initGfx(){
   const fill=new T.DirectionalLight(0xffffff,1.5); fill.position.set(.1,.28,1); scene.add(fill);
   const torchA=new T.PointLight(0xff9a48,0,7,1.6); torchA.position.set(.5,1.25,5.2); scene.add(torchA);
   const torchB=new T.PointLight(0xffb060,0,6,1.6); torchB.position.set(.25,1.1,-2.6); scene.add(torchB);
+  // かがり火は夜だけ影を落とす（昼は影の計算を止めておく）
+  for(const l of [torchA,torchB]){l.castShadow=!lite; l.shadow.mapSize.set(512,512); l.shadow.camera.near=.1; l.shadow.camera.far=8; l.shadow.bias=-.006; l.shadow.normalBias=.04; l.shadow.radius=2; l.shadow.autoUpdate=false;}
 
   /* ----- 地面 ----- */
   function paintGround(g){
@@ -713,23 +715,36 @@ async function initGfx(){
     P(g,'#f6efdc',1,0,9,7); P(g,'#f6efdc',0,1,11,5); P(g,'#f6efdc',4,7,3,1); P(g,'#f6efdc',5,8,1,1);
     if(k==='cheer'){P(g,c,6,1,1,4); P(g,c,7,1,2,1); P(g,c,4,4,3,2);} else if(k==='heal'){P(g,c,3,2,2,2); P(g,c,6,2,2,2); P(g,c,3,3,5,2); P(g,c,4,5,3,1); P(g,c,5,6,1,1);} else {P(g,c,2,3,1,1); P(g,c,5,3,1,1); P(g,c,8,3,1,1);}
     outline(g,w,h,'#231a14');});
+  // 窓あかりの影：冒険者のシルエットを、近くの灯った窓と反対の向きへ地面に伸ばす（1人につき近い窓2つまで）
+  const winGeo=new T.PlaneGeometry(1,1).rotateX(-Math.PI/2).translate(0,0,.5);
+  {const uv=winGeo.attributes.uv, pos=winGeo.attributes.position; for(let i=0;i<uv.count;i++)uv.setXY(i,pos.getX(i)+.5,pos.getZ(i));}
+  const winMat=map=>new T.ShaderMaterial({uniforms:{map:{value:map},fr:{value:new T.Vector2(0,1)},op:{value:0}},transparent:true,depthWrite:false,
+    vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+    fragmentShader:'uniform sampler2D map;uniform vec2 fr;uniform float op;varying vec2 vUv;void main(){float u=fr.y>0.?vUv.x:1.-vUv.x;float a=texture2D(map,vec2(fr.x+u/6.,vUv.y)).a*op*(1.-.82*vUv.y);gl_FragColor=vec4(.02,.03,.09,a);}'});
   const walkers=new Map(), walkGeo=standGeo(FW,FH), walkX=crossGeo(FW,FH), bubGeo=new T.PlaneGeometry(11*U,10*U);
   function mkWalker(a){
     const c=canvasOf(FW*6,FH), t=texOf(c); t.repeat.set(1/6,1);
     const mesh=add(new T.Mesh(walkGeo,cut(t)),0,0,0); mesh.visible=false; addCaster(mesh,walkX,t);
     const bub=add(new T.Mesh(bubGeo,new T.MeshBasicMaterial({map:bubTex.idle,alphaTest:.5,side:T.DoubleSide,fog:false})),0,FH*U+.34,.02,mesh,false); bub.visible=false;
-    return {mesh,bub,c,t,key:'',flip:1,back:false};
+    const fs=[0,1].map(()=>{const m=new T.Mesh(winGeo,winMat(t)); m.visible=false; m.renderOrder=3; m.frustumCulled=false; scene.add(m); return m;});
+    return {mesh,bub,c,t,fs,key:'',flip:1,back:false};
   }
   function updWalkers(now){
     for(const a of S.advs){
       let w=walkers.get(a.id); if(!w){w=mkWalker(a); walkers.set(a.id,w);}
-      const vis=!a.hidden&&S.phase==='day'; w.mesh.visible=vis; if(!vis)continue;
+      const vis=!a.hidden&&S.phase==='day'; w.mesh.visible=vis; w.fs[0].visible=w.fs[1].visible=false; if(!vis)continue;
       const key=`${a.wlv>0}|${a.alv>0}|${a.slow}`; if(key!==w.key){w.key=key; paintWalker(w.c.getContext('2d'),a); w.t.needsUpdate=true;}
       const p=walkerTile(a), moving=p.moving&&speed>0;
       if(p.moving){if(p.dx<0)w.flip=-1; else if(p.dx>0)w.flip=1; if(p.dy<0)w.back=true; else if(p.dy>0||p.dx)w.back=false;} else w.back=false;
       const st=moving?1+((Math.floor(now/(a.slow?280:150))+a.id)%2):0;
       w.t.offset.x=((w.back?3:0)+st)/6;
       w.mesh.position.set(wx(p.x),0,wz(p.y)+.15+a.id*.004); w.mesh.scale.x=w.flip;
+      // 灯った窓のうち、正面側で近いもの2つを選ぶ
+      let b1=null, b2=null; const px=w.mesh.position.x, pz=w.mesh.position.z;
+      for(const g of bGroups){const u=g.userData; if(!u.gm||u.glow<.05)continue; const dx=px-g.position.x, dz=pz-(g.position.z+.42), d=Math.hypot(dx,dz); if(d>2.5||dz<-.1)continue;
+        const k=u.glow*(1-sm(.7,2.5,d))*Math.min(1,(dz+.1)/.35); if(k<.03)continue; const e={k,dx,dz,d}; if(!b1||k>b1.k){b2=b1; b1=e;} else if(!b2||k>b2.k)b2=e;}
+      [b1,b2].forEach((e,i)=>{if(!e)return; const m=w.fs[i]; m.visible=true; m.position.set(px,.036+i*.002,pz); m.rotation.y=Math.atan2(e.dx,e.dz); m.scale.set(FW*U,1,.8+e.d*.75);
+        m.material.uniforms.fr.value.set(w.t.offset.x,w.flip); m.material.uniforms.op.value=e.k*.55;});
       const b=a.bubble, on=b&&now<b.until; w.bub.visible=!!on;
       if(on){if(w.bub.material.map!==bubTex[b.kind]){w.bub.material.map=bubTex[b.kind]; w.bub.material.needsUpdate=true;} const k=Math.min(1,(now-b.from)/160); w.bub.scale.set(w.flip*k,k,1); w.bub.position.y=FH*U+.3+Math.sin(now/200)*.03;}
     }
@@ -847,6 +862,7 @@ async function initGfx(){
     cam.aspect=w/h; cam.updateProjectionMatrix();
     for(const p of [tiltH,tiltV]){p.uniforms.res.value.set(w*dpr,h*dpr); p.uniforms.amt.value=h*dpr/300;}
     ptScale=h*dpr*.5/Math.tan(FOV*Math.PI/360);
+    torchA.castShadow=torchB.castShadow=!lite;
   }
   new ResizeObserver(resize).observe(cv); resize();
 
@@ -896,6 +912,7 @@ async function initGfx(){
     flyAcc+=dt; if(flyAcc>.16){flyAcc=0; if(night>.6&&trees.length&&t>=1000){const m=trees[Math.random()*trees.length|0]; glow.spawn(m.x+rnd(-.8,.8),rnd(.2,1.1),m.z+rnd(-.5,.8),rnd(-.12,.12),rnd(-.04,.08),rnd(-.1,.1),rnd(2.5,4.5),.075,1.3,1.9,.5,.9,0,0);}}
     soft.update(dt); glow.update(dt);
     const fl=.82+.1*Math.sin(now/90)+.08*Math.sin(now/37); torchA.intensity=9*night*fl; torchB.intensity=7*night*(1.64-fl);
+    torchA.shadow.autoUpdate=torchB.shadow.autoUpdate=night>.02;
     // もやと光の筋
     const mist=Math.max(1-sm(375,480,t),sm(1120,1180,t)*.4);
     mistMat.opacity=mist*.34; mistMat.color.copy(cur.fog).lerp(WHITE,.35);
