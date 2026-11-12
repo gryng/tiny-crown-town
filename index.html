@@ -192,7 +192,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 
 <div class="wrap">
   <header class="hud">
-    <div class="brand"><h1>Tiny Crown Town</h1><span class="ver">v0.3.0</span></div>
+    <div class="brand"><h1>Tiny Crown Town</h1><span class="ver">v0.3.1</span></div>
     <div class="stat plate"><span class="lbl">日</span><b id="day">1</b></div>
     <div class="stat plate clock"><span class="lbl">時刻</span><b id="clock">06:00</b><div class="sunbar"><i id="sun"></i></div></div>
     <div class="stat plate"><span class="lbl" id="resLbl">精霊石</span><b id="elem">0</b></div>
@@ -225,7 +225,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.3.0 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.3.1 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -1050,6 +1050,7 @@ async function initGfx(){
   return {draw,pick,resize,screenOf};
 }
 
+/*VOICE-START*/
 /* ---------- 本人のひと言（性格 × その日の出来事）。{k}=口ぐせ {o}=ほかの冒険者 {w}=勝った数 {i}=買った装備 ---------- */
 const VOICE={
 nonbiri:{
@@ -1058,7 +1059,7 @@ nonbiri:{
  lvup:['あれ、いつの間にか強くなってた。{k}','レベル上がったって。へえ、そうなんだ','強くなるのも、のんびりでいいよね'],
  gear:['{i}、買ってみた。重いけど、まあいいか','新しい{i}、手になじむまで昼寝しよう','{i}を買ったら、ちょっとやる気出てきた'],
  streak:['{w}連勝。のんびりやっても勝てるもんだね','今日は調子よかった。{k}','敵のほうが先にくたびれてたよ'],
- lost:['負けちゃった。まあ、明日もあるし','うーん、相手のほうが元気だったな','{o}みたいに速く動けたらなあ……まあいっか'],
+ lost:['負けちゃった。まあ、明日もあるし','うーん、相手のほうが元気だったな','{o:depEarlier}みたいに速く動けたらなあ……まあいっか'],
  late:['支度してたら、お昼になってた','公園の噴水、ずっと見てられるんだよね','出発？ あ、今日はもういいかなって'],
  rest:['今日はお休み。{k}','ずっと寝てた。いい一日だった','休むのも仕事のうち、だよね'],
  normal:['いつも通りの一日。{k}','{w}回勝って、帰ってきた。ふつうだね','夕焼けがきれいだったよ'],
@@ -1070,7 +1071,7 @@ sekkachi:{
  lvup:['レベル上がった！ 明日はもっと奥まで行く、いや今から行きたい！','強くなった！ {k}','よし、次のレベルまであと何回！？'],
  gear:['{i}、即決で買った！','迷ってる暇ないから{i}にした！','{i}を買った！ これでもっと速く倒せる！'],
  streak:['{w}連勝！ 止まらない！','{k} 今日は全部一撃だった！','敵が遅すぎて退屈だった！'],
- lost:['負けた！ 次はもっと速く動く！','{o}より先に出たのに……！','準備不足だったかも……いや、気のせい！'],
+ lost:['負けた！ 次はもっと速く動く！','{o:depLater}より先に出たのに……！','準備不足だったかも……いや、気のせい！'],
  late:['出発が遅すぎる！ 待たされるのが一番いやだ！','なんで今日はこんなに遠回りなんだ！','気づいたら昼過ぎ！ ありえない！'],
  rest:['休み！？ 体がうずうずする！','寝てるだけなんて耐えられない！','明日は誰より早く出る！ {k}'],
  normal:['今日もさっさと行って、さっさと帰ってきた！','{w}勝！ 明日はもっと勝つ！','{k} ……あれ、もう夜！？'],
@@ -1082,7 +1083,7 @@ okubyo:{
  lvup:['{k} ……でも、ちょっとだけ自信ついたかも','レベルが上がった……ぼくでも、強くなれるんだ','強くなったけど……まだこわいものはこわいです'],
  gear:['{i}を買いました。これで少し安心……','{i}、大事に使います……','ま、まず守りを固めないと。{i}にしました'],
  streak:['{w}回も勝てた……！ ほんとに？','今日は一度もこわい目にあわなかった','{k} ……でも、今日は勝てました'],
- lost:['や、やっぱりこわい……','{o}みたいに強くなれたらいいのに……','途中で引き返しちゃった……ごめんなさい'],
+ lost:['や、やっぱりこわい……','{o:lvAbove}みたいに強くなれたらいいのに……','途中で引き返しちゃった……ごめんなさい'],
  late:['準備してたら遅くなっちゃった……','忘れ物がないか、何度も確かめちゃって……','出発するのが、ちょっとこわくて……'],
  rest:['今日はお休み……ほっとしました','{k} ……休めてよかった','家にいると落ち着きます'],
  normal:['今日もなんとか帰ってこられました','{w}回勝てました。少しずつ、です','{k} ……明日もがんばります'],
@@ -1091,11 +1092,11 @@ okubyo:{
 makezu:{
  boss:['親玉なんて、相手にならなかった','{k} ……いや、もう勝ったか','{o}より先に倒してやった。当然だ'],
  ko:['くそっ……{k}','負けたまま寝てられるか……','次は絶対に倒す。絶対だ'],
- lvup:['ふん、これでやっと{o}に並んだ。明日は抜く','レベルアップ。まだ足りない','強くなった。{k}'],
- gear:['{i}を買った。これで負ける理由はない','{o}よりいい装備だ。{i}','{i}。勝つためなら安いもんだ'],
+ lvup:['ふん、これでやっと{o:lvCaught}に並んだ。明日は抜く','レベルアップ。まだ足りない','強くなった。{k}'],
+ gear:['{i}を買った。これで負ける理由はない','{o:gearBelow}よりいい装備だ。{i}','{i}。勝つためなら安いもんだ'],
  streak:['{w}連勝。まだまだいける','全勝だ。{o}は何勝した？','{k} ……今日は見せる相手がいなかったな'],
  lost:['{k}','負けた。……今日のところはな','{o}には負けてない。魔物に負けただけだ'],
- late:['出遅れた。{o}に先を越された','なんでこんなに支度に時間がかかるんだ','遅れた分、明日取り返す'],
+ late:['出遅れた。{o:depEarlier}に先を越された','なんでこんなに支度に時間がかかるんだ','遅れた分、明日取り返す'],
  rest:['休んでる場合じゃないのに','寝てる間に{o}が強くなってたらどうする','明日は倍やる。{k}'],
  normal:['{w}勝。悪くないが、満足もしてない','{k}','今日の自分には勝った'],
  town:['{k}','{o}はもう出たか？','王様、今日も勝ってくる','訓練が足りない……'],
@@ -1106,7 +1107,7 @@ kuishinbo:{
  lvup:['おなかすいた……あ、レベルも上がってた','強くなったら、もっと食べられる気がする','{k} ……レベル上がったし、今日は二杯食べよう'],
  gear:['{i}、買っちゃった。今月のおやつ代が……','{i}を買ったら、おなかが鳴った','{i}ってなんだかおいしそうな名前……じゃないか'],
  streak:['{w}連勝！ いっぱい動いたからおなかすいた！','今日は調子いい！ 朝ごはんがよかったのかな','{k} ……今日は全部勝ったよ！'],
- lost:['負けた……おなかが空いてたせいだ','{k}','{o}は朝ごはん何食べてるんだろう……'],
+ lost:['負けた……おなかが空いてたせいだ','{k}','{o:winsMore}は朝ごはん何食べてるんだろう……'],
  late:['朝ごはん食べてたら遅くなっちゃった','{k} ……寄り道しすぎたかな','おなかいっぱいで、眠くなっちゃって'],
  rest:['今日はお休み。おやつの時間がたっぷり','{k}','休みの日のごはんは格別だね'],
  normal:['今日も元気に帰ってきた！ ごはんごはん','{w}回勝った。夕ごはん何かな','{k}'],
@@ -1156,21 +1157,35 @@ function voiceScene(r){
 }
 // 決まった材料から同じ結果を返す小さな乱数（報告書を開き直しても台詞が変わらない）
 function seeded(n){n=(n^0x9e3779b9)>>>0; n=Math.imul(n^(n>>>16),0x45d9f3b)>>>0; n=Math.imul(n^(n>>>16),0x45d9f3b)>>>0; return ((n^(n>>>16))>>>0)/4294967296;}
-function otherName(id,seed){const o=S.advs.filter(x=>x.id!==id); if(!o.length)return null; const a=S.advs.find(x=>x.id===id); const riv=a&&a.rival!=null?S.advs.find(x=>x.id===a.rival):null; return (riv||o[Math.floor(seeded(seed)*o.length)]).name;}
-function fillLine(t,a,r,seed){
-  const o=otherName(a.id,seed+7), item=r&&r.bought&&r.bought.length?r.bought[r.bought.length-1].name:'';
-  return t.replace(/\{k\}/g,`「${a.k}」`).replace(/\{o\}/g,o||'みんな').replace(/\{w\}/g,r?r.wins:0).replace(/\{i\}/g,item);
+// 比べる台詞に入れる相手の条件。me と o はその日の報告の記録（lv, lvFrom, wlv, alv, dep, wins）
+const OCOND={
+  depEarlier:(me,o)=>o.dep!=null&&(me.dep==null||o.dep<me.dep),
+  depLater:(me,o)=>me.dep!=null&&!o.rested&&(o.dep==null||o.dep>me.dep),
+  lvAbove:(me,o)=>o.lv>me.lv,
+  lvCaught:(me,o)=>o.lv===me.lv&&me.lvFrom<o.lv,
+  gearBelow:(me,o)=>(o.wlv+o.alv)<(me.wlv+me.alv),
+  winsMore:(me,o)=>!o.rested&&o.wins>me.wins,
+};
+// 台詞の中の {o:条件} を満たす相手の一覧。rows がない（街で聞く声など）ときは条件つきの台詞を使わない
+function candidates(cond,me,rows){if(!rows||!me)return []; return rows.filter(o=>o.id!==me.id&&OCOND[cond](me,o));}
+function usable(t,me,rows){const m=t.match(/\{o:(\w+)\}/g); if(m&&!m.every(x=>candidates(x.slice(3,-1),me,rows).length))return false; if(t.includes('{o}')&&S.advs.length<2)return false; return true;}
+function fillLine(t,a,r,seed,rows){
+  const others=S.advs.filter(x=>x.id!==a.id), anyO=others.length?others[Math.floor(seeded(seed+7)*others.length)].name:'みんな';
+  const item=r&&r.bought&&r.bought.length?r.bought[r.bought.length-1].name:'';
+  return t.replace(/\{o:(\w+)\}/g,(_,c)=>{const cs=candidates(c,r,rows); return cs.length?cs[Math.floor(seeded(seed+11)*cs.length)].name:anyO;})
+    .replace(/\{k\}/g,`「${a.k}」`).replace(/\{o\}/g,anyO).replace(/\{w\}/g,r?r.wins:0).replace(/\{i\}/g,item);
 }
-function pickLine(a,scene,seed,r){
-  let pool=VOICE[a.pid][scene]; if(!pool)pool=VOICE[a.pid].normal;
-  if(S.advs.length<2)pool=pool.filter(l=>!l.includes('{o}'))||pool; if(!pool.length)pool=VOICE[a.pid].normal;
-  return fillLine(pool[Math.floor(seeded(seed)*pool.length)],a,r,seed);
+function pickLine(a,scene,seed,r,rows){
+  let pool=(VOICE[a.pid][scene]||[]).filter(t=>usable(t,r,rows));
+  if(!pool.length)pool=VOICE[a.pid].normal.filter(t=>usable(t,r,rows));
+  return fillLine(pool[Math.floor(seeded(seed)*pool.length)],a,r,seed,rows);
 }
+/*VOICE-END*/
 
 /* ---------- タップで聞こえる声（画面の上に出す吹き出し） ---------- */
 let voiceOn=null, talkN=0;
 function sayLine(a,now){
-  const pool=VOICE[a.pid][a.slow?'hurt':'town'].filter(l=>S.advs.length>1||!l.includes('{o}'));
+  const pool=VOICE[a.pid][a.slow?'hurt':'town'].filter(t=>usable(t,null,null));
   const line=fillLine(pool[Math.floor(seeded(a.id*977+(talkN++)*131+S.day)*pool.length)],a,null,S.day+a.id).replace(/^「(.*)」$/,'$1');
   const el=$('voice'); el.innerHTML=`<b>${a.name}</b>${line}`; el.hidden=false; el.style.setProperty('--tc',a.tunic);
   voiceOn={a,until:now+2600};
@@ -1287,8 +1302,8 @@ const EVI={
   u:'<svg viewBox="0 0 10 10"><path d="M5 .5l1.3 3h3.2L7 5.5l1 3.5L5 7 2 9l1-3.5L.5 3.5h3.2z" fill="#f6e7a8"/></svg>',
 };
 const EVN={w:'勝ち',l:'負け',B:'親玉を倒した',b:'親玉に負けた',x:'やられた',u:'レベルアップ'};
-function cardHTML(r,day){
-  const a=S.advs.find(x=>x.id===r.id)||r, P=PERSONAS[r.pid], scene=voiceScene(r), line=pickLine(a,scene,day*131+r.id*17,r);
+function cardHTML(r,day,rows){
+  const a=S.advs.find(x=>x.id===r.id)||r, P=PERSONAS[r.pid], scene=voiceScene(r), line=pickLine(a,scene,day*131+r.id*17,r,rows);
   const big=r.ups.length||r.ko||r.boss;
   // タイムライン
   let bar='', marks='';
@@ -1320,7 +1335,7 @@ function cardHTML(r,day){
 function openReport(){
   const rep=S.lastReport;
   if(!rep){showDayCard(); return;}
-  const cards=rep.advs.map(r=>cardHTML(r,rep.day)).join('');
+  const cards=rep.advs.map(r=>cardHTML(r,rep.day,rep.advs)).join('');
   const elem=rep.advs.reduce((m,a)=>m+(a.elem||0),0), exp=rep.advs.reduce((m,a)=>m+(a.exp||0),0);
   $('reportSheet').innerHTML=`
     ${stepBar(0)}
