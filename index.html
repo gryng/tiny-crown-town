@@ -49,20 +49,16 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   content:"";position:absolute;inset:0;z-index:-1;background:var(--paper-bg);box-shadow:0 0 0 2.5px var(--ink),3px 5px 0 #0007;filter:url(#rough)}
 .sheet::before{filter:url(#roughL)}
 
-.hud{display:flex;flex-wrap:wrap;align-items:stretch;gap:10px 12px}
-.brand{flex:1 1 100%;display:flex;align-items:baseline;gap:12px}
-.brand h1{margin:0;font-family:var(--f-head);font-weight:800;font-size:26px;letter-spacing:.04em;color:var(--cream);text-shadow:2px 2px 0 #0a1411,0 0 22px #3d8c8055}
-.brand .ver{font-size:12px;color:var(--cream-dim);font-family:var(--f-head)}
-.brand::after{content:"";flex:1;height:3px;align-self:center;border-radius:2px;background:linear-gradient(90deg,var(--accent-2),transparent);opacity:.7}
-.stat{padding:6px 12px 7px;display:flex;flex-direction:column;min-width:0;flex:1 1 0}
-.stat:nth-child(2){transform:rotate(-.8deg)} .stat:nth-child(3){transform:rotate(.5deg)} .stat:nth-child(4){transform:rotate(-.4deg)} .stat:nth-child(5){transform:rotate(.7deg)}
-.stat .lbl{font-size:11px;color:var(--muted);letter-spacing:.06em;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.stat b{font-family:var(--f-head);font-weight:800;font-size:21px;line-height:1.2;font-variant-numeric:tabular-nums;color:var(--ink)}
-.clock{flex:1.4 1 0}
-@media (max-width:520px){.hud{display:grid;grid-template-columns:1fr 1fr;gap:10px}.brand{grid-column:1/-1}}
-.sunbar{height:5px;background:var(--paper-3);box-shadow:0 0 0 1px var(--ink);margin-top:4px;position:relative}
+.hud{display:flex;align-items:center;padding:6px 4px}
+.hi{flex:1 1 auto;display:flex;align-items:center;justify-content:center;gap:5px;padding:0 8px;min-width:0}
+.hi+.hi{border-left:1.5px solid #241c1440}
+.hi b{font-family:var(--f-head);font-weight:800;font-size:16px;line-height:1.2;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+.hi .u{font-size:11px;color:var(--muted);font-weight:700;white-space:nowrap}
+.hi .sunbar,.hi .bar{flex:0 0 30px;width:30px;height:4px;margin:0}
+@media (max-width:400px){.hi{padding:0 5px;gap:4px}.hi b{font-size:15px}.hi .sunbar,.hi .bar{flex-basis:22px;width:22px}}
+.sunbar{height:5px;background:var(--paper-3);box-shadow:0 0 0 1px var(--ink);position:relative}
 .sunbar i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#c0583a,var(--gold) 20%,#f0d98a 55%,#c0583a 85%,#4a5a9a);background-size:var(--sunw,100%) 100%;width:0}
-.bar{height:5px;background:var(--paper-3);box-shadow:0 0 0 1px var(--ink);margin-top:4px}
+.bar{height:5px;background:var(--paper-3);box-shadow:0 0 0 1px var(--ink)}
 .bar i{display:block;height:100%;background:var(--accent);width:0}
 
 .screen{position:relative;background:#0a1410;line-height:0;overflow:hidden;border-radius:3px;
@@ -112,6 +108,13 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 
 .modal{position:fixed;inset:0;background:#08120fd9;-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);display:flex;align-items:flex-start;justify-content:center;overflow:auto;z-index:20;padding-top:max(28px,env(safe-area-inset-top,0px));padding-bottom:max(28px,env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .modal[hidden]{display:none}
+.modal{flex-direction:column;align-items:center;justify-content:flex-start;gap:18px}
+.modal>:first-child{margin-top:auto}
+.modal>:last-child{margin-bottom:auto}
+.actions{width:100%;max-width:580px;display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+.actions .primary{flex:1 1 220px;max-width:360px}
+.actions .toggle{padding:10px 16px}
+.actions:empty{display:none}
 #titleModal{background:linear-gradient(180deg,#08120f40 0%,#08120fcc 75%);-webkit-backdrop-filter:none;backdrop-filter:none}
 #lineModal{z-index:30}
 .sheet{max-width:580px;width:100%;padding:24px 22px 22px;display:flex;flex-direction:column;gap:14px;transform:rotate(-.3deg)}
@@ -215,12 +218,11 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   <filter id="roughL" x="-3%" y="-3%" width="106%" height="106%"><feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="3" seed="3"/><feDisplacementMap in="SourceGraphic" scale="9"/></filter>
 </svg>
 <div class="wrap">
-  <header class="hud">
-    <div class="brand"><h1>Tiny Crown Town</h1><span class="ver">v0.3.3</span></div>
-    <div class="stat plate"><span class="lbl">日</span><b id="day">1</b></div>
-    <div class="stat plate clock"><span class="lbl">時刻</span><b id="clock">06:00</b><div class="sunbar"><i id="sun"></i></div></div>
-    <div class="stat plate"><span class="lbl" id="resLbl">精霊石</span><b id="elem">0</b></div>
-    <div class="stat plate"><span class="lbl">洞窟の探索</span><b id="explore">0%</b><div class="bar"><i id="exbar"></i></div></div>
+  <header class="hud plate">
+    <div class="hi"><b id="day">1</b><span class="u">日目</span></div>
+    <div class="hi clock"><b id="clock">06:00</b><div class="sunbar"><i id="sun"></i></div></div>
+    <div class="hi"><span class="u" id="resLbl">時のかけら</span><b id="elem">0</b></div>
+    <div class="hi"><span class="u">探索</span><b id="explore">0%</b><div class="bar"><i id="exbar"></i></div></div>
   </header>
 
   <div class="screen">
@@ -249,19 +251,20 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.3.3 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.3.4 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
       <li>建物の置き場所が、そのまま出発時刻になります。遅いと洞窟を探索できません。</li>
       <li>洞窟の中は見えません。翌朝の報告書で結果を知ります。探索100%で親玉に挑めます。</li>
     </ol>
-    <button class="primary" id="startBtn">はじめる</button>
   </div>
+  <div class="actions"><button class="primary" id="startBtn">はじめる</button></div>
 </div>
 
 <div class="modal" id="reportModal" hidden>
   <div class="sheet" id="reportSheet"></div>
+  <div class="actions" id="reportActions"></div>
 </div>
 
 <div class="daycard dusk" id="duskCard" hidden role="dialog" aria-live="assertive" aria-label="一日の終わり">
@@ -1198,7 +1201,7 @@ const OCOND={
   depEarlier:(me,o)=>o.dep!=null&&(me.dep==null||o.dep<me.dep),
   depLater:(me,o)=>me.dep!=null&&!o.rested&&(o.dep==null||o.dep>me.dep),
   lvAbove:(me,o)=>o.lv>me.lv,
-  lvCaught:(me,o)=>o.lv===me.lv&&me.lvFrom<o.lv,
+  lvCaught:(me,o)=>o.lv===me.lv&&o.lvFrom>me.lvFrom, // 今朝は相手が上で、今日並んだ
   gearBelow:(me,o)=>(o.wlv+o.alv)<(me.wlv+me.alv),
   winsMore:(me,o)=>!o.rested&&o.wins>me.wins,
 };
@@ -1244,7 +1247,7 @@ function updateHud(){
   $('day').textContent=S.day; $('clock').textContent=hm(S.t);
   const pc=Math.max(0,Math.min(100,(S.t-DAY_START)/(DAY_END-DAY_START)*100));
   $('sun').style.width=`${pc}%`; $('sun').style.setProperty('--sunw',`${10000/Math.max(pc,1)}%`);
-  $('elem').textContent=S.elem+(S.refund?`（明朝+${S.refund}）`:'');
+  $('elem').textContent=S.elem+(S.refund?` (+${S.refund})`:'');
   $('explore').textContent=`${Math.floor(S.explore)}%`+(S.bossDown?' 制覇':''); $('exbar').style.width=`${S.explore}%`;
   $('daypart').textContent=daypart(S.t);
 }
@@ -1384,10 +1387,10 @@ function openReport(){
     ${rep.won?'<div class="won">西の洞窟の親玉を倒した！ ここまでがこの版の目標です。</div>':''}
     <div class="cards">${cards}</div><div class="tlaxis"><span>6:00</span><span>10:00</span><span>14:00</span><span>17:00 引き返す</span><span>20:00</span></div>
     <div class="legend"><span><i style="background:var(--gold)"></i>街で支度</span><span><i style="background:var(--accent-2)"></i>冒険</span><span>カードを押すと開閉</span></div>
-    <button class="primary" id="next1">報告書を閉じる</button>`;
+`;
+  $('reportActions').innerHTML='<button class="primary" id="next1">報告書を閉じる</button>';
   $('reportModal').hidden=false; $('reportSheet').scrollIntoView({block:'start'});
   $('next1').addEventListener('click',()=>{$('reportModal').hidden=true; showDayCard();});
-  $('next1').focus({preventScroll:true});
 }
 // 全画面カード：タップ・キー・時間経過のどれかで次へ
 let cardTimer=null;
@@ -1426,15 +1429,12 @@ function openOrders(){
       <label><input type="radio" name="bh" value="explore" ${S.behest==='explore'?'checked':''}> 西の洞窟を探索せよ</label>
       <label><input type="radio" name="bh" value="boss" ${S.behest==='boss'?'checked':''} ${canBoss?'':'disabled'}> 親玉を倒せ${canBoss?'':'（探索100%で解放）'}</label>
     </div></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      ${rep?'<button class="toggle" id="back3">報告書をもう一度見る</button>':''}
-      <button class="primary" id="go" style="flex:1 1 200px">${S.day}日目をはじめる</button>
-    </div>`;
+`;
+  $('reportActions').innerHTML=`${rep?'<button class="toggle" id="back3">報告書をもう一度見る</button>':''}<button class="primary" id="go">${S.day}日目をはじめる</button>`;
   $('reportModal').hidden=false;
   $('reportSheet').querySelectorAll('input[name=bh]').forEach(i=>i.addEventListener('change',()=>{S.behest=i.value;}));
   if(rep)$('back3').addEventListener('click',()=>{openReportOnly();});
   $('go').addEventListener('click',()=>{ $('reportModal').hidden=true; startDay(S); if(speed===0)setSpeed(1); renderPanel(); updateHud(); });
-  $('go').focus({preventScroll:true});
 }
 // 指示画面から報告書を見返す（閉じると指示に戻る）
 function openReportOnly(){openReport(); const b=$('next1'); const nb=b.cloneNode(true); nb.textContent='指示にもどる'; b.replaceWith(nb); nb.addEventListener('click',()=>openOrders());}
