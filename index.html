@@ -131,7 +131,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 
 <div class="wrap">
   <header class="hud">
-    <div class="brand"><h1>Tiny Crown Town</h1><span class="ver">v0.2.2</span></div>
+    <div class="brand"><h1>Tiny Crown Town</h1><span class="ver">v0.2.3</span></div>
     <div class="stat plate"><span class="lbl">日</span><b id="day">1</b></div>
     <div class="stat plate clock"><span class="lbl">時刻</span><b id="clock">06:00</b><div class="sunbar"><i id="sun"></i></div></div>
     <div class="stat plate"><span class="lbl">精霊石</span><b id="elem">0</b></div>
@@ -163,7 +163,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.2.2 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.2.3 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -609,9 +609,10 @@ async function initGfx(){
     gg.setAttribute('uv',new T.Float32BufferAttribute([0,0,1,0,.5,1, 0,0,1,0,.5,1],2)); gg.computeVertexNormals();
     return [s,gg];
   }
-  const GEO={body:new T.BoxGeometry(BW,BH,BD).translate(0,BH/2,0), roof:roofGeos(1,13*U,BH-U,RH,BW), chim:new T.BoxGeometry(2*U,5*U,2*U), pool:new T.PlaneGeometry(1.7,1.3).rotateX(-Math.PI/2)};
+  const GEO={body:new T.BoxGeometry(BW,BH,BD).translate(0,BH/2,0), roof:roofGeos(1,13*U,BH-U,RH,BW), chim:new T.BoxGeometry(2*U,5*U,2*U), pool:new T.PlaneGeometry(1.7,1.6).rotateX(-Math.PI/2)};
   const plain=new T.MeshLambertMaterial({color:0xd9c9a0}), chimMat=new T.MeshLambertMaterial({color:0x8a4a3a});
-  const poolTex=tex(64,48,g=>{const r=g.createRadialGradient(32,20,2,32,24,30); r.addColorStop(0,'rgba(255,200,110,1)'); r.addColorStop(.5,'rgba(255,170,80,.35)'); r.addColorStop(1,'rgba(255,150,60,0)'); g.fillStyle=r; g.fillRect(0,0,64,48);},{soft:true});
+  // 窓からこぼれる光：壁ぎわがいちばん明るく、手前へ扇形に広がって消える（地面に光の中心を作らない）
+  const poolTex=tex(48,48,g=>{const im=g.createImageData(48,48), d=im.data; for(let y=0;y<48;y++)for(let x=0;x<48;x++){const v=y/47, u=(x-23.5)/24, w=.2+v*.7, k=.8*Math.exp(-v*1.5)*Math.exp(-(u/w)*(u/w))*(1-v)*Math.min(1,(1-Math.abs(u))*3), i=(y*48+x)*4; d[i]=255; d[i+1]=168+34*(1-v); d[i+2]=92; d[i+3]=255*Math.min(1,k);} g.putImageData(im,0,0);},{soft:true});
   // ドット座標（正面テクスチャ上）の矩形を、壁の手前に浮かせた板にする
   function glowPlane(px,py,pw,ph,mat,grp){add(new T.Mesh(new T.PlaneGeometry(pw*U,ph*U),mat),(px+pw/2-7)*U,(9-py-ph/2)*U,BD/2+.004,grp,false);}
   function mkBuilding(b){
@@ -626,13 +627,14 @@ async function initGfx(){
       const gm=new T.MeshBasicMaterial({color:new T.Color(3.2,2.2,.8),transparent:true,opacity:0}), pm=new T.MeshBasicMaterial({map:poolTex,transparent:true,opacity:0,blending:T.AdditiveBlending,depthWrite:false,fog:false});
       grp.userData.gm=gm; grp.userData.pm=pm;
       const g2=new T.Group(); g2.position.z=.04; grp.add(g2);
+      grp.userData.wins=t==='house'?[-4*U,4*U]:[-3.5*U];
       if(t==='house'){glowPlane(2,3,2,3,gm,g2); glowPlane(10,3,2,3,gm,g2); add(new T.Mesh(GEO.chim,chimMat),4*U,BH+5*U,-1*U,grp); grp.userData.smoke=new T.Vector3(wx(b.x)+4*U,BH+8*U,wz(b.y)-1*U);}
       else {
         glowPlane(2,3,3,3,gm,g2);
         const aw=memo('awn'+rc,()=>lam(tex(9,3,g=>{for(let i=0;i<9;i++)P(g,i%2?'#efe4c4':rc,i,0,1,3);})));
         const a=add(new T.Mesh(new T.BoxGeometry(9*U,U*.8,3.4*U),aw),-1.5*U,6.3*U,BD/2+1.5*U+.04,grp); a.rotation.x=.42;
       }
-      add(new T.Mesh(GEO.pool,pm),0,.03,.75,grp,false);
+      for(const ox of grp.userData.wins)add(new T.Mesh(GEO.pool,pm),ox,.03,.04+BD/2+.8,grp,false);
     } else if(t==='board'){
       const bt=memo('board',()=>cut(tex(16,15,(g,w,h)=>{P(g,'#6b4426',3,6,2,9); P(g,'#6b4426',11,6,2,9); P(g,'#8a5a2a',1,4,14,8); P(g,'#b88a52',2,5,12,6); P(g,'#f3ead7',3,6,3,4); P(g,'#f3ead7',8,5,4,5); P(g,'#c0503a',4,6); P(g,'#c0503a',10,5); P(g,'#9a8f78',4,8,1,1); P(g,'#9a8f78',9,7,2,1); P(g,'#9a8f78',9,8,2,1); P(g,'#7a3a3a',0,2,16,2); P(g,'#a84a32',1,1,14,1); P(g,'#a84a32',3,0,10,1); outline(g,w,h,'#2a1c12');})));
       const bm=add(new T.Mesh(standGeo(16,15),bt),0,0,.1,grp); addCaster(bm,crossGeo(16,15),bt.map);
@@ -715,7 +717,7 @@ async function initGfx(){
     P(g,'#f6efdc',1,0,9,7); P(g,'#f6efdc',0,1,11,5); P(g,'#f6efdc',4,7,3,1); P(g,'#f6efdc',5,8,1,1);
     if(k==='cheer'){P(g,c,6,1,1,4); P(g,c,7,1,2,1); P(g,c,4,4,3,2);} else if(k==='heal'){P(g,c,3,2,2,2); P(g,c,6,2,2,2); P(g,c,3,3,5,2); P(g,c,4,5,3,1); P(g,c,5,6,1,1);} else {P(g,c,2,3,1,1); P(g,c,5,3,1,1); P(g,c,8,3,1,1);}
     outline(g,w,h,'#231a14');});
-  // 窓あかりの影：冒険者のシルエットを、近くの灯った窓と反対の向きへ地面に伸ばす（1人につき近い窓2つまで）
+  // 窓あかりの影：冒険者のシルエットを、近くの灯った窓それぞれと反対の向きへ地面に伸ばす（1人につき近い窓2つまで）
   const winGeo=new T.PlaneGeometry(1,1).rotateX(-Math.PI/2).translate(0,0,.5);
   {const uv=winGeo.attributes.uv, pos=winGeo.attributes.position; for(let i=0;i<uv.count;i++)uv.setXY(i,pos.getX(i)+.5,pos.getZ(i));}
   const winMat=map=>new T.ShaderMaterial({uniforms:{map:{value:map},fr:{value:new T.Vector2(0,1)},op:{value:0}},transparent:true,depthWrite:false,
@@ -741,8 +743,9 @@ async function initGfx(){
       w.mesh.position.set(wx(p.x),0,wz(p.y)+.15+a.id*.004); w.mesh.scale.x=w.flip;
       // 灯った窓のうち、正面側で近いもの2つを選ぶ
       let b1=null, b2=null; const px=w.mesh.position.x, pz=w.mesh.position.z;
-      for(const g of bGroups){const u=g.userData; if(!u.gm||u.glow<.05)continue; const dx=px-g.position.x, dz=pz-(g.position.z+.42), d=Math.hypot(dx,dz); if(d>2.5||dz<-.1)continue;
-        const k=u.glow*(1-sm(.7,2.5,d))*Math.min(1,(dz+.1)/.35); if(k<.03)continue; const e={k,dx,dz,d}; if(!b1||k>b1.k){b2=b1; b1=e;} else if(!b2||k>b2.k)b2=e;}
+      for(const g of bGroups){const u=g.userData; if(!u.gm||u.glow<.05)continue; const dz=pz-(g.position.z+.4); if(dz<-.1||dz>2.5)continue;
+        for(const ox of u.wins){const dx=px-(g.position.x+ox), d=Math.hypot(dx,dz); if(d>2.5)continue;
+          const k=u.glow*(1-sm(.7,2.5,d))*Math.min(1,(dz+.1)/.35)*(u.wins.length>1?.8:1); if(k<.03)continue; const e={k,dx,dz,d}; if(!b1||k>b1.k){b2=b1; b1=e;} else if(!b2||k>b2.k)b2=e;}}
       [b1,b2].forEach((e,i)=>{if(!e)return; const m=w.fs[i]; m.visible=true; m.position.set(px,.036+i*.002,pz); m.rotation.y=Math.atan2(e.dx,e.dz); m.scale.set(FW*U,1,.8+e.d*.75);
         m.material.uniforms.fr.value.set(w.t.offset.x,w.flip); m.material.uniforms.op.value=e.k*.55;});
       const b=a.bubble, on=b&&now<b.until; w.bub.visible=!!on;
@@ -892,7 +895,7 @@ async function initGfx(){
     for(const g of bGroups){
       const u=g.userData, age=(now-u.born)/520;
       if(age<1){const c=1.70158, k=age-1, e=1+(c+1)*k*k*k+c*k*k; g.scale.set(.6+.4*e,Math.max(.05,e),.6+.4*e);} else g.scale.set(1,1,1);
-      if(u.gm){const on=t>=1062+u.stag*55||t<366+u.stag*42; u.glow+=((on?1:0)-u.glow)*Math.min(1,dt*3); u.gm.opacity=u.glow*(.92+.08*Math.sin(now/170+u.stag*40)); u.pm.opacity=u.glow*.5*night;}
+      if(u.gm){const on=t>=1062+u.stag*55||t<366+u.stag*42; u.glow+=((on?1:0)-u.glow)*Math.min(1,dt*3); u.gm.opacity=u.glow*(.92+.08*Math.sin(now/170+u.stag*40)); u.pm.opacity=u.glow*.62*night;}
       if(u.water){u.water.offset.x=now/5200; u.water.offset.y=Math.sin(now/1700)*.08;}
     }
     {const on=t>=1058||t<372; castleGlow.userData.g=(castleGlow.userData.g||0)+((on?1:0)-(castleGlow.userData.g||0))*Math.min(1,dt*3); castleGlow.opacity=castleGlow.userData.g;}
