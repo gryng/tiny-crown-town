@@ -126,12 +126,27 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .won{background:linear-gradient(180deg,#e4cf8f,var(--gold));color:#1a1a10;padding:10px 12px;font-family:var(--f-display);font-size:15px}
 .copyrow{display:flex;gap:8px;flex-wrap:wrap}
 .copyrow input{flex:1 1 200px;min-width:0;background:#0f2219;color:var(--ink);border:1px solid var(--line);padding:6px}
-@media (prefers-reduced-motion:reduce){.primary:active{transform:none}}
+.steps{display:flex;gap:6px;font-family:var(--f-display);font-size:11px;letter-spacing:.08em;color:var(--muted)}
+.steps span{flex:1;border-top:2px solid var(--line);padding-top:4px}
+.steps span.on{border-color:var(--gold);color:var(--gold-soft)}
+.daycard{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;background:#05100b;overflow:hidden}
+.daycard[hidden]{display:none}
+.daycard .sky{position:absolute;inset:0;background:linear-gradient(180deg,#0a1430 0%,#1b4332 55%,#c9a84c 100%);opacity:0;animation:dawn 1.6s ease-out forwards}
+.daycard .sun{position:absolute;left:50%;bottom:-60px;width:120px;height:120px;margin-left:-60px;background:radial-gradient(circle,#f6e7a8 0 38%,#e4cf8f55 39% 60%,transparent 61%);animation:rise 2s ease-out forwards}
+.daycard .ln{position:relative;font-family:var(--f-display);color:var(--gold-soft);text-shadow:0 2px 0 #06100b,0 0 24px #c9a84c80;opacity:0;animation:pop .6s ease-out forwards}
+.daycard .ln.small{font-size:15px;letter-spacing:.3em;animation-delay:.5s}
+.daycard .ln.big{font-size:56px;letter-spacing:.12em;line-height:1.1;animation-delay:.8s}
+.daycard .ln.sub{font-size:13px;letter-spacing:.2em;color:var(--ink);animation-delay:1.3s}
+.daycard .ln.tap{position:absolute;bottom:max(28px,env(safe-area-inset-bottom,0px));font-size:12px;color:var(--ink);letter-spacing:.2em;animation-delay:1.8s}
+@keyframes dawn{to{opacity:1}}
+@keyframes rise{to{bottom:calc(14% - 40px)}}
+@keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.primary:active{transform:none}.daycard .sky,.daycard .sun,.daycard .ln{animation:none;opacity:1}.daycard .sun{bottom:calc(14% - 40px)}}
 </style>
 
 <div class="wrap">
   <header class="hud">
-    <div class="brand"><h1>Tiny Crown Town</h1><span class="ver">v0.2.4</span></div>
+    <div class="brand"><h1>Tiny Crown Town</h1><span class="ver">v0.2.5</span></div>
     <div class="stat plate"><span class="lbl">日</span><b id="day">1</b></div>
     <div class="stat plate clock"><span class="lbl">時刻</span><b id="clock">06:00</b><div class="sunbar"><i id="sun"></i></div></div>
     <div class="stat plate"><span class="lbl">精霊石</span><b id="elem">0</b></div>
@@ -163,7 +178,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.2.4 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.2.5 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -176,6 +191,14 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 
 <div class="modal" id="reportModal" hidden>
   <div class="sheet" id="reportSheet"></div>
+</div>
+
+<div class="daycard" id="dayCard" hidden role="dialog" aria-live="assertive" aria-label="日付の切り替わり">
+  <div class="sky"></div><div class="sun"></div>
+  <div class="ln small" id="dcSmall">夜が明けた</div>
+  <div class="ln big" id="dcBig">2日目</div>
+  <div class="ln sub" id="dcSub"></div>
+  <div class="ln tap">タップで進む</div>
 </div>
 
 <div class="modal" id="lineModal" hidden>
@@ -1019,34 +1042,72 @@ function hintsFor(rep){
   if(S.explore>=100&&!S.bossDown)h.push('探索100%。おふれを「親玉を倒せ」に変えましょう。');
   return h.slice(0,3);
 }
+function stepBar(n){const L=['報告書','夜明け','きょうの指示'];return `<div class="steps">${L.map((l,i)=>`<span class="${i===n?'on':''}">${i+1} ${l}</span>`).join('')}</div>`;}
+// 1. きのうの報告書 → 2. 日付の演出 → 3. きょうの指示
 function openReport(){
   const rep=S.lastReport;
-  const rows=rep?rep.advs.map(a=>{
+  if(!rep){showDayCard(); return;}
+  const rows=rep.advs.map(a=>{
     let res;
     if(a.rested)res=a.note;
     else if(a.dep===null)res=a.note||'出発しなかった';
     else res=`${hm(a.dep)}出発 · ${a.wins}勝${a.losses}敗 · 精霊石+${a.elem}${a.explore?` · 探索+${a.explore.toFixed(1)}%`:''}${a.bought.length?` · ${a.bought.join('と')}を買った`:''} · ${a.note}${a.missedWage?' · 日給をもらいそこねた':''}`;
     const bar=a.leftHome!==null?`<div class="tl">${a.dep!==null?`<i class="p" style="left:${pct(a.leftHome)}%;width:${pct(a.dep)-pct(a.leftHome)}%"></i><i class="a" style="left:${pct(a.dep)}%;width:${pct(a.back||RETURN_TIME)-pct(a.dep)}%"></i>`:`<i class="p" style="left:${pct(a.leftHome)}%;width:${100-pct(a.leftHome)}%"></i>`}</div>`:'';
     return `<div class="rrow"><div class="top"><b><i class="dot" style="display:inline-block;background:${a.tunic};margin-right:6px"></i>${a.name}</b><span class="chip ${a.ko?'hurt':a.dep!==null?'away':'off'}">Lv${a.lv}${a.ko?' · やられた':''}</span></div>${bar}<div class="res">${res}</div></div>`;
-  }).join(''):'';
+  }).join('');
+  const elem=rep.advs.reduce((m,a)=>m+(a.elem||0),0);
+  $('reportSheet').innerHTML=`
+    ${stepBar(0)}
+    <h2>${rep.day}日目の報告書</h2>
+    <p class="lead">持ち帰った精霊石 ${elem} · 洞窟の探索 ${Math.floor(rep.explore)}%</p>
+    ${rep.won?'<div class="won">西の洞窟の親玉を倒した！ ここまでがv0.1の目標です。</div>':''}
+    <div class="rep">${rows}</div><div class="tlaxis"><span>6:00</span><span>10:00</span><span>14:00</span><span>17:00 引き返す</span><span>20:00</span></div><div class="legend"><span><i style="background:var(--gold)"></i>街で支度</span><span><i style="background:var(--good)"></i>冒険</span></div>
+    <button class="primary" id="next1">報告書を閉じる</button>`;
+  $('reportModal').hidden=false; $('reportSheet').scrollIntoView({block:'start'});
+  $('next1').addEventListener('click',()=>{$('reportModal').hidden=true; showDayCard();});
+  $('next1').focus({preventScroll:true});
+}
+let dayCardTimer=null;
+function showDayCard(){
+  const c=$('dayCard');
+  $('dcSmall').textContent=S.day===1?'はじまりの朝':'夜が明けた';
+  $('dcBig').textContent=`${S.day}日目`;
+  $('dcSub').textContent=S.day===1?'小さな王国の最初の一日':`冒険者 ${S.advs.length}人 · 精霊石 ${S.elem+S.refund}`;
+  // アニメーションを毎回最初から
+  c.querySelectorAll('.sky,.sun,.ln').forEach(el=>{el.style.animation='none'; void el.offsetWidth; el.style.animation='';});
+  c.hidden=false;
+  let done=false; const go=()=>{if(done)return; done=true; clearTimeout(dayCardTimer); c.hidden=true; c.removeEventListener('click',go); document.removeEventListener('keydown',key); openOrders();};
+  const key=e=>{if(e.key==='Enter'||e.key===' '||e.key==='Escape'){e.preventDefault(); go();}};
+  c.addEventListener('click',go); document.addEventListener('keydown',key);
+  dayCardTimer=setTimeout(go,3200);
+}
+function openOrders(){
+  const rep=S.lastReport;
   const hints=hintsFor(rep);
   const canBoss=S.explore>=100&&!S.bossDown;
   if(!canBoss&&S.behest==='boss')S.behest='explore';
   $('reportSheet').innerHTML=`
-    <h2>${rep?`${S.day}日目の朝 · きのうの報告書`:'1日目の朝'}</h2>
-    ${rep&&rep.won?'<div class="won">西の洞窟の親玉を倒した！ ここまでがv0.1の目標です。</div>':''}
-    ${rep?`<div class="rep">${rows}</div><div class="tlaxis"><span>6:00</span><span>10:00</span><span>14:00</span><span>17:00 引き返す</span><span>20:00</span></div><div class="legend"><span><i style="background:var(--gold)"></i>街で支度</span><span><i style="background:var(--good)"></i>冒険</span></div>`:'<p>城下町には家が2軒と立て札だけ。冒険者が毎朝歩く道を考えて、武器屋や公園を建てていきましょう。</p>'}
+    ${stepBar(2)}
+    <h2>${S.day}日目の指示</h2>
+    ${rep?'':'<p>城下町には家が2軒と立て札だけ。冒険者が毎朝歩く道を考えて、武器屋や公園を建てていきましょう。</p>'}
     ${hints.length?`<div class="hints">${hints.map(h=>`<span>${h}</span>`).join('')}</div>`:''}
     <div><p class="lead" style="margin-bottom:6px">きょうのおふれ（立て札に貼る）</p>
     <div class="behest">
       <label><input type="radio" name="bh" value="explore" ${S.behest==='explore'?'checked':''}> 西の洞窟を探索せよ</label>
       <label><input type="radio" name="bh" value="boss" ${S.behest==='boss'?'checked':''} ${canBoss?'':'disabled'}> 親玉を倒せ${canBoss?'':'（探索100%で解放）'}</label>
     </div></div>
-    <button class="primary" id="go">${S.day}日目をはじめる</button>`;
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      ${rep?'<button class="toggle" id="back3">報告書をもう一度見る</button>':''}
+      <button class="primary" id="go" style="flex:1 1 200px">${S.day}日目をはじめる</button>
+    </div>`;
   $('reportModal').hidden=false;
   $('reportSheet').querySelectorAll('input[name=bh]').forEach(i=>i.addEventListener('change',()=>{S.behest=i.value;}));
+  if(rep)$('back3').addEventListener('click',()=>{openReportOnly();});
   $('go').addEventListener('click',()=>{ $('reportModal').hidden=true; startDay(S); if(speed===0)setSpeed(1); renderPanel(); updateHud(); });
+  $('go').focus({preventScroll:true});
 }
+// 指示画面から報告書を見返す（閉じると指示に戻る）
+function openReportOnly(){openReport(); const b=$('next1'); const nb=b.cloneNode(true); nb.textContent='指示にもどる'; b.replaceWith(nb); nb.addEventListener('click',()=>openOrders());}
 
 /* ---------- ループ ---------- */
 let GFX=null, panelClock=0, wasPhase=S.phase;
