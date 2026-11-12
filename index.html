@@ -141,12 +141,19 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 @keyframes dawn{to{opacity:1}}
 @keyframes rise{to{bottom:calc(14% - 40px)}}
 @keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){.primary:active{transform:none}.daycard .sky,.daycard .sun,.daycard .ln{animation:none;opacity:1}.daycard .sun{bottom:calc(14% - 40px)}}
+.daycard.dusk .sky{background:linear-gradient(180deg,#0a1430 0%,#2a2350 40%,#7a3a3a 75%,#e08466 100%)}
+.daycard.dusk .sun{bottom:calc(14% - 40px);background:radial-gradient(circle,#f2b07a 0 38%,#e0846655 39% 60%,transparent 61%);animation:set 2.2s ease-in forwards}
+.daycard.dusk .ln.big{font-size:clamp(30px,9vw,46px);letter-spacing:.1em}
+.daycard .letter{position:relative;width:64px;height:44px;background:#f1e9d2;border:2px solid #7d6727;box-shadow:0 4px 0 #06100b88;opacity:0;animation:pop .5s ease-out 1.5s forwards}
+.daycard .letter::before{content:"";position:absolute;left:-2px;right:-2px;top:-2px;height:24px;background:linear-gradient(to bottom right,transparent 49%,#d8cba6 50%) left/50% 100% no-repeat,linear-gradient(to bottom left,transparent 49%,#d8cba6 50%) right/50% 100% no-repeat;border-bottom:0}
+.daycard .letter::after{content:"";position:absolute;left:50%;top:14px;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:#a84a32;box-shadow:0 0 0 2px #c9a84c}
+@keyframes set{to{bottom:-160px}}
+@media (prefers-reduced-motion:reduce){.primary:active{transform:none}.daycard .sky,.daycard .sun,.daycard .ln,.daycard .letter{animation:none;opacity:1}.daycard .sun{bottom:calc(14% - 40px)}.daycard.dusk .sun{bottom:-160px}}
 </style>
 
 <div class="wrap">
   <header class="hud">
-    <div class="brand"><h1>Tiny Crown Town</h1><span class="ver">v0.2.5</span></div>
+    <div class="brand"><h1>Tiny Crown Town</h1><span class="ver">v0.2.6</span></div>
     <div class="stat plate"><span class="lbl">日</span><b id="day">1</b></div>
     <div class="stat plate clock"><span class="lbl">時刻</span><b id="clock">06:00</b><div class="sunbar"><i id="sun"></i></div></div>
     <div class="stat plate"><span class="lbl">精霊石</span><b id="elem">0</b></div>
@@ -178,7 +185,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.2.5 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.2.6 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -191,6 +198,15 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 
 <div class="modal" id="reportModal" hidden>
   <div class="sheet" id="reportSheet"></div>
+</div>
+
+<div class="daycard dusk" id="duskCard" hidden role="dialog" aria-live="assertive" aria-label="一日の終わり">
+  <div class="sky"></div><div class="sun"></div>
+  <div class="ln small" id="ddSmall">日が暮れた</div>
+  <div class="ln big">今日の活動終了</div>
+  <div class="letter" aria-hidden="true"></div>
+  <div class="ln sub">報告書を受け取った</div>
+  <div class="ln tap">タップで報告書を読む</div>
 </div>
 
 <div class="daycard" id="dayCard" hidden role="dialog" aria-live="assertive" aria-label="日付の切り替わり">
@@ -1067,19 +1083,27 @@ function openReport(){
   $('next1').addEventListener('click',()=>{$('reportModal').hidden=true; showDayCard();});
   $('next1').focus({preventScroll:true});
 }
-let dayCardTimer=null;
+// 全画面カード：タップ・キー・時間経過のどれかで次へ
+let cardTimer=null;
+function playCard(c,ms,next){
+  c.querySelectorAll('.sky,.sun,.ln,.letter').forEach(el=>{el.style.animation='none'; void el.offsetWidth; el.style.animation='';});
+  c.hidden=false;
+  let done=false; const go=()=>{if(done)return; done=true; clearTimeout(cardTimer); c.hidden=true; c.removeEventListener('click',go); document.removeEventListener('keydown',key); next();};
+  const key=e=>{if(e.key==='Enter'||e.key===' '||e.key==='Escape'){e.preventDefault(); go();}};
+  c.addEventListener('click',go); document.addEventListener('keydown',key);
+  cardTimer=setTimeout(go,ms);
+}
+// 0. 一日の終わり「今日の活動終了。報告書を受け取った」
+function showDuskCard(){
+  $('ddSmall').textContent=`${S.lastReport?S.lastReport.day:S.day}日目 · 日が暮れた`;
+  playCard($('duskCard'),3400,openReport);
+}
 function showDayCard(){
   const c=$('dayCard');
   $('dcSmall').textContent=S.day===1?'はじまりの朝':'夜が明けた';
   $('dcBig').textContent=`${S.day}日目`;
   $('dcSub').textContent=S.day===1?'小さな王国の最初の一日':`冒険者 ${S.advs.length}人 · 精霊石 ${S.elem+S.refund}`;
-  // アニメーションを毎回最初から
-  c.querySelectorAll('.sky,.sun,.ln').forEach(el=>{el.style.animation='none'; void el.offsetWidth; el.style.animation='';});
-  c.hidden=false;
-  let done=false; const go=()=>{if(done)return; done=true; clearTimeout(dayCardTimer); c.hidden=true; c.removeEventListener('click',go); document.removeEventListener('keydown',key); openOrders();};
-  const key=e=>{if(e.key==='Enter'||e.key===' '||e.key==='Escape'){e.preventDefault(); go();}};
-  c.addEventListener('click',go); document.addEventListener('keydown',key);
-  dayCardTimer=setTimeout(go,3200);
+  playCard(c,3200,openOrders);
 }
 function openOrders(){
   const rep=S.lastReport;
@@ -1114,7 +1138,7 @@ let GFX=null, panelClock=0, wasPhase=S.phase;
 function loop(now){
   const dt=Math.min(.1,(now-lastT)/1000); lastT=now;
   if(S.phase==='day'&&speed>0){acc+=dt*speed*RATE; const whole=Math.floor(acc); if(whole>0){acc-=whole; tick(S,whole);}}
-  if(S.phase==='report'&&wasPhase==='day'){acc=0; openReport();}
+  if(S.phase==='report'&&wasPhase==='day'){acc=0; showDuskCard();}
   wasPhase=S.phase;
   if(GFX)GFX.draw(now,dt);
   if(now-panelClock>300){panelClock=now; updateHud(); if(!sel)renderPanel();}
