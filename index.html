@@ -82,6 +82,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .panel h2{margin:0;font-family:var(--f-head);font-weight:800;font-size:19px;letter-spacing:.04em;display:flex;justify-content:space-between;align-items:center;gap:8px;color:var(--accent)}
 .panel h2 small{font-size:12px;color:var(--muted);font-family:var(--f-body);font-weight:700}
 .x{padding:2px 12px;font-size:13px;font-weight:700}
+.menu-btn[aria-expanded="true"]{color:var(--accent)}
 .roster{display:grid;gap:0}
 .adv{display:grid;grid-template-columns:12px minmax(0,1fr) auto;gap:8px;align-items:center;padding:7px 2px;border-bottom:1.5px dashed #241c1440}
 .adv:last-child{border-bottom:0}
@@ -104,6 +105,40 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .kv dt{color:var(--muted);font-weight:700}
 .kv dd{margin:0;font-variant-numeric:tabular-nums}
 .danger{padding:6px 14px;align-self:flex-start;color:var(--bad);font-weight:700}
+/* 画面下のメニュー */
+.foot{position:relative;display:flex;justify-content:flex-end}
+.menu-btn{font-family:var(--f-head);font-weight:800;font-size:13px;padding:4px 14px}
+.menu{position:absolute;right:0;bottom:calc(100% + 12px);width:min(300px,100%);padding:12px 14px;display:grid;gap:6px;z-index:5}
+.menu[hidden]{display:none}
+.menu-h{margin:0;font-family:var(--f-head);font-weight:800;font-size:15px;color:var(--accent)}
+.mi{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:0 12px;align-items:center;text-align:left;background:none;border:0;border-top:1.5px dashed #241c1440;padding:9px 2px;color:var(--ink)}
+.mi span{font-weight:700}
+.mi small{grid-column:1;font-size:11px;color:var(--muted)}
+.mi .sw{grid-row:1/3;grid-column:2;width:36px;height:20px;border-radius:10px;background:var(--paper-3);box-shadow:inset 0 0 0 1.5px var(--ink);position:relative}
+.mi .sw::after{content:"";position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:var(--ink);transition:left .15s}
+.mi[aria-pressed="true"] .sw{background:var(--accent)}
+.mi[aria-pressed="true"] .sw::after{left:19px;background:var(--paper)}
+/* 冒険者パネル：顔のタブと、選んだ子の詳しい情報 */
+.tabs{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 8px;margin:0 -2px;scrollbar-width:thin}
+.tabf{position:relative;flex:0 0 auto;width:52px;height:52px;padding:0;border-radius:50%;background:var(--paper-3);border:2px solid #241c1499;box-shadow:2px 2px 0 #241c1433}
+.tabf img{width:100%;height:100%;border-radius:50%;image-rendering:pixelated;display:block}
+.tabf[aria-pressed="true"]{border:3px solid var(--accent);box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--accent);transform:translateY(-2px)}
+.tabf .st{position:absolute;right:-2px;bottom:-2px;width:14px;height:14px;border-radius:50%;box-shadow:0 0 0 2px var(--paper),0 0 0 3.5px var(--ink);background:var(--muted)}
+.tabf .st.prep{background:var(--gold)} .tabf .st.away{background:var(--accent-2)} .tabf .st.hurt{background:var(--bad)} .tabf .st.off{background:#a89a7c}
+.ad{display:grid;gap:10px}
+.ad-head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;align-items:start}
+.ad-head h3{margin:0;font-family:var(--f-head);font-weight:800;font-size:22px;line-height:1.2;color:var(--ink);display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.ad-head h3 small{font-family:var(--f-body);font-size:12px;font-weight:700;color:var(--muted)}
+.ad-head q{grid-column:1/-1;font-family:var(--f-hand);font-weight:600;font-size:14px;color:var(--accent)}
+.ad-head q::before{content:"口ぐせ　";font-family:var(--f-body);font-size:11px;font-weight:700;color:var(--muted)}
+.meters{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:5px 10px;align-items:center;font-size:12px;margin:0}
+.meters dt{color:var(--muted);font-weight:700}
+.meters dd{margin:0;font-family:var(--f-head);font-weight:800;font-size:14px;font-variant-numeric:tabular-nums;color:var(--ink);text-align:right;white-space:nowrap}
+.meters .meter{height:8px;background:var(--paper-3);box-shadow:0 0 0 1.5px var(--ink);position:relative}
+.meter i{position:absolute;left:0;top:0;bottom:0;background:var(--good)}
+.meter.mo i{background:var(--gold)}
+.ad .gains{grid-template-columns:repeat(4,minmax(0,1fr))}
+.ad .today{font-size:12px;color:var(--muted);margin:0}
 .msg{font-size:12px;color:var(--bad);min-height:1em;margin:0}
 
 .modal{position:fixed;inset:0;background:#08120fd9;-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);display:flex;align-items:flex-start;justify-content:center;overflow:auto;z-index:20;padding-top:max(28px,env(safe-area-inset-top,0px));padding-bottom:max(28px,env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -240,18 +275,25 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
       <button id="sp4" data-sp="4" aria-pressed="false">×4</button>
     </div>
     <button id="trails" class="toggle" aria-pressed="false">足あと</button>
-    <button id="lite" class="toggle" aria-pressed="false" title="ぼかしや光のにじみを切って軽くする">軽量表示</button>
     <span class="tip">光る角の空き地をタップで建設。歩いている冒険者をタップすると声が聞ける。</span>
   </div>
 
   <section class="panel plate" id="panel" aria-live="polite"></section>
+
+  <div class="foot">
+    <button class="x menu-btn" id="menuBtn" aria-expanded="false" aria-controls="menu">メニュー</button>
+    <div class="menu plate" id="menu" hidden>
+      <p class="menu-h">メニュー</p>
+      <button class="mi" id="lite" aria-pressed="false"><span>軽量表示</span><small>ぼかしや光のにじみを切って軽くする</small><i class="sw"></i></button>
+    </div>
+  </div>
 </div>
 
 <div class="modal" id="titleModal">
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.3.4 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.3.5 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -1269,6 +1311,7 @@ function renderPanel(){
   const p=$('panel');
   if(sel&&sel.kind==='lot'){
     const opts=Object.keys(BUILD).map(k=>{const e=canBuild(S,k,sel.x,sel.y); return `<button class="opt" data-build="${k}" ${e?'disabled':''}><b>${BUILD[k].name}</b><span>${e&&e!==`${RES}が足りない`?e:BUILD[k].desc}</span><em>${BUILD[k].cost}</em></button>`;}).join('');
+    p.dataset.mode='lot';
     p.innerHTML=`<h2>空き地に建てる <button class="x" id="close">閉じる</button></h2><div class="opts">${opts}</div><p class="msg" id="msg"></p>`;
   } else if(sel&&sel.kind==='building'){
     const b=at(S,sel.x,sel.y); if(!b){sel=null; return renderPanel();}
@@ -1276,14 +1319,36 @@ function renderPanel(){
     if(b.type==='house'){const a=S.advs.find(a=>a.home===b.id); body=a?`<dl class="kv"><dt>住んでいる冒険者</dt><dd>${a.name}（Lv${a.lv}）</dd><dt>性格</dt><dd>${PP(a).name}・口ぐせ「${a.k}」</dd><dt>装備</dt><dd>${WEAPONS[a.wlv]}・${ARMORS[a.alv]}</dd><dt>体力</dt><dd>${a.hp}/${a.hpMax}</dd><dt>攻撃・守り</dt><dd>${a.atk}・${a.def}</dd><dt>やる気</dt><dd>${a.morale}</dd><dt>所持金</dt><dd>${a.gold}G</dd></dl>`:'<p class="lead">だれも住んでいない</p>';}
     else if(b.type==='park')body=`<p class="lead">きょう休んだ冒険者 ${S.parkUsed}/${PARK_CAP}人</p>`;
     else body=`<p class="lead">${BUILD[b.type].desc}</p>`;
+    p.dataset.mode='building';
     p.innerHTML=`<h2>${BUILD[b.type].name} <button class="x" id="close">閉じる</button></h2>${body}<button class="danger" id="demo">${sel.confirm?`撤去する（${RES}は明朝もどる）`:'撤去'}</button><p class="msg" id="msg"></p>`;
-  } else {
-    const rows=S.advs.map(a=>{const [txt,cls]=status(a); return `<div class="adv"><i class="dot" style="background:${a.tunic}"></i><div class="nm">${a.name}<small>${PP(a).name} Lv${a.lv} 体力${a.hp}/${a.hpMax} やる気${a.morale}</small></div><span class="chip ${cls}">${txt}</span></div>`;}).join('');
-    p.innerHTML=`<h2>冒険者 <small>おふれ：${S.behest==='boss'?'親玉を倒せ':'西の洞窟を探索せよ'}</small></h2><div class="roster">${rows}</div>`;
+  } else renderRoster(p);
+}
+// 冒険者パネル。タブの並びは人数が変わったときだけ作り直し、中身は毎回更新する（横スクロールの位置を保つ）
+let pickAdv=0;
+function renderRoster(p){
+  if(!S.advs.length){p.innerHTML='<h2>冒険者</h2><p class="lead">まだ冒険者がいない</p>'; p.dataset.mode=''; return;}
+  if(!S.advs.some(a=>a.id===pickAdv))pickAdv=S.advs[0].id;
+  if(p.dataset.mode!=='roster'||p.dataset.n!==String(S.advs.length)){
+    p.innerHTML=`<h2>冒険者 <small id="behestNow"></small></h2><div class="tabs" role="tablist">${S.advs.map(a=>`<button class="tabf" role="tab" data-adv="${a.id}" aria-label="${a.name}"><img src="${faceURL(a)}" alt=""><i class="st"></i></button>`).join('')}</div><div class="ad" id="advDetail" role="tabpanel"></div>`;
+    p.dataset.mode='roster'; p.dataset.n=String(S.advs.length);
   }
+  $('behestNow').textContent=`おふれ：${S.behest==='boss'?'親玉を倒せ':'西の洞窟を探索せよ'}`;
+  p.querySelectorAll('.tabf').forEach(b=>{const a=S.advs.find(x=>x.id===+b.dataset.adv), [txt,cls]=status(a); b.setAttribute('aria-pressed',String(a.id===pickAdv)); b.querySelector('.st').className=`st ${cls}`; b.title=`${a.name}：${txt}`;});
+  const a=S.advs.find(x=>x.id===pickAdv), P=PP(a), [txt,cls]=status(a), r=a.rep;
+  const today=S.phase==='day'&&r&&!r.rested?`今日：${r.dep!=null?`${hm(r.dep)}に出発 · `:''}${r.wins}勝${r.losses}敗${r.bought.length?` · ${r.bought.map(b=>b.name).join('、')}を買った`:''}`:'';
+  $('advDetail').innerHTML=`
+    <div class="ad-head"><h3>${a.name}<small>${P.name} · Lv${a.lv}</small></h3><span class="chip ${cls}">${txt}</span><q>${a.k}</q></div>
+    <dl class="meters">
+      <dt>体力</dt><dd class="meter"><i style="width:${Math.round(a.hp/a.hpMax*100)}%"></i></dd><dd>${a.hp}/${a.hpMax}</dd>
+      <dt>やる気</dt><dd class="meter mo"><i style="width:${a.morale}%"></i></dd><dd>${a.morale}</dd>
+    </dl>
+    <dl class="gains"><div><dt>攻撃</dt><dd>${a.atk}</dd></div><div><dt>守り</dt><dd>${a.def}</dd></div><div><dt>経験値</dt><dd>${a.exp}<small>/${a.lv*25}</small></dd></div><div><dt>所持金</dt><dd>${a.gold}<small>G</small></dd></div></dl>
+    <div class="gear"><span>武器 ${WEAPONS[a.wlv]}</span><span>防具 ${ARMORS[a.alv]}</span><span>お守り なし</span></div>
+    ${today?`<p class="today">${today}</p>`:''}`;
 }
 $('panel').addEventListener('click',e=>{
   const t=e.target.closest('button'); if(!t)return;
+  if(t.dataset.adv!==undefined){pickAdv=+t.dataset.adv; renderPanel(); return;}
   if(t.id==='close'){sel=null; renderPanel(); return;}
   if(t.dataset.build){const err=build(S,t.dataset.build,sel.x,sel.y); if(err){$('msg').textContent=err; return;} baseDirty=true; sel=null; renderPanel(); updateHud(); return;}
   if(t.id==='demo'){
@@ -1307,6 +1372,8 @@ document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',(
 function setSpeed(s){speed=s; document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.sp===s)));}
 $('trails').addEventListener('click',()=>{showTrails=!showTrails; $('trails').setAttribute('aria-pressed',String(showTrails));});
 $('lite').setAttribute('aria-pressed',String(lite));
+$('menuBtn').addEventListener('click',e=>{e.stopPropagation(); const m=$('menu'); m.hidden=!m.hidden; $('menuBtn').setAttribute('aria-expanded',String(!m.hidden));});
+document.addEventListener('click',e=>{const m=$('menu'); if(!m.hidden&&!m.contains(e.target)&&e.target!==$('menuBtn')){m.hidden=true; $('menuBtn').setAttribute('aria-expanded','false');}});
 $('lite').addEventListener('click',()=>{lite=!lite; $('lite').setAttribute('aria-pressed',String(lite)); try{localStorage.setItem('tct-lite',lite?'1':'0');}catch(e){} if(GFX)GFX.resize();});
 
 /* ---------- 朝の報告書 ---------- */
