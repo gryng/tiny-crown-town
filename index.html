@@ -192,7 +192,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 
 <div class="wrap">
   <header class="hud">
-    <div class="brand"><h1>Tiny Crown Town</h1><span class="ver">v0.3.1</span></div>
+    <div class="brand"><h1>Tiny Crown Town</h1><span class="ver">v0.3.2</span></div>
     <div class="stat plate"><span class="lbl">日</span><b id="day">1</b></div>
     <div class="stat plate clock"><span class="lbl">時刻</span><b id="clock">06:00</b><div class="sunbar"><i id="sun"></i></div></div>
     <div class="stat plate"><span class="lbl" id="resLbl">精霊石</span><b id="elem">0</b></div>
@@ -225,7 +225,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.3.1 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.3.2 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -355,7 +355,7 @@ function build(S,type,x,y,free){
 function newAdv(S,b){
   const i=S.advs.length, look=LOOKS[i%LOOKS.length], pid=S.pOrder[i%S.pOrder.length], ks=PERSONAS[pid].k;
   return {id:i,name:NAMES[i%NAMES.length],hair:look[0],tunic:look[1],pid,k:ks[Math.floor(S.rng()*ks.length)],rival:null,home:b.id,lv:1,exp:0,hp:24,hpMax:24,atk:3,def:1,wlv:0,alv:0,gold:30,morale:70,
-    joinDay:S.phase==='report'?S.day:S.day+1,state:'idle',pos:{...b.door},hidden:true,ko:false,slow:false,rep:null,trail:[],lastTrail:[],walk:null,goal:null,bubble:null,react:null};
+    joinDay:S.phase==='report'?S.day:S.day+1,last:null,state:'idle',pos:{...b.door},hidden:true,ko:false,slow:false,rep:null,trail:[],lastTrail:[],walk:null,goal:null,bubble:null,react:null};
 }
 function demolish(S,b){
   if(S.demolished>=5)return '撤去は1日5件まで';
@@ -370,7 +370,7 @@ function startDay(S){
   S.advs.forEach((a,i)=>{
     a.rep={leftHome:null,dep:null,back:null,wins:0,losses:0,elem:0,explore:0,wage:false,bought:[],note:'',ko:false,boss:false,rested:false,missedWage:false,
       ev:[],exp:0,gold:0,lvFrom:a.lv,ups:[],hurt:false,late:false};
-    a.trail=[]; a.walk=null; a.slow=false; a.hidden=true; a.bubble=null; a.pos={...homeDoor(S,a)};
+    a.trail=[]; a.walk=null; a.last=null; a.slow=false; a.hidden=true; a.bubble=null; a.pos={...homeDoor(S,a)};
     if(a.joinDay>S.day){a.state='idle'; a.rep.note='明日から冒険に出る'; a.rep.rested=true; return;}
     if(a.ko){a.ko=false; a.hp=a.hpMax; a.state='rest'; a.rep.rested=true; a.rep.note='きのうの傷で療養中'; return;}
     a.hp=a.hpMax;
@@ -386,7 +386,7 @@ function step(S,a){
     case 'walk': advance(S,a); break;
     case 'stop': if(t>=a.until)finish(S,a); break;
     case 'away': away(S,a); break;
-    case 'back': if(t>=a.backAt){a.pos={...GATE}; a.hidden=false; S.elem+=a.rep.elem; a.rep.back=t; a.slow=a.ko; if(a.ko||a.rep.losses>a.rep.wins)react(a,'sad'); goTo(S,a,CASTLE_DOOR,'castle');} break;
+    case 'back': if(t>=a.backAt){a.pos={...GATE}; a.hidden=false; S.elem+=a.rep.elem; a.rep.back=t; a.slow=a.ko; if(a.ko||a.rep.losses>a.rep.wins)react(a,'sad'); a.last={k:'back'}; goTo(S,a,CASTLE_DOOR,'castle');} break;
   }
 }
 function goTo(S,a,dest,goal){a.walk={path:bfs(S.g,a.pos,dest)||[],i:0,prog:0}; a.goal=goal; a.state='walk';}
@@ -398,18 +398,18 @@ function advance(S,a){
 function stopAt(S,a,mins,what){a.state='stop'; a.until=S.t+mins; a.stopWhat=what;}
 function arrive(S,a){
   switch(a.goal){
-    case 'park': if(S.parkUsed<PARK_CAP){S.parkUsed++; react(a,'heart'); stopAt(S,a,PP(a).park||20,'park');} else next(S,a); break;
+    case 'park': if(S.parkUsed<PARK_CAP){S.parkUsed++; react(a,'heart'); a.last={k:'park'}; stopAt(S,a,PP(a).park||20,'park');} else next(S,a); break;
     case 'board': stopAt(S,a,10,'board'); break;
     case 'weapon': case 'armor': a.hidden=true; stopAt(S,a,25,a.goal); break;
     case 'gate': a.rep.dep=S.t; a.state='away'; a.hidden=true; a.dungeonAt=S.t+TRAVEL; a.inDungeon=false; break;
-    case 'castle': a.gold+=30; a.rep.gold+=30; a.rep.wage=true; a.hidden=true; stopAt(S,a,10,'castle'); break;
+    case 'castle': a.gold+=30; a.rep.gold+=30; a.rep.wage=true; a.last={k:'wage'}; a.hidden=true; stopAt(S,a,10,'castle'); break;
     case 'home': a.state='done'; a.hidden=true; break;
   }
 }
 function finish(S,a){
   const w=a.stopWhat; a.hidden=false;
   if(w==='park'){a.morale=Math.min(100,a.morale+25); a.todo.park=false;}
-  if(w==='board'){a.todo.board=false; a.behest=S.behest; react(a,'excl');}
+  if(w==='board'){a.todo.board=false; a.behest=S.behest; react(a,'excl'); a.last={k:'board',b:S.behest};}
   if(w==='weapon'||w==='armor'){buy(a,w); a.todo.shopsVisited++;}
   if(w==='castle'){goTo(S,a,homeDoor(S,a),'home'); return;}
   next(S,a);
@@ -417,8 +417,8 @@ function finish(S,a){
 const price=lv=>40+lv*20;
 function canBuy(a,type){return a.gold>=price(type==='weapon'?a.wlv:a.alv);}
 function buy(a,type){
-  if(type==='weapon'){const p=price(a.wlv); if(a.gold>=p){a.gold-=p; a.wlv=Math.min(a.wlv+1,WEAPONS.length-1); a.atk+=2; a.rep.bought.push({slot:'weapon',name:WEAPONS[a.wlv]}); react(a,'sparkle');}}
-  else {const p=price(a.alv); if(a.gold>=p){a.gold-=p; a.alv=Math.min(a.alv+1,ARMORS.length-1); a.def+=1; a.hpMax+=6; a.hp+=6; a.rep.bought.push({slot:'armor',name:ARMORS[a.alv]}); react(a,'sparkle');}}
+  if(type==='weapon'){const p=price(a.wlv); if(a.gold>=p){a.gold-=p; a.wlv=Math.min(a.wlv+1,WEAPONS.length-1); a.atk+=2; a.rep.bought.push({slot:'weapon',name:WEAPONS[a.wlv]}); react(a,'sparkle'); a.last={k:'buy',i:WEAPONS[a.wlv]};}}
+  else {const p=price(a.alv); if(a.gold>=p){a.gold-=p; a.alv=Math.min(a.alv+1,ARMORS.length-1); a.def+=1; a.hpMax+=6; a.hp+=6; a.rep.bought.push({slot:'armor',name:ARMORS[a.alv]}); react(a,'sparkle'); a.last={k:'buy',i:ARMORS[a.alv]};}}
 }
 function next(S,a){
   const td=a.todo;
@@ -1150,6 +1150,18 @@ ippiki:{
  town:['{k}','……何か用か','……先に行く','……騒がしいのは苦手だ'],
  hurt:['……かすり傷だ','……放っておいてくれ']},
 };
+// 施設を使ったあとに話しかけたときの台詞。{d}=受けたおふれ {i}=買った物
+const TAPV={
+nonbiri:{board:['{d}のおふれ、受けてきたよ。のんびり行こう','{d}かあ。今日も無理しない程度に'],park:['公園は気持ちがいいなあ。もうちょっとここにいたい','噴水の音って、眠くなるよね'],buy:['{i}、買ってきたよ。ちょっと重いなあ','{i}を手に入れた。似合う？'],back:['ただいま。いい運動になった','ふう、帰ってこられた'],wage:['日給もらった。今日は何に使おうかな','お給料、ありがとう王様']},
+sekkachi:{board:['{d}のおふれ、受けた！ すぐ行く！','{d}だな！ 一番に片づけてくる！'],park:['公園？ 一瞬だけ休んだ！','座ってる暇ないけど、水はおいしかった！'],buy:['{i}を買ったぞ！ これで速く倒せる！','{i}、即決！ 行ってきます！'],back:['ただいま！ 明日はもっと奥まで行く！','もう帰ってきた！ 早すぎた？'],wage:['日給もらった！ 次の装備代にする！','お給料ゲット！ 明日も早く出る！']},
+okubyo:{board:['{d}のおふれを受けました……が、がんばります','{d}……ぼ、ぼくで大丈夫かな'],park:['公園は落ち着きます……少しだけ勇気が出ました','噴水を見てたら、こわいのが少し減りました'],buy:['{i}を買いました。これで少し安心……','{i}……守ってくれるといいな'],back:['た、ただいま……無事に帰れました','こわかったけど、帰ってこられました'],wage:['日給をいただきました。ありがとうございます……','お給料……大事に使います']},
+makezu:{board:['{d}のおふれを受けた。誰より結果を出す','{d}か。上等だ'],park:['公園で体を整えた。準備は万全だ','休むのも勝つためだ'],buy:['{i}を買ったぞ。これで負ける理由はない','{i}だ。見てろよ'],back:['戻った。まだやれたけどな','帰ってきた。明日はもっと勝つ'],wage:['日給か。次の装備に回す','給料分は働いた。いや、それ以上だ']},
+kuishinbo:{board:['{d}のおふれ、受けたよ！ お弁当持っていかなきゃ','{d}かあ。帰ったら何食べよう'],park:['公園は気持ちがいいなあ。お弁当食べたくなっちゃう','噴水のそばでおやつ休憩してたの'],buy:['{i}を買ったぞ！ おやつ代は……まあいいか','{i}、買っちゃった。おなかすいてきた'],back:['ただいま！ ごはんまだかな','帰ってきた！ おなかぺこぺこ'],wage:['日給もらった！ パン何個買えるかな','お給料！ 今日はちょっといいもの食べよう']},
+yumemi:{board:['{d}のおふれを受けたの。物語が始まる予感','{d}……今日はどんな章になるかな'],park:['公園は気持ちがいいなあ。噴水の向こうに虹が見えた気がする','ここで物語の続きを考えてたの'],buy:['{i}を買ったの。伝説の装備みたい','{i}……いつかこれで大活躍するんだ'],back:['ただいま。今日の章もおしまい','帰ってきたよ。夕焼けがきれいだった'],wage:['日給をもらった。夢の資金にしよう','お給料……いつかの旅のために貯めておくね']},
+sewazuki:{board:['{d}のおふれを受けたよ。みんなの分もがんばるね','{d}だって。誰か一緒に行かないかな'],park:['公園は気持ちがいいね。みんなも休んでいけばいいのに','ここでひと休み。王様も休んでね'],buy:['{i}を買ったよ。これでみんなを守れるかな','{i}、大事に使うね'],back:['ただいま。みんなはもう帰ってる？','帰ったよ。けが人はいない？'],wage:['日給をもらったよ。ありがとう、王様','お給料、少しはみんなのために使おうかな']},
+ippiki:{board:['……{d}のおふれを受けた','{d}か。……ひとりで十分だ'],park:['……公園は、朝は静かでいい','……少し休んだだけだ'],buy:['……{i}を買った','{i}。……使えればいい'],back:['……戻った','……今日も、いつも通りだ'],wage:['……日給は受け取った','……それだけだ']},
+};
+const BEHEST_TEXT={explore:'西の洞窟の探索',boss:'西の洞窟の親玉退治'};
 // その日の出来事から、ひと言の場面を選ぶ
 function voiceScene(r){
   if(r.boss)return 'boss'; if(r.ko)return 'ko'; if(r.ups&&r.ups.length)return 'lvup'; if(r.bought&&r.bought.length)return 'gear';
@@ -1185,8 +1197,12 @@ function pickLine(a,scene,seed,r,rows){
 /* ---------- タップで聞こえる声（画面の上に出す吹き出し） ---------- */
 let voiceOn=null, talkN=0;
 function sayLine(a,now){
-  const pool=VOICE[a.pid][a.slow?'hurt':'town'].filter(t=>usable(t,null,null));
-  const line=fillLine(pool[Math.floor(seeded(a.id*977+(talkN++)*131+S.day)*pool.length)],a,null,S.day+a.id).replace(/^「(.*)」$/,'$1');
+  // けがをして帰る途中 → 痛がる声、施設を使った後 → そのことを話す、まだ何もしていない → いつもの声
+  const L=a.last, tp=L&&TAPV[a.pid][L.k];
+  const pool=a.slow?VOICE[a.pid].hurt:tp?tp:VOICE[a.pid].town.filter(t=>usable(t,null,null));
+  let t=pool[(talkN++)%pool.length];
+  if(L){t=t.replace(/\{d\}/g,BEHEST_TEXT[L.b]||'').replace(/\{i\}/g,L.i||'');}
+  const line=fillLine(t,a,null,S.day+a.id).replace(/^「(.*)」$/,'$1');
   const el=$('voice'); el.innerHTML=`<b>${a.name}</b>${line}`; el.hidden=false; el.style.setProperty('--tc',a.tunic);
   voiceOn={a,until:now+2600};
 }
