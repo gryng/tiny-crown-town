@@ -119,7 +119,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .mi[aria-pressed="true"] .sw{background:var(--accent)}
 .mi[aria-pressed="true"] .sw::after{left:19px;background:var(--paper)}
 /* 冒険者パネル：顔のタブと、選んだ子の詳しい情報 */
-.tabs{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 8px;margin:0 -2px;scrollbar-width:thin}
+.tabs{display:flex;gap:12px;overflow-x:auto;padding:9px 9px 11px;margin:-4px -9px 0;scrollbar-width:thin}
 .tabf{position:relative;flex:0 0 auto;width:52px;height:52px;padding:0;border-radius:50%;background:var(--paper-3);border:2px solid #241c1499;box-shadow:2px 2px 0 #241c1433}
 .tabf img{width:100%;height:100%;border-radius:50%;image-rendering:pixelated;display:block}
 .tabf[aria-pressed="true"]{border:3px solid var(--accent);box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--accent);transform:translateY(-2px)}
@@ -275,7 +275,6 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
       <button id="sp4" data-sp="4" aria-pressed="false">×4</button>
     </div>
     <button id="trails" class="toggle" aria-pressed="false">足あと</button>
-    <span class="tip">光る角の空き地をタップで建設。歩いている冒険者をタップすると声が聞ける。</span>
   </div>
 
   <section class="panel plate" id="panel" aria-live="polite"></section>
@@ -293,7 +292,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.3.5 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.3.6 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
