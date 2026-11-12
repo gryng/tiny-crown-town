@@ -108,6 +108,45 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .how{margin:0;padding-left:1.2em;display:grid;gap:4px;font-size:13px}
 .rep{display:grid;gap:8px}
 .rrow{background:var(--panel-2);border:1px solid var(--line);padding:8px 10px;display:grid;gap:4px}
+/* タップで聞こえる声 */
+.voice{position:absolute;z-index:3;max-width:min(260px,70%);line-height:1.45;font-size:13px;background:#f6efdc;color:#231a14;border:2px solid #231a14;border-left:5px solid var(--tc,#231a14);padding:5px 9px;pointer-events:none;box-shadow:0 3px 0 #0008}
+.voice b{display:block;font-family:var(--f-display);font-weight:400;font-size:11px;letter-spacing:.08em;color:#6b5a3a}
+/* 報告書カード */
+.cards{display:grid;gap:8px}
+.card{background:var(--panel-2);border:1px solid var(--line)}
+.card.up{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold-dim),0 0 18px #c9a84c33 inset}
+.card summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:4px 10px;align-items:center;padding:8px 10px}
+.card summary::-webkit-details-marker{display:none}
+.card summary:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+.face{width:40px;height:40px;image-rendering:pixelated;background:#0f2219;border:1px solid var(--line);grid-row:1/3}
+.who{display:flex;gap:6px;align-items:baseline;flex-wrap:wrap;min-width:0}
+.who b{font-size:15px}
+.who small{font-size:11px;color:var(--muted)}
+.say{grid-column:2/4;font-size:13px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.card[open] .say{white-space:normal}
+.card .tog{font-size:11px;color:var(--muted);font-family:var(--f-display)}
+.card[open] .tog{color:var(--gold-soft)}
+.body{padding:0 10px 10px;display:grid;gap:8px}
+.tlw{position:relative;height:22px}
+.tlw .bar{position:absolute;left:0;right:0;top:7px;height:8px;background:#0f2219;border:1px solid var(--line)}
+.tlw .bar i{position:absolute;top:0;bottom:0}
+.tlw .bar .p{background:var(--gold)} .tlw .bar .a{background:var(--good)}
+.tlw .ev{position:absolute;top:4px;width:14px;height:14px;margin-left:-7px;display:grid;place-items:center;background:#0f2219;border:1px solid #0a1811;border-radius:50%}
+.tlw .ev svg{width:10px;height:10px}
+.lvup{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;background:linear-gradient(90deg,#c9a84c33,transparent);border-left:3px solid var(--gold);padding:6px 10px}
+.lvup strong{font-family:var(--f-display);font-weight:400;font-size:20px;color:var(--gold-soft);letter-spacing:.06em}
+.lvup span{font-size:12px;color:var(--ink)}
+.gains{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.gains div{background:#0f2219;border:1px solid var(--line);padding:4px 6px;display:grid}
+.gains dt{font-size:10px;color:var(--muted);letter-spacing:.06em}
+.gains dd{margin:0;font-family:var(--f-display);font-size:15px;font-variant-numeric:tabular-nums}
+.gains small{font-size:10px;color:var(--muted);font-family:var(--f-body)}
+.gear{display:flex;flex-wrap:wrap;gap:6px;font-size:12px}
+.gear span{border:1px solid var(--line);padding:1px 8px;background:#0f2219}
+.gear em{font-style:normal;font-family:var(--f-display);font-size:10px;color:#1a1a10;background:var(--gold);padding:0 4px;margin-left:4px}
+.note{font-size:12px;color:var(--muted)}
+.note .hurt{color:var(--bad)}
+@media (max-width:420px){.gains{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .rrow .top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
 .rrow .top b{font-size:15px}
 .rrow .res{font-size:12px;color:var(--muted)}
@@ -153,16 +192,17 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 
 <div class="wrap">
   <header class="hud">
-    <div class="brand"><h1>Tiny Crown Town</h1><span class="ver">v0.2.6</span></div>
+    <div class="brand"><h1>Tiny Crown Town</h1><span class="ver">v0.3.0</span></div>
     <div class="stat plate"><span class="lbl">日</span><b id="day">1</b></div>
     <div class="stat plate clock"><span class="lbl">時刻</span><b id="clock">06:00</b><div class="sunbar"><i id="sun"></i></div></div>
-    <div class="stat plate"><span class="lbl">精霊石</span><b id="elem">0</b></div>
+    <div class="stat plate"><span class="lbl" id="resLbl">精霊石</span><b id="elem">0</b></div>
     <div class="stat plate"><span class="lbl">洞窟の探索</span><b id="explore">0%</b><div class="bar"><i id="exbar"></i></div></div>
   </header>
 
   <div class="screen">
     <canvas id="town" aria-label="城下町のジオラマ。空き地をタップして建物を建てる"></canvas>
     <div class="daypart" id="daypart">夜明け</div>
+    <div class="voice" id="voice" hidden></div>
     <div class="glfail" id="glfail" hidden>3D表示を読み込めませんでした。<br>通信状況を確かめて、Safari や Chrome で開き直してください。</div>
   </div>
 
@@ -175,7 +215,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
     </div>
     <button id="trails" class="toggle" aria-pressed="false">足あと</button>
     <button id="lite" class="toggle" aria-pressed="false" title="ぼかしや光のにじみを切って軽くする">軽量表示</button>
-    <span class="tip">光る角の空き地をタップで建設。歩いている冒険者をタップで声かけ。</span>
+    <span class="tip">光る角の空き地をタップで建設。歩いている冒険者をタップすると声が聞ける。</span>
   </div>
 
   <section class="panel plate" id="panel" aria-live="polite"></section>
@@ -185,7 +225,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.2.6 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.3.0 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -242,6 +282,28 @@ const BUILD={
 const NAMES=['アルト','ベル','コナ','ダイ','エマ','フウ','ギン','ハル','イオ','ジノ','ケイ','ルカ'];
 const LOOKS=[['#3b2a1e','#c0503a'],['#e0c060','#3f78b8'],['#5a3a7a','#d08a3a'],['#1e1e22','#4c9a5a'],['#b8582e','#8a4fa0'],['#e6e2d6','#2f8f8f'],['#6b4a2a','#d0607a'],['#1d3b6b','#b0a040'],['#a03030','#6a8ad0'],['#e8e0d0','#5a5aa8'],['#40302a','#c07a40'],['#c07020','#307070']];
 const DIRS=[[0,1],[0,-1],[-1,0],[1,0]];
+// 資源の名前（仮）。表示はすべてここから読む
+const RES='時のかけら';
+// 装備の名前（段階ごと）
+const WEAPONS=['素手','木の剣','銅の剣','鉄の剣','鋼の剣','白銀の剣','金の剣'];
+const ARMORS=['旅の服','革のよろい','鎖のよろい','鉄のよろい','鋼のよろい','白銀のよろい','金のよろい'];
+// 性格：朝の動き・冒険中の振る舞い・口ぐせ
+// leave:家を出る時刻のずれ(分) park:公園の長さ skipPark:公園に寄らない lovePark:元気でも公園に寄る maxShops:寄る店の数
+// armorFirst:防具を先に買う walk:1マスにかかる分 retreat:引き返す体力の割合 dmg:受けるダメージ倍率 atk:攻撃の上乗せ roll:運のふれ幅
+const PERSONAS={
+  nonbiri:{name:'のんびり屋',leave:20,park:35,walk:7,retreat:.3,dmg:.85,k:['まあ、なんとかなるって','ふぁ……いい天気','急がなくても逃げないよ']},
+  sekkachi:{name:'せっかち',leave:-10,skipPark:true,maxShops:1,walk:5,retreat:.25,k:['よし、行こう今すぐ！','待ってられない！','ほら早く早く！']},
+  okubyo:{name:'臆病',armorFirst:true,retreat:.5,k:['ぼ、ぼくでいいのかな……','こ、こわくないし……','だ、大丈夫かな……']},
+  makezu:{name:'負けず嫌い',retreat:.15,k:['次は勝つ','負けたままじゃ終われない','見てろよ']},
+  kuishinbo:{name:'食いしん坊',lovePark:true,park:30,k:['おなかすいた……','帰ったらなに食べよう','腹が減っては戦えない！']},
+  yumemi:{name:'夢見がち',roll:5,k:['いつかきっと','夢で見たんだ','物語の続きみたい']},
+  sewazuki:{name:'世話好き',leave:-15,k:['みんな無事でよかった','無理しちゃだめだよ','わたしに任せて']},
+  ippiki:{name:'一匹狼',skipPark:true,atk:1,k:['……ひとりで行く','群れるのは苦手だ','……別に']},
+};
+const PIDS=Object.keys(PERSONAS);
+const PP=a=>PERSONAS[a.pid];
+const stepTicks=a=>a.slow?SLOW:(PP(a).walk||WALK);
+function react(a,k){a.react={k,n:(a.react?a.react.n:0)+1};}
 
 function makeMap(){
   const g=[];
@@ -268,6 +330,8 @@ function bfs(g,a,b){
 
 function newState(rng){
   const S={g:makeMap(),day:1,t:DAY_START,elem:450,explore:0,bossDown:false,justWon:false,behest:'explore',b:[],advs:[],refund:0,phase:'report',parkUsed:0,demolished:0,rng:rng||Math.random,nextId:1,lastReport:null,fx:[]};
+  // 性格の出てくる順番はプレイごとに変わる
+  S.pOrder=PIDS.slice(); for(let i=S.pOrder.length-1;i>0;i--){const j=Math.floor(S.rng()*(i+1)); [S.pOrder[i],S.pOrder[j]]=[S.pOrder[j],S.pOrder[i]];}
   build(S,'house',2,2,true); build(S,'house',17,9,true); build(S,'board',12,4,true);
   return S;
 }
@@ -278,7 +342,7 @@ function canBuild(S,type,x,y){
   if(!isLot(S.g,x,y))return 'ここには建てられない';
   if(at(S,x,y))return 'すでに建物がある';
   if(count(S,type)>=BUILD[type].max)return 'もう建てられない';
-  if(S.elem<BUILD[type].cost)return '精霊石が足りない';
+  if(S.elem<BUILD[type].cost)return `${RES}が足りない`;
   return null;
 }
 function build(S,type,x,y,free){
@@ -289,9 +353,9 @@ function build(S,type,x,y,free){
   return null;
 }
 function newAdv(S,b){
-  const i=S.advs.length, look=LOOKS[i%LOOKS.length];
-  return {id:i,name:NAMES[i%NAMES.length],hair:look[0],tunic:look[1],home:b.id,lv:1,exp:0,hp:24,hpMax:24,atk:3,def:1,wlv:0,alv:0,gold:30,morale:70,
-    joinDay:S.phase==='report'?S.day:S.day+1,state:'idle',pos:{...b.door},hidden:true,ko:false,slow:false,talked:false,rep:null,trail:[],lastTrail:[],walk:null,goal:null,bubble:null};
+  const i=S.advs.length, look=LOOKS[i%LOOKS.length], pid=S.pOrder[i%S.pOrder.length], ks=PERSONAS[pid].k;
+  return {id:i,name:NAMES[i%NAMES.length],hair:look[0],tunic:look[1],pid,k:ks[Math.floor(S.rng()*ks.length)],rival:null,home:b.id,lv:1,exp:0,hp:24,hpMax:24,atk:3,def:1,wlv:0,alv:0,gold:30,morale:70,
+    joinDay:S.phase==='report'?S.day:S.day+1,state:'idle',pos:{...b.door},hidden:true,ko:false,slow:false,rep:null,trail:[],lastTrail:[],walk:null,goal:null,bubble:null,react:null};
 }
 function demolish(S,b){
   if(S.demolished>=5)return '撤去は1日5件まで';
@@ -304,47 +368,48 @@ function homeDoor(S,a){const b=S.b.find(b=>b.id===a.home); return b?b.door:CASTL
 function startDay(S){
   S.t=DAY_START; S.parkUsed=0; S.demolished=0; S.elem+=S.refund; S.refund=0; S.phase='day'; S.justWon=false;
   S.advs.forEach((a,i)=>{
-    a.rep={leftHome:null,dep:null,back:null,wins:0,losses:0,elem:0,explore:0,wage:false,bought:[],note:'',ko:false,boss:false,rested:false,missedWage:false};
-    a.trail=[]; a.talked=false; a.walk=null; a.slow=false; a.hidden=true; a.bubble=null; a.pos={...homeDoor(S,a)};
+    a.rep={leftHome:null,dep:null,back:null,wins:0,losses:0,elem:0,explore:0,wage:false,bought:[],note:'',ko:false,boss:false,rested:false,missedWage:false,
+      ev:[],exp:0,gold:0,lvFrom:a.lv,ups:[],hurt:false,late:false};
+    a.trail=[]; a.walk=null; a.slow=false; a.hidden=true; a.bubble=null; a.pos={...homeDoor(S,a)};
     if(a.joinDay>S.day){a.state='idle'; a.rep.note='明日から冒険に出る'; a.rep.rested=true; return;}
     if(a.ko){a.ko=false; a.hp=a.hpMax; a.state='rest'; a.rep.rested=true; a.rep.note='きのうの傷で療養中'; return;}
     a.hp=a.hpMax;
     if(a.morale<25){a.state='rest'; a.rep.rested=true; a.rep.note='やる気が出ず休んだ'; return;}
-    a.state='home'; a.leaveAt=LEAVE+i*5; a.todo={park:true,board:true,shops:['weapon','armor'],shopsVisited:0};
+    const P=PP(a); a.state='home'; a.leaveAt=LEAVE+i*5+(P.leave||0); a.todo={park:!P.skipPark,board:true,shops:P.armorFirst?['armor','weapon']:['weapon','armor'],shopsVisited:0};
   });
 }
 function tick(S,mins){for(let m=0;m<mins;m++){if(S.phase!=='day')return; S.t++; for(const a of S.advs)step(S,a); if(S.t>=DAY_END)endDay(S);}}
 function step(S,a){
   const t=S.t;
   switch(a.state){
-    case 'home': if(t>=a.leaveAt){a.rep.leftHome=t; a.hidden=false; a.trail.push({...a.pos}); next(S,a);} break;
+    case 'home': if(t>=a.leaveAt){a.rep.leftHome=t; a.hidden=false; a.trail.push({...a.pos}); if(a.morale<40)react(a,'sweat'); next(S,a);} break;
     case 'walk': advance(S,a); break;
     case 'stop': if(t>=a.until)finish(S,a); break;
     case 'away': away(S,a); break;
-    case 'back': if(t>=a.backAt){a.pos={...GATE}; a.hidden=false; S.elem+=a.rep.elem; a.rep.back=t; a.slow=a.ko; goTo(S,a,CASTLE_DOOR,'castle');} break;
+    case 'back': if(t>=a.backAt){a.pos={...GATE}; a.hidden=false; S.elem+=a.rep.elem; a.rep.back=t; a.slow=a.ko; if(a.ko||a.rep.losses>a.rep.wins)react(a,'sad'); goTo(S,a,CASTLE_DOOR,'castle');} break;
   }
 }
 function goTo(S,a,dest,goal){a.walk={path:bfs(S.g,a.pos,dest)||[],i:0,prog:0}; a.goal=goal; a.state='walk';}
 function advance(S,a){
-  const w=a.walk; w.prog+=1/(a.slow?SLOW:WALK);
+  const w=a.walk; w.prog+=1/stepTicks(a);
   while(w.prog>=1&&w.i<w.path.length){a.pos={...w.path[w.i]}; w.i++; w.prog-=1; if(a.rep.dep===null&&a.goal!=='home')a.trail.push({...a.pos});}
   if(w.i>=w.path.length){a.walk=null; arrive(S,a);}
 }
 function stopAt(S,a,mins,what){a.state='stop'; a.until=S.t+mins; a.stopWhat=what;}
 function arrive(S,a){
   switch(a.goal){
-    case 'park': if(S.parkUsed<PARK_CAP){S.parkUsed++; stopAt(S,a,20,'park');} else next(S,a); break;
+    case 'park': if(S.parkUsed<PARK_CAP){S.parkUsed++; react(a,'heart'); stopAt(S,a,PP(a).park||20,'park');} else next(S,a); break;
     case 'board': stopAt(S,a,10,'board'); break;
     case 'weapon': case 'armor': a.hidden=true; stopAt(S,a,25,a.goal); break;
     case 'gate': a.rep.dep=S.t; a.state='away'; a.hidden=true; a.dungeonAt=S.t+TRAVEL; a.inDungeon=false; break;
-    case 'castle': a.gold+=30; a.rep.wage=true; a.hidden=true; stopAt(S,a,10,'castle'); break;
+    case 'castle': a.gold+=30; a.rep.gold+=30; a.rep.wage=true; a.hidden=true; stopAt(S,a,10,'castle'); break;
     case 'home': a.state='done'; a.hidden=true; break;
   }
 }
 function finish(S,a){
   const w=a.stopWhat; a.hidden=false;
   if(w==='park'){a.morale=Math.min(100,a.morale+25); a.todo.park=false;}
-  if(w==='board'){a.todo.board=false; a.behest=S.behest;}
+  if(w==='board'){a.todo.board=false; a.behest=S.behest; react(a,'excl');}
   if(w==='weapon'||w==='armor'){buy(a,w); a.todo.shopsVisited++;}
   if(w==='castle'){goTo(S,a,homeDoor(S,a),'home'); return;}
   next(S,a);
@@ -352,17 +417,19 @@ function finish(S,a){
 const price=lv=>40+lv*20;
 function canBuy(a,type){return a.gold>=price(type==='weapon'?a.wlv:a.alv);}
 function buy(a,type){
-  if(type==='weapon'){const p=price(a.wlv); if(a.gold>=p){a.gold-=p; a.wlv++; a.atk+=2; a.rep.bought.push('武器');}}
-  else {const p=price(a.alv); if(a.gold>=p){a.gold-=p; a.alv++; a.def+=1; a.hpMax+=6; a.hp+=6; a.rep.bought.push('防具');}}
+  if(type==='weapon'){const p=price(a.wlv); if(a.gold>=p){a.gold-=p; a.wlv=Math.min(a.wlv+1,WEAPONS.length-1); a.atk+=2; a.rep.bought.push({slot:'weapon',name:WEAPONS[a.wlv]}); react(a,'sparkle');}}
+  else {const p=price(a.alv); if(a.gold>=p){a.gold-=p; a.alv=Math.min(a.alv+1,ARMORS.length-1); a.def+=1; a.hpMax+=6; a.hp+=6; a.rep.bought.push({slot:'armor',name:ARMORS[a.alv]}); react(a,'sparkle');}}
 }
 function next(S,a){
   const td=a.todo;
-  if(td.park){td.park=false; const p=first(S,'park'); if(p&&a.morale<90&&S.parkUsed<PARK_CAP){goTo(S,a,p.door,'park'); return;}}
+  if(td.park){td.park=false; const p=first(S,'park'); if(p&&(a.morale<90||PP(a).lovePark)&&S.parkUsed<PARK_CAP){goTo(S,a,p.door,'park'); return;}}
   if(td.board){const bd=first(S,'board'); if(!bd){a.rep.note='おふれが出ていなかった'; goTo(S,a,homeDoor(S,a),'home'); return;} goTo(S,a,bd.door,'board'); return;}
-  const opts=td.shops.filter(t=>first(S,t)&&canBuy(a,t)&&td.shopsVisited<3);
+  if(S.t>=660&&!a.rep.late){a.rep.late=true; react(a,'clock');}
+  const opts=td.shops.filter(t=>first(S,t)&&canBuy(a,t)&&td.shopsVisited<(PP(a).maxShops||3));
   if(opts.length){
     let best=null,bl=1e9;
     for(const t of opts){const l=(bfs(S.g,a.pos,first(S,t).door)||[]).length; if(l<bl){bl=l; best=t;}}
+    if(PP(a).armorFirst&&opts.includes('armor'))best='armor';
     td.shops=td.shops.filter(x=>x!==best); goTo(S,a,first(S,best).door,best); return;
   }
   goTo(S,a,GATE,'gate');
@@ -374,27 +441,27 @@ function away(S,a){
     encounter(S,a); a.nextEnc+=ENC;
     if(a.ko)return turnBack(S,a,'やられて逃げ帰った');
     if(a.rep.boss)return turnBack(S,a,'親玉を倒して凱旋');
-    if(a.hp<=a.hpMax*0.3)return turnBack(S,a,'傷ついて引き返した');
+    if(a.hp<=a.hpMax*(PP(a).retreat||.3)){a.rep.hurt=true; return turnBack(S,a,'傷ついて引き返した');}
   }
   if(t>=RETURN_TIME)turnBack(S,a,'日が暮れて引き返した');
 }
 function turnBack(S,a,why){a.state='back'; a.backAt=S.t+(a.ko?70:TRAVEL); a.rep.note=why;}
 function encounter(S,a){
-  const r=S.rng, ap=a.atk+a.lv+r()*3;
+  const r=S.rng, P=PP(a), ap=a.atk+a.lv+(P.atk||0)+r()*(P.roll||3), dm=P.dmg||1, lv0=a.lv, ev=k=>a.rep.ev.push({t:S.t,k});
   if(a.behest==='boss'&&S.explore>=100&&!S.bossDown&&a.rep.wins+a.rep.losses>=1){
     const bp=13+r()*5;
-    if(ap>=bp){S.bossDown=true; S.justWon=true; a.rep.boss=true; a.exp+=40; a.rep.elem+=120; a.rep.wins++;}
-    else {a.hp-=Math.max(3,Math.round(bp-a.def*1.5)); a.rep.losses++; a.morale-=8;}
+    if(ap>=bp){S.bossDown=true; S.justWon=true; a.rep.boss=true; a.exp+=40; a.rep.exp+=40; a.rep.elem+=120; a.rep.wins++; ev('B');}
+    else {a.hp-=Math.round(Math.max(3,Math.round(bp-a.def*1.5))*dm); a.rep.losses++; a.morale-=8; ev('b');}
   } else {
     const e=3+S.explore/12+r()*3;
     if(ap>=e){
-      a.hp-=Math.max(0,Math.round(e*0.35-a.def)); a.exp+=6; const got=6+Math.floor(r()*6); a.rep.elem+=got; a.rep.wins++; a.gold+=4;
+      a.hp-=Math.round(Math.max(0,Math.round(e*0.35-a.def))*dm); a.exp+=6; a.rep.exp+=6; const got=6+Math.floor(r()*6); a.rep.elem+=got; a.rep.wins++; a.gold+=4; a.rep.gold+=4; ev('w');
       if(S.explore<100){const d=Math.min(0.5,100-S.explore); S.explore+=d; a.rep.explore+=d;}
-    } else {a.hp-=Math.max(1,Math.round(e*0.9-a.def)); a.rep.losses++;}
+    } else {a.hp-=Math.round(Math.max(1,Math.round(e*0.9-a.def))*dm); a.rep.losses++; ev('l');}
     a.morale-=2;
   }
-  if(a.hp<=0){a.hp=0; a.ko=true; a.rep.ko=true; a.morale-=20;}
-  while(a.exp>=a.lv*25){a.exp-=a.lv*25; a.lv++; a.hpMax+=3; a.atk+=1;}
+  if(a.hp<=0){a.hp=0; a.ko=true; a.rep.ko=true; a.morale-=20; ev('x');}
+  while(a.exp>=a.lv*25){a.exp-=a.lv*25; a.lv++; a.hpMax+=3; a.atk+=1; a.rep.ups.push({lv:a.lv,hp:3,atk:1}); ev('u');}
   a.morale=Math.max(0,a.morale);
 }
 function endDay(S){
@@ -405,11 +472,12 @@ function endDay(S){
     if(a.rep.dep!==null&&!a.rep.wage)a.rep.missedWage=true;
     if(a.state==='away'||a.state==='back')S.elem+=a.rep.elem;
     if(a.state==='rest')a.morale=Math.min(100,a.morale+25);
+    if(a.pid==='makezu'&&a.rep.losses>a.rep.wins)a.morale=Math.min(100,a.morale+10); // 負けた翌日はやる気が上がる
     a.morale=Math.min(100,a.morale+6);
     a.lastTrail=a.trail; a.state='idle'; a.hidden=true; a.walk=null; a.pos={...homeDoor(S,a)};
   }
   S.lastReport={day:S.day,won:S.justWon,explore:S.explore,
-    advs:S.advs.filter(a=>a.rep).map(a=>({id:a.id,name:a.name,tunic:a.tunic,lv:a.lv,hp:a.hp,hpMax:a.hpMax,atk:a.atk,def:a.def,morale:a.morale,...a.rep}))};
+    advs:S.advs.filter(a=>a.rep).map(a=>({id:a.id,name:a.name,tunic:a.tunic,hair:a.hair,pid:a.pid,k:a.k,lv:a.lv,hp:a.hp,hpMax:a.hpMax,atk:a.atk,def:a.def,morale:a.morale,gold:a.gold,wlv:a.wlv,alv:a.alv,...a.rep,held:a.gold,ev:a.rep.ev.slice(),ups:a.rep.ups.slice(),bought:a.rep.bought.slice()}))};
   S.day++; S.phase='report';
 }
 /*SIM-END*/
@@ -430,7 +498,7 @@ try{lite=localStorage.getItem('tct-lite')==='1';}catch(e){}
 function hash(x,y,i){let h=(x*374761393+y*668265263+i*2147483647)>>>0; h=(h^(h>>>13))*1274126177>>>0; return ((h^(h>>>16))>>>0)/4294967295;}
 // 歩いている冒険者の位置（タイル座標、補間つき）
 function walkerTile(a){
-  if(a.walk&&a.walk.i<a.walk.path.length){const n=a.walk.path[a.walk.i], f=Math.min(1,a.walk.prog+(acc/(a.slow?SLOW:WALK))); return {x:a.pos.x+(n.x-a.pos.x)*f, y:a.pos.y+(n.y-a.pos.y)*f, dx:n.x-a.pos.x, dy:n.y-a.pos.y, moving:true};}
+  if(a.walk&&a.walk.i<a.walk.path.length){const n=a.walk.path[a.walk.i], f=Math.min(1,a.walk.prog+(acc/stepTicks(a))); return {x:a.pos.x+(n.x-a.pos.x)*f, y:a.pos.y+(n.y-a.pos.y)*f, dx:n.x-a.pos.x, dy:n.y-a.pos.y, moving:true};}
   const k=(a.id%3)-1; return {x:a.pos.x+k*.25, y:a.pos.y+(a.id%2)*.125, dx:0, dy:0, moving:false};
 }
 
@@ -754,10 +822,17 @@ async function initGfx(){
     outline(g,FW*6,FH,'#231a14');
   }
   const bubTex={};
-  for(const [k,c] of [['cheer','#c9a84c'],['heal','#e08466'],['idle','#a3b6a3']])bubTex[k]=tex(11,10,(g,w,h)=>{
-    P(g,'#f6efdc',1,0,9,7); P(g,'#f6efdc',0,1,11,5); P(g,'#f6efdc',4,7,3,1); P(g,'#f6efdc',5,8,1,1);
-    if(k==='cheer'){P(g,c,6,1,1,4); P(g,c,7,1,2,1); P(g,c,4,4,3,2);} else if(k==='heal'){P(g,c,3,2,2,2); P(g,c,6,2,2,2); P(g,c,3,3,5,2); P(g,c,4,5,3,1); P(g,c,5,6,1,1);} else {P(g,c,2,3,1,1); P(g,c,5,3,1,1); P(g,c,8,3,1,1);}
-    outline(g,w,h,'#231a14');});
+  // 吹き出しのアイコン（11×10のドット絵）
+  const ICONS={
+    heart:g=>{const c='#e0605a'; P(g,c,2,2,3,2);P(g,c,6,2,3,2);P(g,c,2,3,7,2);P(g,c,3,5,5,1);P(g,c,4,6,3,1);P(g,'#f6b0a8',3,2,1,1);},
+    sparkle:g=>{const c='#d8a830'; P(g,c,5,1,1,6);P(g,c,2,4,7,1);P(g,c,4,3,3,3);P(g,'#fff3b0',5,4,1,1);},
+    excl:g=>{const c='#c0503a'; P(g,c,5,1,2,4);P(g,c,5,6,2,1);},
+    sweat:g=>{const c='#5a9ad8'; P(g,c,5,1,1,1);P(g,c,4,2,3,2);P(g,c,3,4,5,2);P(g,'#bfe0ff',4,4,1,1);},
+    clock:g=>{const c='#3a4a6a'; P(g,c,3,1,5,1);P(g,c,2,2,1,4);P(g,c,8,2,1,4);P(g,c,3,6,5,1);P(g,'#fff',3,2,5,4);P(g,c,5,2,1,3);P(g,c,6,4,1,1);},
+    sad:g=>{const c='#5a7ac8'; P(g,c,2,1,7,6);P(g,'#2a3a6a',4,3,1,1);P(g,'#2a3a6a',6,3,1,1);P(g,'#2a3a6a',4,5,3,1);P(g,'#bfe0ff',3,3,1,2);},
+    talk:g=>{const c='#8a9a8a'; P(g,c,2,3,1,1);P(g,c,5,3,1,1);P(g,c,8,3,1,1);},
+  };
+  for(const k in ICONS)bubTex[k]=tex(11,10,(g,w,h)=>{P(g,'#f6efdc',1,0,9,7); P(g,'#f6efdc',0,1,11,5); P(g,'#f6efdc',4,7,3,1); P(g,'#f6efdc',5,8,1,1); ICONS[k](g); outline(g,w,h,'#231a14');});
   // 窓あかりの影：冒険者のシルエットを、近くの灯った窓それぞれと反対の向きへ地面に伸ばす（1人につき近い窓2つまで）
   const winGeo=new T.PlaneGeometry(1,1).rotateX(-Math.PI/2).translate(0,0,.5);
   {const uv=winGeo.attributes.uv, pos=winGeo.attributes.position; for(let i=0;i<uv.count;i++)uv.setXY(i,pos.getX(i)+.5,pos.getZ(i));}
@@ -768,9 +843,9 @@ async function initGfx(){
   function mkWalker(a){
     const c=canvasOf(FW*6,FH), t=texOf(c); t.repeat.set(1/6,1);
     const mesh=add(new T.Mesh(walkGeo,cut(t)),0,0,0); mesh.visible=false; addCaster(mesh,walkX,t);
-    const bub=add(new T.Mesh(bubGeo,new T.MeshBasicMaterial({map:bubTex.idle,alphaTest:.5,side:T.DoubleSide,fog:false})),0,FH*U+.34,.02,mesh,false); bub.visible=false;
+    const bub=add(new T.Mesh(bubGeo,new T.MeshBasicMaterial({map:bubTex.talk,alphaTest:.5,side:T.DoubleSide,fog:false})),0,FH*U+.34,.02,mesh,false); bub.visible=false;
     const fs=[0,1].map(()=>{const m=new T.Mesh(winGeo,winMat(t)); m.visible=false; m.renderOrder=3; m.frustumCulled=false; scene.add(m); return m;});
-    return {mesh,bub,c,t,fs,key:'',flip:1,back:false};
+    return {mesh,bub,c,t,fs,key:'',flip:1,back:false,rn:0};
   }
   function updWalkers(now){
     for(const a of S.advs){
@@ -790,8 +865,10 @@ async function initGfx(){
             const k=u.glow*(1-sm(.7,2.5,d))*Math.min(1,(out+.1)/.35)*(u.wins.length>1?.8:1); if(k<.03)continue; const e={k,dx,dz,d}; if(!b1||k>b1.k){b2=b1; b1=e;} else if(!b2||k>b2.k)b2=e;}}}
       [b1,b2].forEach((e,i)=>{if(!e)return; const m=w.fs[i]; m.visible=true; m.position.set(px,.036+i*.002,pz); m.rotation.y=Math.atan2(e.dx,e.dz); m.scale.set(FW*U,1,.8+e.d*.75);
         m.material.uniforms.fr.value.set(w.t.offset.x,w.flip); m.material.uniforms.op.value=e.k*.55;});
+      // 計算側の反応（公園でハート、店できらきら…）を短い吹き出しにする
+      if(a.react&&a.react.n!==w.rn){w.rn=a.react.n; a.bubble={kind:a.react.k,from:now,until:now+1600};}
       const b=a.bubble, on=b&&now<b.until; w.bub.visible=!!on;
-      if(on){if(w.bub.material.map!==bubTex[b.kind]){w.bub.material.map=bubTex[b.kind]; w.bub.material.needsUpdate=true;} const k=Math.min(1,(now-b.from)/160); w.bub.scale.set(w.flip*k,k,1); w.bub.position.y=FH*U+.3+Math.sin(now/200)*.03;}
+      if(on){if(w.bub.material.map!==(bubTex[b.kind]||bubTex.talk)){w.bub.material.map=bubTex[b.kind]||bubTex.talk; w.bub.material.needsUpdate=true;} const k=Math.min(1,(now-b.from)/160); w.bub.scale.set(w.flip*k,k,1); w.bub.position.y=FH*U+.3+Math.sin(now/200)*.03;}
     }
   }
 
@@ -968,7 +1045,141 @@ async function initGfx(){
     if(lite)renderer.render(scene,cam);
     else {bloom.strength=cur.bloom; grade.uniforms.tint.value.copy(cur.tint); composer.render(dt);}
   }
-  return {draw,pick,resize};
+  const sp=new T.Vector3();
+  function screenOf(a){const w=walkers.get(a.id); if(!w||!w.mesh.visible)return null; sp.copy(w.mesh.position); sp.y+=FH*U+.55; sp.project(cam); return {x:(sp.x+1)/2*cv.clientWidth, y:(1-sp.y)/2*cv.clientHeight};}
+  return {draw,pick,resize,screenOf};
+}
+
+/* ---------- 本人のひと言（性格 × その日の出来事）。{k}=口ぐせ {o}=ほかの冒険者 {w}=勝った数 {i}=買った装備 ---------- */
+const VOICE={
+nonbiri:{
+ boss:['親玉、倒しちゃった。{k}','みんなが騒いでるけど、ほんとにやったのかな。……まあいっか','大物だったなあ。今夜はよく眠れそう'],
+ ko:['あいたた……ちょっと寝てれば治るよ。{k}','やられちゃった。明日はゆっくりしよ','転んだと思ったら、もう夕方だった'],
+ lvup:['あれ、いつの間にか強くなってた。{k}','レベル上がったって。へえ、そうなんだ','強くなるのも、のんびりでいいよね'],
+ gear:['{i}、買ってみた。重いけど、まあいいか','新しい{i}、手になじむまで昼寝しよう','{i}を買ったら、ちょっとやる気出てきた'],
+ streak:['{w}連勝。のんびりやっても勝てるもんだね','今日は調子よかった。{k}','敵のほうが先にくたびれてたよ'],
+ lost:['負けちゃった。まあ、明日もあるし','うーん、相手のほうが元気だったな','{o}みたいに速く動けたらなあ……まあいっか'],
+ late:['支度してたら、お昼になってた','公園の噴水、ずっと見てられるんだよね','出発？ あ、今日はもういいかなって'],
+ rest:['今日はお休み。{k}','ずっと寝てた。いい一日だった','休むのも仕事のうち、だよね'],
+ normal:['いつも通りの一日。{k}','{w}回勝って、帰ってきた。ふつうだね','夕焼けがきれいだったよ'],
+ town:['{k}','いい天気だねえ','ちょっと寄り道してから行くよ','ふぁ……あ、王様。おはよう'],
+ hurt:['いてて……ゆっくり帰るよ','今日はもうおしまい']},
+sekkachi:{
+ boss:['親玉、一番乗りで倒した！ 次はどこ！？','速攻で片づけてきた！ {k}','待ちきれなくて突っ込んだら勝ってた！'],
+ ko:['くそっ、急ぎすぎた……','転んだ！ 明日こそ倍の速さで行く！','やられた……でも寝てる時間がもったいない！'],
+ lvup:['レベル上がった！ 明日はもっと奥まで行く、いや今から行きたい！','強くなった！ {k}','よし、次のレベルまであと何回！？'],
+ gear:['{i}、即決で買った！','迷ってる暇ないから{i}にした！','{i}を買った！ これでもっと速く倒せる！'],
+ streak:['{w}連勝！ 止まらない！','{k} 今日は全部一撃だった！','敵が遅すぎて退屈だった！'],
+ lost:['負けた！ 次はもっと速く動く！','{o}より先に出たのに……！','準備不足だったかも……いや、気のせい！'],
+ late:['出発が遅すぎる！ 待たされるのが一番いやだ！','なんで今日はこんなに遠回りなんだ！','気づいたら昼過ぎ！ ありえない！'],
+ rest:['休み！？ 体がうずうずする！','寝てるだけなんて耐えられない！','明日は誰より早く出る！ {k}'],
+ normal:['今日もさっさと行って、さっさと帰ってきた！','{w}勝！ 明日はもっと勝つ！','{k} ……あれ、もう夜！？'],
+ town:['{k}','急いでるから、またあとで！','寄り道してる場合じゃない！','王様、今日も一番乗りで行くよ！'],
+ hurt:['くっ……足が重い……','急げない日もあるのか……']},
+okubyo:{
+ boss:['ぼ、ぼくが親玉を……？ 夢じゃないよね……','こわかった……でも、勝ったんだ','{k} ……でも、やったよ！'],
+ ko:['や、やっぱりだめだった……','こわくて、足がすくんじゃった……','ご、ごめんなさい……明日はもっと気をつけます'],
+ lvup:['{k} ……でも、ちょっとだけ自信ついたかも','レベルが上がった……ぼくでも、強くなれるんだ','強くなったけど……まだこわいものはこわいです'],
+ gear:['{i}を買いました。これで少し安心……','{i}、大事に使います……','ま、まず守りを固めないと。{i}にしました'],
+ streak:['{w}回も勝てた……！ ほんとに？','今日は一度もこわい目にあわなかった','{k} ……でも、今日は勝てました'],
+ lost:['や、やっぱりこわい……','{o}みたいに強くなれたらいいのに……','途中で引き返しちゃった……ごめんなさい'],
+ late:['準備してたら遅くなっちゃった……','忘れ物がないか、何度も確かめちゃって……','出発するのが、ちょっとこわくて……'],
+ rest:['今日はお休み……ほっとしました','{k} ……休めてよかった','家にいると落ち着きます'],
+ normal:['今日もなんとか帰ってこられました','{w}回勝てました。少しずつ、です','{k} ……明日もがんばります'],
+ town:['{k}','あ、王様……お、おはようございます','忘れ物、ないよね……','防具屋、まだ開いてるかな……'],
+ hurt:['うう……いたい……','こわかった……早く帰りたい……']},
+makezu:{
+ boss:['親玉なんて、相手にならなかった','{k} ……いや、もう勝ったか','{o}より先に倒してやった。当然だ'],
+ ko:['くそっ……{k}','負けたまま寝てられるか……','次は絶対に倒す。絶対だ'],
+ lvup:['ふん、これでやっと{o}に並んだ。明日は抜く','レベルアップ。まだ足りない','強くなった。{k}'],
+ gear:['{i}を買った。これで負ける理由はない','{o}よりいい装備だ。{i}','{i}。勝つためなら安いもんだ'],
+ streak:['{w}連勝。まだまだいける','全勝だ。{o}は何勝した？','{k} ……今日は見せる相手がいなかったな'],
+ lost:['{k}','負けた。……今日のところはな','{o}には負けてない。魔物に負けただけだ'],
+ late:['出遅れた。{o}に先を越された','なんでこんなに支度に時間がかかるんだ','遅れた分、明日取り返す'],
+ rest:['休んでる場合じゃないのに','寝てる間に{o}が強くなってたらどうする','明日は倍やる。{k}'],
+ normal:['{w}勝。悪くないが、満足もしてない','{k}','今日の自分には勝った'],
+ town:['{k}','{o}はもう出たか？','王様、今日も勝ってくる','訓練が足りない……'],
+ hurt:['くっ……こんなはずじゃ……','次は勝つ……次は……']},
+kuishinbo:{
+ boss:['親玉を倒したら、おなかぺこぺこ！','勝ったお祝いに、なにか食べたいな','{k} ……でもその前に、勝ってきた！'],
+ ko:['おなかが空いて、力が出なかった……','やられた……せめて何か食べたい……','ごはん食べたら、きっと治る'],
+ lvup:['おなかすいた……あ、レベルも上がってた','強くなったら、もっと食べられる気がする','{k} ……レベル上がったし、今日は二杯食べよう'],
+ gear:['{i}、買っちゃった。今月のおやつ代が……','{i}を買ったら、おなかが鳴った','{i}ってなんだかおいしそうな名前……じゃないか'],
+ streak:['{w}連勝！ いっぱい動いたからおなかすいた！','今日は調子いい！ 朝ごはんがよかったのかな','{k} ……今日は全部勝ったよ！'],
+ lost:['負けた……おなかが空いてたせいだ','{k}','{o}は朝ごはん何食べてるんだろう……'],
+ late:['朝ごはん食べてたら遅くなっちゃった','{k} ……寄り道しすぎたかな','おなかいっぱいで、眠くなっちゃって'],
+ rest:['今日はお休み。おやつの時間がたっぷり','{k}','休みの日のごはんは格別だね'],
+ normal:['今日も元気に帰ってきた！ ごはんごはん','{w}回勝った。夕ごはん何かな','{k}'],
+ town:['{k}','いいにおいがする……','王様、おなかすかない？','公園でちょっと休憩……'],
+ hurt:['おなかすいた……力が出ない……','帰ったら、たくさん食べて寝る……']},
+yumemi:{
+ boss:['親玉を倒した……まるで物語の主人公みたい','{k} ……今日のことは、ずっと覚えておく','夢で見た通りの戦いだった'],
+ ko:['今日は、悪い夢を見てたことにする','物語にも、つらい章はあるよね','{k} ……明日は続きを書き直そう'],
+ lvup:['いつか黒魔道士になる日に、一歩近づいた気がする','{k} ……少しだけ、夢に近づいた','レベルが上がった。物語が動き出す音がした'],
+ gear:['{i}……伝説の装備に見えてきた','{i}を買った。似合うかな','いつか、もっとすごい装備を……まずは{i}から'],
+ streak:['{w}連勝。今日の私、主人公だった','{k} ……今日はなんでもできる気がした','風が味方してくれた気がする'],
+ lost:['負けちゃった。でも物語はここからだよね','{o}は、私の物語のライバルかもしれない','{k}'],
+ late:['学び舎を眺めてたら、時間を忘れてた','雲の形を見てたら、お昼になってた','{k} ……出発、遅れちゃった'],
+ rest:['今日はお休み。続きの夢を見ていた','{k}','窓から空を眺めてた。いい一日'],
+ normal:['今日のお話は、ちょっと地味だったかな','{w}回勝った。物語の、ふつうの一ページ','{k}'],
+ town:['{k}','あの建物、いつか私も……','王様、今日はいい予感がするの','空がきれい……'],
+ hurt:['今日の章は、ここでおしまい……','夢なら覚めてほしい……']},
+sewazuki:{
+ boss:['親玉を倒せた。みんなが待っててくれたおかげだよ','{k} ……わたしも、ほっとした','勝ったよ！ 帰ったらみんなに報告しなきゃ'],
+ ko:['ごめんね、心配かけちゃった','{k} ……って言ってたのに、わたしがこれじゃね','みんなは無事？ わたしは大丈夫だから'],
+ lvup:['みんなのおかげだよ。今度はわたしが守る番','{k} ……強くなれたのは、みんながいたから','レベルが上がった！ これでもっと助けられる'],
+ gear:['{i}を買ったよ。これでみんなを守れるかな','{i}にしたの。{o}にも似合いそう','{k} ……{i}、大事に使うね'],
+ streak:['{w}連勝！ でも無理はしてないから安心して','{k}','今日は調子よかった。{o}は大丈夫だったかな'],
+ lost:['負けちゃった……{o}たちは平気だった？','{k} ……わたしも、気をつけなきゃね','ひとりだと、ちょっと心細かったな'],
+ late:['みんなの様子を見て回ってたら遅くなっちゃった','{o}の忘れ物を届けてたの','{k} ……出発が遅れちゃった'],
+ rest:['今日はお休み。みんなは元気かな','{k}','休んでる間も、みんなのことが気になって'],
+ normal:['今日もみんな無事でよかった','{w}回勝ったよ。{o}はどうだった？','{k}'],
+ town:['{k}','王様、ちゃんと朝ごはん食べた？','{o}、もう出発したかな','今日も一日、気をつけてね'],
+ hurt:['わたしは大丈夫……みんなは？','ちょっと休めば平気だから……']},
+ippiki:{
+ boss:['……親玉は倒した。それだけだ','{k}','ひとりでも、やれる'],
+ ko:['……油断した','{k} ……今日は、少しだけ休む','……次は負けない'],
+ lvup:['……悪くない','{k}','強くなった。それだけだ'],
+ gear:['{i}。……使えればいい','{i}を買った。それだけだ','……{i}。悪くない'],
+ streak:['{w}勝。……ひとりのほうが楽だ','{k}','……今日は静かだった'],
+ lost:['……今日は、運がなかった','{k}','{o}に言うなよ'],
+ late:['人の多い道を避けてたら、遅くなった','……遠回りは嫌いじゃない','{k}'],
+ rest:['……静かな一日だった','{k}','休むのも悪くない'],
+ normal:['……いつも通りだ','{w}勝。……それだけだ','{k}'],
+ town:['{k}','……何か用か','……先に行く','……騒がしいのは苦手だ'],
+ hurt:['……かすり傷だ','……放っておいてくれ']},
+};
+// その日の出来事から、ひと言の場面を選ぶ
+function voiceScene(r){
+  if(r.boss)return 'boss'; if(r.ko)return 'ko'; if(r.ups&&r.ups.length)return 'lvup'; if(r.bought&&r.bought.length)return 'gear';
+  if(r.rested)return 'rest'; if(r.dep===null||r.dep>=720)return 'late'; if(r.wins>=5&&r.losses===0)return 'streak'; if(r.losses>r.wins)return 'lost'; return 'normal';
+}
+// 決まった材料から同じ結果を返す小さな乱数（報告書を開き直しても台詞が変わらない）
+function seeded(n){n=(n^0x9e3779b9)>>>0; n=Math.imul(n^(n>>>16),0x45d9f3b)>>>0; n=Math.imul(n^(n>>>16),0x45d9f3b)>>>0; return ((n^(n>>>16))>>>0)/4294967296;}
+function otherName(id,seed){const o=S.advs.filter(x=>x.id!==id); if(!o.length)return null; const a=S.advs.find(x=>x.id===id); const riv=a&&a.rival!=null?S.advs.find(x=>x.id===a.rival):null; return (riv||o[Math.floor(seeded(seed)*o.length)]).name;}
+function fillLine(t,a,r,seed){
+  const o=otherName(a.id,seed+7), item=r&&r.bought&&r.bought.length?r.bought[r.bought.length-1].name:'';
+  return t.replace(/\{k\}/g,`「${a.k}」`).replace(/\{o\}/g,o||'みんな').replace(/\{w\}/g,r?r.wins:0).replace(/\{i\}/g,item);
+}
+function pickLine(a,scene,seed,r){
+  let pool=VOICE[a.pid][scene]; if(!pool)pool=VOICE[a.pid].normal;
+  if(S.advs.length<2)pool=pool.filter(l=>!l.includes('{o}'))||pool; if(!pool.length)pool=VOICE[a.pid].normal;
+  return fillLine(pool[Math.floor(seeded(seed)*pool.length)],a,r,seed);
+}
+
+/* ---------- タップで聞こえる声（画面の上に出す吹き出し） ---------- */
+let voiceOn=null, talkN=0;
+function sayLine(a,now){
+  const pool=VOICE[a.pid][a.slow?'hurt':'town'].filter(l=>S.advs.length>1||!l.includes('{o}'));
+  const line=fillLine(pool[Math.floor(seeded(a.id*977+(talkN++)*131+S.day)*pool.length)],a,null,S.day+a.id).replace(/^「(.*)」$/,'$1');
+  const el=$('voice'); el.innerHTML=`<b>${a.name}</b>${line}`; el.hidden=false; el.style.setProperty('--tc',a.tunic);
+  voiceOn={a,until:now+2600};
+}
+function updVoice(now){
+  const el=$('voice'); if(!voiceOn)return;
+  if(now>voiceOn.until||S.phase!=='day'||voiceOn.a.hidden){el.hidden=true; voiceOn=null; return;}
+  const p=GFX&&GFX.screenOf(voiceOn.a); if(!p){el.hidden=true; voiceOn=null; return;}
+  const W0=$('town').clientWidth, bw=el.offsetWidth; el.style.left=`${Math.max(4,Math.min(W0-bw-4,p.x-bw/2))}px`; el.style.top=`${Math.max(4,p.y-el.offsetHeight-6)}px`;
 }
 
 /* ---------- HUD とパネル ---------- */
@@ -999,17 +1210,17 @@ function status(a){
 function renderPanel(){
   const p=$('panel');
   if(sel&&sel.kind==='lot'){
-    const opts=Object.keys(BUILD).map(k=>{const e=canBuild(S,k,sel.x,sel.y); return `<button class="opt" data-build="${k}" ${e?'disabled':''}><b>${BUILD[k].name}</b><span>${e&&e!=='精霊石が足りない'?e:BUILD[k].desc}</span><em>${BUILD[k].cost}</em></button>`;}).join('');
+    const opts=Object.keys(BUILD).map(k=>{const e=canBuild(S,k,sel.x,sel.y); return `<button class="opt" data-build="${k}" ${e?'disabled':''}><b>${BUILD[k].name}</b><span>${e&&e!==`${RES}が足りない`?e:BUILD[k].desc}</span><em>${BUILD[k].cost}</em></button>`;}).join('');
     p.innerHTML=`<h2>空き地に建てる <button class="x" id="close">閉じる</button></h2><div class="opts">${opts}</div><p class="msg" id="msg"></p>`;
   } else if(sel&&sel.kind==='building'){
     const b=at(S,sel.x,sel.y); if(!b){sel=null; return renderPanel();}
     let body='';
-    if(b.type==='house'){const a=S.advs.find(a=>a.home===b.id); body=a?`<dl class="kv"><dt>住んでいる冒険者</dt><dd>${a.name}（Lv${a.lv}）</dd><dt>体力</dt><dd>${a.hp}/${a.hpMax}</dd><dt>攻撃・守り</dt><dd>${a.atk}・${a.def}</dd><dt>やる気</dt><dd>${a.morale}</dd><dt>所持金</dt><dd>${a.gold}G</dd></dl>`:'<p class="lead">だれも住んでいない</p>';}
+    if(b.type==='house'){const a=S.advs.find(a=>a.home===b.id); body=a?`<dl class="kv"><dt>住んでいる冒険者</dt><dd>${a.name}（Lv${a.lv}）</dd><dt>性格</dt><dd>${PP(a).name}・口ぐせ「${a.k}」</dd><dt>装備</dt><dd>${WEAPONS[a.wlv]}・${ARMORS[a.alv]}</dd><dt>体力</dt><dd>${a.hp}/${a.hpMax}</dd><dt>攻撃・守り</dt><dd>${a.atk}・${a.def}</dd><dt>やる気</dt><dd>${a.morale}</dd><dt>所持金</dt><dd>${a.gold}G</dd></dl>`:'<p class="lead">だれも住んでいない</p>';}
     else if(b.type==='park')body=`<p class="lead">きょう休んだ冒険者 ${S.parkUsed}/${PARK_CAP}人</p>`;
     else body=`<p class="lead">${BUILD[b.type].desc}</p>`;
-    p.innerHTML=`<h2>${BUILD[b.type].name} <button class="x" id="close">閉じる</button></h2>${body}<button class="danger" id="demo">${sel.confirm?'撤去する（精霊石は明朝もどる）':'撤去'}</button><p class="msg" id="msg"></p>`;
+    p.innerHTML=`<h2>${BUILD[b.type].name} <button class="x" id="close">閉じる</button></h2>${body}<button class="danger" id="demo">${sel.confirm?`撤去する（${RES}は明朝もどる）`:'撤去'}</button><p class="msg" id="msg"></p>`;
   } else {
-    const rows=S.advs.map(a=>{const [txt,cls]=status(a); return `<div class="adv"><i class="dot" style="background:${a.tunic}"></i><div class="nm">${a.name}<small>Lv${a.lv} 体力${a.hp}/${a.hpMax} やる気${a.morale}</small></div><span class="chip ${cls}">${txt}</span></div>`;}).join('');
+    const rows=S.advs.map(a=>{const [txt,cls]=status(a); return `<div class="adv"><i class="dot" style="background:${a.tunic}"></i><div class="nm">${a.name}<small>${PP(a).name} Lv${a.lv} 体力${a.hp}/${a.hpMax} やる気${a.morale}</small></div><span class="chip ${cls}">${txt}</span></div>`;}).join('');
     p.innerHTML=`<h2>冒険者 <small>おふれ：${S.behest==='boss'?'親玉を倒せ':'西の洞窟を探索せよ'}</small></h2><div class="roster">${rows}</div>`;
   }
 }
@@ -1026,12 +1237,8 @@ $('town').addEventListener('pointerdown',e=>{
   if(!GFX)return;
   const hit=GFX.pick(e), now=performance.now();
   if(hit&&hit.adv){
-    // 冒険者を優先：けが人は励ます、初回は声かけでやる気+8
-    const a=hit.adv;
-    if(a.slow){a.slow=false; a.bubble={kind:'heal',from:now,until:now+1500};}
-    else if(!a.talked){a.talked=true; a.morale=Math.min(100,a.morale+8); a.bubble={kind:'cheer',from:now,until:now+1500};}
-    else a.bubble={kind:'idle',from:now,until:now+1000};
-    return;
+    // 冒険者をタップすると声が聞ける（効果はなし）
+    const a=hit.adv; sayLine(a,now); return;
   }
   if(hit&&at(S,hit.x,hit.y))sel={kind:'building',x:hit.x,y:hit.y};
   else if(hit&&isLot(S.g,hit.x,hit.y))sel={kind:'lot',x:hit.x,y:hit.y};
@@ -1060,24 +1267,68 @@ function hintsFor(rep){
 }
 function stepBar(n){const L=['報告書','夜明け','きょうの指示'];return `<div class="steps">${L.map((l,i)=>`<span class="${i===n?'on':''}">${i+1} ${l}</span>`).join('')}</div>`;}
 // 1. きのうの報告書 → 2. 日付の演出 → 3. きょうの指示
+const faceCache={};
+// 報告書用の顔アイコン（12×12のドット絵）
+function faceURL(a){
+  const key=a.hair+a.tunic; if(faceCache[key])return faceCache[key];
+  const c=document.createElement('canvas'); c.width=12; c.height=12; const g=c.getContext('2d'), p=(col,x,y,w=1,h=1)=>{g.fillStyle=col; g.fillRect(x,y,w,h);};
+  p('#0f2219',0,0,12,12); p(a.tunic,1,9,10,3); p('#00000033',1,11,10,1);
+  p(a.hair,3,1,6,1); p(a.hair,2,2,8,2); p('#f1c89a',3,4,6,5); p('#d9a878',3,8,6,1); p(a.hair,3,3,6,1); p(a.hair,2,4,1,3); p(a.hair,9,4,1,3);
+  p('#1a1a1a',4,5,1,2); p('#1a1a1a',7,5,1,2); p('#e08466',4,7,1,1); p('#e08466',7,7,1,1);
+  return faceCache[key]=c.toDataURL();
+}
+// タイムラインの印
+const EVI={
+  w:'<svg viewBox="0 0 10 10"><path d="M7.5 1L9 2.5 4 7.5 2.5 6z" fill="#e4cf8f"/><path d="M1.5 6.5l2 2M2 8.5l-1 1" stroke="#c9a84c" stroke-width="1.4"/></svg>',
+  l:'<svg viewBox="0 0 10 10"><path d="M5 1l4 1.5v3C9 8 5 9.5 5 9.5S1 8 1 5.5v-3z" fill="#e08466"/><path d="M5 2L4 5l2 1-1 3" stroke="#0f2219" stroke-width="1" fill="none"/></svg>',
+  B:'<svg viewBox="0 0 10 10"><path d="M1 8V3l2.2 2L5 1.5 6.8 5 9 3v5z" fill="#f6e7a8"/></svg>',
+  b:'<svg viewBox="0 0 10 10"><path d="M1 8V3l2.2 2L5 1.5 6.8 5 9 3v5z" fill="#7a8a7a"/></svg>',
+  x:'<svg viewBox="0 0 10 10"><path d="M2 2l6 6M8 2l-6 6" stroke="#e08466" stroke-width="2"/></svg>',
+  u:'<svg viewBox="0 0 10 10"><path d="M5 .5l1.3 3h3.2L7 5.5l1 3.5L5 7 2 9l1-3.5L.5 3.5h3.2z" fill="#f6e7a8"/></svg>',
+};
+const EVN={w:'勝ち',l:'負け',B:'親玉を倒した',b:'親玉に負けた',x:'やられた',u:'レベルアップ'};
+function cardHTML(r,day){
+  const a=S.advs.find(x=>x.id===r.id)||r, P=PERSONAS[r.pid], scene=voiceScene(r), line=pickLine(a,scene,day*131+r.id*17,r);
+  const big=r.ups.length||r.ko||r.boss;
+  // タイムライン
+  let bar='', marks='';
+  if(r.leftHome!==null){
+    bar=r.dep!==null?`<i class="p" style="left:${pct(r.leftHome)}%;width:${pct(r.dep)-pct(r.leftHome)}%"></i><i class="a" style="left:${pct(r.dep)}%;width:${pct(r.back||RETURN_TIME)-pct(r.dep)}%"></i>`:`<i class="p" style="left:${pct(r.leftHome)}%;width:${100-pct(r.leftHome)}%"></i>`;
+    marks=r.ev.map(e=>`<i class="ev" style="left:${pct(e.t)}%" title="${hm(e.t)} ${EVN[e.k]}">${EVI[e.k]}</i>`).join('');
+  }
+  const tl=r.leftHome!==null?`<div class="tlw"><div class="bar">${bar}</div>${marks}</div>`:'';
+  // レベルアップ
+  const up=r.ups.length?`<div class="lvup"><strong>Lv${r.lvFrom} → Lv${r.lv}</strong><span>体力 +${r.ups.reduce((m,u)=>m+u.hp,0)}　攻撃 +${r.ups.reduce((m,u)=>m+u.atk,0)}</span></div>`:'';
+  // 成果
+  const gains=r.rested?'':`<dl class="gains"><div><dt>経験値</dt><dd>+${r.exp}</dd></div><div><dt>ゴールド</dt><dd>+${r.gold} <small>所持${r.held}</small></dd></div><div><dt>${RES}</dt><dd>+${r.elem}</dd></div><div><dt>探索</dt><dd>+${r.explore.toFixed(1)}%</dd></div></dl>`;
+  // 装備
+  const nw=k=>r.bought.some(b=>b.slot===k)?'<em>NEW</em>':'';
+  const gear=`<div class="gear"><span>武器 ${WEAPONS[r.wlv]}${nw('weapon')}</span><span>防具 ${ARMORS[r.alv]}${nw('armor')}</span><span>お守り なし</span></div>`;
+  // できごと
+  const bits=[];
+  if(r.dep!==null)bits.push(`${hm(r.leftHome)}に家を出て${hm(r.dep)}に出発`);
+  if(r.note)bits.push(r.note);
+  if(r.bought.length)bits.push(r.bought.map(b=>`${b.name}を買った`).join('、'));
+  if(r.missedWage)bits.push('日給をもらいそびれた');
+  const hurt=r.ko?'<span class="hurt">やられた。あすは療養</span>':r.hurt?'<span class="hurt">傷ついて帰ってきた</span>':'';
+  const chip=r.ko?'<span class="chip hurt">やられた</span>':r.boss?'<span class="chip prep">親玉撃破</span>':r.ups.length?'<span class="chip prep">レベルアップ</span>':r.rested?'<span class="chip off">休み</span>':r.dep!==null?`<span class="chip away">${r.wins}勝${r.losses}敗</span>`:'<span class="chip off">出発せず</span>';
+  return `<details class="card${r.ups.length||r.boss?' up':''}"${big?' open':''}>
+    <summary><img class="face" src="${faceURL(r)}" alt=""><div class="who"><b>${r.name}</b><small>${P.name} · Lv${r.lv}</small></div>${chip}<div class="say">${line}</div></summary>
+    <div class="body">${tl}${up}${gains}${gear}<p class="note">${bits.join('。')}${bits.length?'。':''}${hurt}</p></div>
+  </details>`;
+}
 function openReport(){
   const rep=S.lastReport;
   if(!rep){showDayCard(); return;}
-  const rows=rep.advs.map(a=>{
-    let res;
-    if(a.rested)res=a.note;
-    else if(a.dep===null)res=a.note||'出発しなかった';
-    else res=`${hm(a.dep)}出発 · ${a.wins}勝${a.losses}敗 · 精霊石+${a.elem}${a.explore?` · 探索+${a.explore.toFixed(1)}%`:''}${a.bought.length?` · ${a.bought.join('と')}を買った`:''} · ${a.note}${a.missedWage?' · 日給をもらいそこねた':''}`;
-    const bar=a.leftHome!==null?`<div class="tl">${a.dep!==null?`<i class="p" style="left:${pct(a.leftHome)}%;width:${pct(a.dep)-pct(a.leftHome)}%"></i><i class="a" style="left:${pct(a.dep)}%;width:${pct(a.back||RETURN_TIME)-pct(a.dep)}%"></i>`:`<i class="p" style="left:${pct(a.leftHome)}%;width:${100-pct(a.leftHome)}%"></i>`}</div>`:'';
-    return `<div class="rrow"><div class="top"><b><i class="dot" style="display:inline-block;background:${a.tunic};margin-right:6px"></i>${a.name}</b><span class="chip ${a.ko?'hurt':a.dep!==null?'away':'off'}">Lv${a.lv}${a.ko?' · やられた':''}</span></div>${bar}<div class="res">${res}</div></div>`;
-  }).join('');
-  const elem=rep.advs.reduce((m,a)=>m+(a.elem||0),0);
+  const cards=rep.advs.map(r=>cardHTML(r,rep.day)).join('');
+  const elem=rep.advs.reduce((m,a)=>m+(a.elem||0),0), exp=rep.advs.reduce((m,a)=>m+(a.exp||0),0);
   $('reportSheet').innerHTML=`
     ${stepBar(0)}
     <h2>${rep.day}日目の報告書</h2>
-    <p class="lead">持ち帰った精霊石 ${elem} · 洞窟の探索 ${Math.floor(rep.explore)}%</p>
-    ${rep.won?'<div class="won">西の洞窟の親玉を倒した！ ここまでがv0.1の目標です。</div>':''}
-    <div class="rep">${rows}</div><div class="tlaxis"><span>6:00</span><span>10:00</span><span>14:00</span><span>17:00 引き返す</span><span>20:00</span></div><div class="legend"><span><i style="background:var(--gold)"></i>街で支度</span><span><i style="background:var(--good)"></i>冒険</span></div>
+    <p class="lead">持ち帰った${RES} ${elem} · 経験値 合計${exp} · 洞窟の探索 ${Math.floor(rep.explore)}%</p>
+    ${rep.won?'<div class="won">西の洞窟の親玉を倒した！ ここまでがこの版の目標です。</div>':''}
+    <div class="cards">${cards}</div><div class="tlaxis"><span>6:00</span><span>10:00</span><span>14:00</span><span>17:00 引き返す</span><span>20:00</span></div>
+    <div class="legend"><span><i style="background:var(--gold)"></i>街で支度</span><span><i style="background:var(--good)"></i>冒険</span><span>カードを押すと開閉</span></div>
     <button class="primary" id="next1">報告書を閉じる</button>`;
   $('reportModal').hidden=false; $('reportSheet').scrollIntoView({block:'start'});
   $('next1').addEventListener('click',()=>{$('reportModal').hidden=true; showDayCard();});
@@ -1102,7 +1353,7 @@ function showDayCard(){
   const c=$('dayCard');
   $('dcSmall').textContent=S.day===1?'はじまりの朝':'夜が明けた';
   $('dcBig').textContent=`${S.day}日目`;
-  $('dcSub').textContent=S.day===1?'小さな王国の最初の一日':`冒険者 ${S.advs.length}人 · 精霊石 ${S.elem+S.refund}`;
+  $('dcSub').textContent=S.day===1?'小さな王国の最初の一日':`冒険者 ${S.advs.length}人 · ${RES} ${S.elem+S.refund}`;
   playCard(c,3200,openOrders);
 }
 function openOrders(){
@@ -1141,9 +1392,11 @@ function loop(now){
   if(S.phase==='report'&&wasPhase==='day'){acc=0; showDuskCard();}
   wasPhase=S.phase;
   if(GFX)GFX.draw(now,dt);
+  updVoice(now);
   if(now-panelClock>300){panelClock=now; updateHud(); if(!sel)renderPanel();}
   requestAnimationFrame(loop);
 }
+$('resLbl').textContent=RES;
 $('startBtn').addEventListener('click',()=>{$('titleModal').hidden=true; openReport();});
 updateHud(); renderPanel(); requestAnimationFrame(loop);
 initGfx().then(g=>{GFX=g;}).catch(e=>{console.error(e); $('glfail').hidden=false; $('daypart').hidden=true;});
