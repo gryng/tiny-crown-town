@@ -131,7 +131,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 
 <div class="wrap">
   <header class="hud">
-    <div class="brand"><h1>Tiny Crown Town</h1><span class="ver">v0.2.0</span></div>
+    <div class="brand"><h1>Tiny Crown Town</h1><span class="ver">v0.2.1</span></div>
     <div class="stat plate"><span class="lbl">日</span><b id="day">1</b></div>
     <div class="stat plate clock"><span class="lbl">時刻</span><b id="clock">06:00</b><div class="sunbar"><i id="sun"></i></div></div>
     <div class="stat plate"><span class="lbl">精霊石</span><b id="elem">0</b></div>
@@ -163,7 +163,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.2.0 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.2.1 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -401,6 +401,7 @@ function walkerTile(a){
 async function initGfx(){
   const T=await import('three');
   const [EC,RP,SP,UB,OP]=await Promise.all(['EffectComposer','RenderPass','ShaderPass','UnrealBloomPass','OutputPass'].map(n=>import(`three/addons/postprocessing/${n}.js`)));
+  const BGU=await import('three/addons/utils/BufferGeometryUtils.js');
   const cv=$('town');
   const renderer=new T.WebGLRenderer({canvas:cv,antialias:true,powerPreference:'high-performance'});
   renderer.shadowMap.enabled=true; renderer.shadowMap.type=T.PCFSoftShadowMap;
@@ -539,31 +540,39 @@ async function initGfx(){
   flagTex.repeat.set(1/3,1);
   const flag=add(new T.Mesh(new T.PlaneGeometry(8*U,5*U).translate(4*U,0,0),new T.MeshLambertMaterial({map:flagTex,alphaTest:.5,side:T.DoubleSide,emissive:0x221a06})),.27,3.75,-4.45,scene,false);
 
-  /* ----- 木 ----- */
-  function paintTree(v){return (g,w,h)=>{
-    if(v===2){ // 針葉樹
-      P(g,'#5a3c22',7,13,2,5); P(g,'#3f2a18',8,13,1,5);
-      for(const [y0,hh,hw] of [[1,5,3],[4,5,5],[8,6,6]])for(let r=0;r<hh;r++){const half=Math.max(1,Math.ceil((r+1)/hh*hw)); for(let x=-half;x<half;x++)P(g,r===hh-1?'#1f4a2a':x<-half*.2?'#3c8048':'#2c6238',8+x,y0+r);}
-      P(g,'#58a05c',6,3); P(g,'#58a05c',5,7); P(g,'#58a05c',4,11); P(g,'#58a05c',6,10);
-    } else {
-      const a=v===1?['#8fb048','#6a8f36','#4a6c28']:['#62ac4c','#3f8038','#2b5c2a'];
-      P(g,'#5a3c22',7,12,2,6); P(g,'#3f2a18',8,12,1,6);
-      for(let y=1;y<14;y++)for(let x=1;x<15;x++){const dx=(x-7.5)/6.6, dy=(y-7)/6.1, d=dx*dx+dy*dy; if(d>=1)continue; const n=hash(x,y,v+5);
-        let c=a[1]; if((x-5.5)*(x-5.5)+(y-4.5)*(y-4.5)<9+n*5)c=a[0]; else if(d>.6&&(y>8||x>10))c=a[2]; if(n<.1)c=a[2]; else if(n>.93)c=a[0]; P(g,c,x,y);}
-    }
-    outline(g,w,h,'#1c3520');
-  };}
-  const treeTexs=[0,1,2].map(v=>tex(16,19,paintTree(v))), treeMats=treeTexs.map(t=>cut(t)), treeCast=treeTexs.map(t=>caster(t));
-  const treeGeo=standGeo(16,19), treeX=crossGeo(16,19), trees=[];
+  /* ----- 木（幹と葉のかたまりを立体で。建物と同じく、ドット絵テクスチャ＋面ごとの陰影） ----- */
+  const leafTex=pal=>tex(16,16,g=>{P(g,pal[1],0,0,16,16); for(let i=0;i<46;i++)P(g,i%3?pal[0]:pal[2],hash(i,1,21)*16|0,hash(i,2,22)*16|0,1+(i%2),1); for(let i=0;i<8;i++){const x=hash(i,3,23)*15|0, y=hash(i,4,24)*15|0; P(g,pal[0],x,y,2,1); P(g,pal[2],x,y+1,2,1);}},{repeat:true});
+  const PALS=[['#74c05a','#4a903e','#2f6630'],['#a4c456','#789c3a','#4f742c'],['#52a060','#2f7242','#1d4c2e']];
+  const barkMat=lam(tex(8,8,g=>{P(g,'#6b4a2a',0,0,8,8); for(let i=0;i<4;i++)P(g,'#4e3420',i*2+(i%2),0,1,8); P(g,'#8a6238',1,2,1,3); P(g,'#8a6238',5,5,1,2);},{repeat:true}),{flatShading:true});
+  // 高さで明暗をつける（下ほど暗く）。葉のかたまりの下側が沈んで、立体に見える
+  function shadeY(g,y0,y1,lo,hi){const p=g.attributes.position, c=new Float32Array(p.count*3); for(let i=0;i<p.count;i++){const k=Math.max(0,Math.min(1,(p.getY(i)-y0)/(y1-y0))), v=lo+(hi-lo)*k; c[i*3]=c[i*3+1]=c[i*3+2]=v;} g.setAttribute('color',new T.BufferAttribute(c,3)); return g;}
+  const uvMul=(g,u,v)=>{const a=g.attributes.uv; for(let i=0;i<a.count;i++)a.setXY(i,a.getX(i)*u,a.getY(i)*v); return g;};
+  const blob=(r,x,y,z)=>uvMul(new T.IcosahedronGeometry(r,1),Math.max(1,Math.round(r*6.3)),Math.max(1,Math.round(r*3.2))).scale(1,.86,1).translate(x,y,z);
+  const tier=(r,h,y)=>shadeY(uvMul(new T.ConeGeometry(r,h,7).toNonIndexed(),3,1).translate(0,y+h/2,0),y,y+h,.5,1.12);
+  const trunk=(h,r)=>new T.CylinderGeometry(r*.7,r,h,6).toNonIndexed().translate(0,h/2,0);
+  const round=()=>shadeY(BGU.mergeGeometries([blob(.33,0,.62,0),blob(.24,-.2,.48,.07),blob(.22,.21,.5,-.02),blob(.2,.03,.85,.02),blob(.17,.02,.5,.24)]),.28,1,.5,1.12);
+  const TREE=[{c:round(),t:trunk(.4,.085)},{c:round().scale(.86,.9,.86),t:trunk(.36,.075)},{c:BGU.mergeGeometries([tier(.37,.46,.2),tier(.29,.42,.48),tier(.2,.42,.74)]),t:trunk(.26,.07)}];
+  const leafMats=PALS.map(p=>new T.MeshLambertMaterial({map:leafTex(p),vertexColors:true,flatShading:true}));
+  const trees=[], outer=[];
   for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){
     if(S.g[y][x]!=='G'||isLot(S.g,x,y))continue; const r=hash(x,y,99); if(r>=.75)continue;
-    const v=r<.34?0:r<.56?1:2, m=add(new T.Mesh(treeGeo,treeMats[v]),wx(x)+(hash(x,y,5)-.5)*.3,0,wz(y)+.1+hash(x,y,6)*.2); m.scale.setScalar(.86+hash(x,y,7)*.14); const c=new T.Mesh(treeX,treeCast[v]); c.castShadow=true; m.add(c); m.userData.ph=hash(x,y,8)*6.28; trees.push(m);
+    trees.push({v:r<.34?0:r<.56?1:2,x:wx(x)+(hash(x,y,5)-.5)*.3,z:wz(y)+(hash(x,y,6)-.4)*.25,s:.88+hash(x,y,7)*.18,ry:hash(x,y,9)*6.28,ph:hash(x,y,8)*6.28});
   }
-  { // 城壁の外の森（まとめて描く）
-    const pts=[[],[],[]];
-    for(let i=0;i<520;i++){const x=(hash(i,11,1)-.5)*56, z=-22+hash(i,13,2)*36; if(Math.abs(x)<11&&z>-7.2&&z<6.9)continue; if(x>-.6&&x<1.6&&z>5)continue; pts[hash(i,17,3)*3|0].push([x,z,1.1+hash(i,19,4)*.8]);}
-    const o=new T.Object3D();
-    pts.forEach((arr,v)=>{const im=new T.InstancedMesh(treeGeo,treeMats[v],arr.length); arr.forEach((p,i)=>{o.position.set(p[0],0,p[1]); o.scale.setScalar(p[2]); o.updateMatrix(); im.setMatrixAt(i,o.matrix);}); im.frustumCulled=false; scene.add(im);});
+  for(let i=0;i<520;i++){const x=(hash(i,11,1)-.5)*56, z=-22+hash(i,13,2)*36; if(Math.abs(x)<11&&z>-7.2&&z<6.9)continue; if(x>-.6&&x<1.6&&z>5)continue; outer.push({v:hash(i,17,3)*3|0,x,z,s:1.1+hash(i,19,4)*.8,ry:hash(i,23,5)*6.28,ph:0});}
+  const treeObj=new T.Object3D();
+  function treeSet(list,shadow){
+    return [0,1,2].map(v=>{const arr=list.filter(t=>t.v===v), n=Math.max(1,arr.length);
+      const c=new T.InstancedMesh(TREE[v].c,leafMats[v],n), k=new T.InstancedMesh(TREE[v].t,barkMat,n); c.count=k.count=arr.length;
+      for(const m of [c,k]){m.frustumCulled=false; m.castShadow=shadow; m.receiveShadow=shadow; scene.add(m);} return {arr,c,k};});
+  }
+  function treePose(set,now){
+    for(const {arr,c,k} of set){arr.forEach((t,i)=>{treeObj.position.set(t.x,0,t.z); treeObj.rotation.set(0,t.ry,now===null?0:Math.sin(now/1300+t.ph)*.02); treeObj.scale.setScalar(t.s); treeObj.updateMatrix(); c.setMatrixAt(i,treeObj.matrix); k.setMatrixAt(i,treeObj.matrix);}); c.instanceMatrix.needsUpdate=true; k.instanceMatrix.needsUpdate=true;}
+  }
+  const innerSet=treeSet(trees,true); treePose(innerSet,null); treePose(treeSet(outer,false),null);
+  { // 根元の接地影（幹のまわりを少し暗くして、地面に生えて見えるように）
+    const tx=tex(32,32,g=>{const r=g.createRadialGradient(16,16,1,16,16,15); r.addColorStop(0,'rgba(8,20,10,.62)'); r.addColorStop(.55,'rgba(8,20,10,.3)'); r.addColorStop(1,'rgba(8,20,10,0)'); g.fillStyle=r; g.fillRect(0,0,32,32);},{soft:true});
+    const im=new T.InstancedMesh(new T.PlaneGeometry(1,1).rotateX(-Math.PI/2),new T.MeshBasicMaterial({map:tx,transparent:true,depthWrite:false}),Math.max(1,trees.length)); im.count=trees.length;
+    trees.forEach((t,i)=>{treeObj.position.set(t.x,.014,t.z+.04); treeObj.rotation.set(0,0,0); treeObj.scale.set(t.s*.95,1,t.s*.7); treeObj.updateMatrix(); im.setMatrixAt(i,treeObj.matrix);}); im.frustumCulled=false; scene.add(im);
   }
 
   /* ----- 建物 ----- */
@@ -877,14 +886,14 @@ async function initGfx(){
     trMesh.visible=showTrails; if(showTrails&&(trTick++%8===0))paintTrails();
     updWalkers(now);
     // 木と旗のゆれ
-    if(!still)for(const m of trees)m.rotation.z=Math.sin(now/1300+m.userData.ph)*.022;
+    if(!still)treePose(innerSet,now);
     flagTex.offset.x=(Math.floor(now/220)%3)/3;
     // 粒
     const morning=1-sm(470,560,t), evening=sm(990,1060,t), smokeOn=Math.max(morning,evening);
     smokeAcc+=dt; if(smokeAcc>.22){smokeAcc=0; if(smokeOn>.05)for(const g of bGroups){const p=g.userData.smoke; if(p&&Math.random()<smokeOn)for(let k=0;k<2;k++)soft.spawn(p.x+rnd(-.03,.03),p.y,p.z,rnd(.08,.2),rnd(.22,.4),rnd(-.03,.03),rnd(2,3.2),rnd(.07,.1),.92*amb,.92*amb,.97*amb,.5,-.02,.045);}}
     jetAcc+=dt; if(jetAcc>.05){jetAcc=0; for(const g of bGroups){const p=g.userData.jet; if(!p)continue; const a=Math.random()*6.283, v=rnd(.12,.3), c=.5+amb*.9; glow.spawn(p.x,p.y,p.z,Math.cos(a)*v,rnd(.45,.8),Math.sin(a)*v,rnd(.5,.75),.065,.55*c,.8*c,1*c,.75,2.6,0);}}
     torchAcc+=dt; if(torchAcc>.045){torchAcc=0; if(night>.08)for(const p of torches)glow.spawn(p[0]+rnd(-.04,.04),p[1],p[2]+rnd(-.04,.04),rnd(-.05,.05),rnd(.3,.6),0,rnd(.25,.45),rnd(.09,.14),2.4*night,1.1*night,.3*night,.9,0,-.12);}
-    flyAcc+=dt; if(flyAcc>.16){flyAcc=0; if(night>.6&&trees.length&&t>=1000){const m=trees[Math.random()*trees.length|0]; glow.spawn(m.position.x+rnd(-.8,.8),rnd(.2,1.1),m.position.z+rnd(-.5,.8),rnd(-.12,.12),rnd(-.04,.08),rnd(-.1,.1),rnd(2.5,4.5),.075,1.3,1.9,.5,.9,0,0);}}
+    flyAcc+=dt; if(flyAcc>.16){flyAcc=0; if(night>.6&&trees.length&&t>=1000){const m=trees[Math.random()*trees.length|0]; glow.spawn(m.x+rnd(-.8,.8),rnd(.2,1.1),m.z+rnd(-.5,.8),rnd(-.12,.12),rnd(-.04,.08),rnd(-.1,.1),rnd(2.5,4.5),.075,1.3,1.9,.5,.9,0,0);}}
     soft.update(dt); glow.update(dt);
     const fl=.82+.1*Math.sin(now/90)+.08*Math.sin(now/37); torchA.intensity=9*night*fl; torchB.intensity=7*night*(1.64-fl);
     // もやと光の筋
