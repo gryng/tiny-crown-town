@@ -141,7 +141,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .ad .today{font-size:12px;color:var(--muted);margin:0}
 .msg{font-size:12px;color:var(--bad);min-height:1em;margin:0}
 
-.modal{position:fixed;inset:0;background:#08120fd9;-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);display:flex;align-items:flex-start;justify-content:center;overflow:auto;z-index:20;padding-top:max(28px,env(safe-area-inset-top,0px));padding-bottom:max(28px,env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.modal{position:fixed;inset:0;background:#08120fe8;display:flex;align-items:flex-start;justify-content:center;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;z-index:20;padding-top:max(28px,env(safe-area-inset-top,0px));padding-bottom:max(28px,env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .modal[hidden]{display:none}
 .modal{flex-direction:column;align-items:center;justify-content:flex-start;gap:18px}
 .modal>:first-child{margin-top:auto}
@@ -150,9 +150,9 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .actions .primary{flex:1 1 220px;max-width:360px}
 .actions .toggle{padding:10px 16px}
 .actions:empty{display:none}
-#titleModal{background:linear-gradient(180deg,#08120f40 0%,#08120fcc 75%);-webkit-backdrop-filter:none;backdrop-filter:none}
+#titleModal{background:linear-gradient(180deg,#08120f40 0%,#08120fcc 75%)}
 #lineModal{z-index:30}
-.sheet{max-width:580px;width:100%;padding:24px 22px 22px;display:flex;flex-direction:column;gap:14px;transform:rotate(-.3deg)}
+.sheet{max-width:580px;width:100%;min-width:0;box-sizing:border-box;padding:24px 22px 22px;display:flex;flex-direction:column;gap:14px;transform:rotate(-.3deg)}
 .sheet h2{margin:0;font-family:var(--f-head);font-weight:800;font-size:28px;line-height:1.25;color:var(--accent);text-wrap:balance;letter-spacing:.03em}
 .sheet p{margin:0}
 .lead{color:var(--muted);font-size:13px;font-weight:700}
@@ -197,7 +197,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 #rpWon.in{animation:slam .4s cubic-bezier(.2,1.5,.4,1) forwards}
 @keyframes slam{from{transform:scale(1.5) rotate(-3deg);opacity:0}to{transform:scale(1) rotate(-.6deg);opacity:1}}
 /* 報告書：冒険者カード（1枚ずつ登場） */
-.rc{position:relative;background:#f3ead3;border:1.5px solid var(--ink);border-radius:3px 9px 4px 8px;box-shadow:2px 3px 0 #241c1426;color:var(--ink);padding:10px 12px;display:grid;gap:8px;opacity:0;transform:translateY(14px) rotate(.6deg)}
+.rc{position:relative;background:#f3ead3;border:1.5px solid var(--ink);border-radius:3px 9px 4px 8px;box-shadow:2px 3px 0 #241c1426;color:var(--ink);padding:10px 12px;display:grid;grid-template-columns:minmax(0,1fr);gap:8px;opacity:0;transform:translateY(14px) rotate(.6deg)}
 .rc.in{animation:cardIn .34s cubic-bezier(.2,1.2,.4,1) forwards}
 @keyframes cardIn{to{opacity:1;transform:none}}
 .rc.up{border-color:var(--gold-ink);background:linear-gradient(180deg,#f8ecc4,#f3ead3 70%);box-shadow:0 0 0 2px #c9a84c88,3px 4px 0 #8a6a1e44}
@@ -210,9 +210,9 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .rc.up .lvb{background:var(--gold-ink)}
 .burst{position:absolute;inset:-14px;border-radius:50%;background:repeating-conic-gradient(#c9a84c 0 8deg,transparent 8deg 24deg);-webkit-mask:radial-gradient(circle,transparent 54%,#000 56%,transparent 72%);mask:radial-gradient(circle,transparent 54%,#000 56%,transparent 72%);opacity:0;pointer-events:none}
 .rc.flash .burst{animation:burst .7s ease-out forwards}
-@keyframes burst{0%{opacity:1;transform:scale(.6) rotate(0)}100%{opacity:0;transform:scale(1.5) rotate(40deg)}}
+@keyframes burst{0%{opacity:1;transform:scale(.6) rotate(0)}99%{opacity:0;transform:scale(1.5) rotate(40deg)}100%{opacity:0;transform:scale(.6)}}
 .rc .say{grid-column:2/4;margin:0;white-space:normal;overflow:visible;font-family:var(--f-hand);font-weight:600;font-size:14px;line-height:1.5;color:var(--accent)}
-.lvbanner{display:none;flex-wrap:wrap;gap:2px 12px;align-items:baseline;background:linear-gradient(90deg,#c9a84c88,#c9a84c22 85%);border-left:4px solid var(--gold-ink);padding:5px 12px;transform-origin:left center}
+.lvbanner{display:none;min-width:0;max-width:100%;box-sizing:border-box;flex-wrap:wrap;gap:2px 12px;align-items:baseline;background:linear-gradient(90deg,#c9a84c88,#c9a84c22 85%);border-left:4px solid var(--gold-ink);padding:5px 12px;transform-origin:left center}
 .rc.up .lvbanner{display:flex;animation:slam .36s cubic-bezier(.2,1.5,.4,1)}
 .lvbanner strong{font-family:var(--f-head);font-weight:800;font-size:19px;color:var(--ink);letter-spacing:.06em}
 .lvbanner span{font-family:var(--f-head);font-weight:800;font-size:13px;color:var(--ink)}
@@ -228,6 +228,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .more-body{display:grid;gap:8px;padding-top:6px}
 .log ol{list-style:none;margin:6px 0 0;padding:0 0 0 12px;border-left:2px solid #241c1433;display:grid;gap:3px;font-size:13px}
 .log time{display:inline-block;min-width:3.4em;font-family:var(--f-head);font-weight:800;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+@media (max-width:620px){.sheet{transform:none}.rc{transform:translateY(14px)}}
 @media (prefers-reduced-motion:reduce){.rc,.stamp,#rpWon{opacity:1;transform:none;animation:none}.stamp{transform:rotate(12deg);opacity:.85}.rc.flash::after,.burst{display:none}}
 /* 報告書カード */
 .cards{display:grid;gap:10px}
@@ -352,7 +353,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.4.0 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.4.1 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -1640,12 +1641,14 @@ function openReportOnly(){openReport({instant:true,back:true});}
 
 /* ---------- ループ ---------- */
 let GFX=null, panelClock=0, wasPhase=S.phase;
+const _cover=['reportModal','dayCard','duskCard','lineModal'].map(id=>document.getElementById(id));
+function townHidden(){for(const e of _cover)if(e&&!e.hidden)return true;return false;}
 function loop(now){
   const dt=Math.min(.1,(now-lastT)/1000); lastT=now;
   if(S.phase==='day'&&speed>0){acc+=dt*speed*RATE; const whole=Math.floor(acc); if(whole>0){acc-=whole; tick(S,whole);}}
   if(S.phase==='report'&&wasPhase==='day'){acc=0; showDuskCard();}
   wasPhase=S.phase;
-  if(GFX)GFX.draw(now,dt);
+  if(GFX&&!townHidden())GFX.draw(now,dt);
   updVoice(now);
   if(now-panelClock>300){panelClock=now; updateHud(); if(!sel)renderPanel();}
   requestAnimationFrame(loop);
