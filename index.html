@@ -140,7 +140,8 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .meter i{position:absolute;left:0;top:0;bottom:0;background:var(--good)}
 .meter.mo i{background:var(--gold)}
 .ad .gains{grid-template-columns:repeat(4,minmax(0,1fr))}
-.ad .today{font-size:12px;color:var(--muted);margin:0}
+.ad{gap:14px}
+.devrow{margin:0;font-size:11px;color:var(--muted);border:1px dashed #241c1455;border-radius:4px;padding:3px 8px;font-variant-numeric:tabular-nums}
 .msg{font-size:12px;color:var(--bad);min-height:1em;margin:0}
 
 .modal{position:fixed;inset:0;background:#08120fe8;display:flex;align-items:flex-start;justify-content:center;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;z-index:20;padding-top:max(28px,env(safe-area-inset-top,0px));padding-bottom:max(28px,env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -386,7 +387,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.5.0 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.5.1 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -1396,7 +1397,7 @@ function status(a){
     case 'walk': return a.goal==='gate'?['城門へ向かう','prep']:a.goal==='castle'?[a.slow?'とぼとぼ帰還':'帰還中',a.slow?'hurt':'away']:a.goal==='home'?['帰宅中','off']:[`${BUILD[a.goal]?BUILD[a.goal].name:''}へ向かう`,'prep'];
     case 'stop': return a.stopWhat==='castle'?['日給を受け取り中','away']:[PLACE[a.stopWhat],'prep'];
     case 'away': return [`冒険中（${hm(a.rep.dep)}出発）`,'away'];
-    case 'back': return [a.ko?'やられて帰り道':'帰り道','away'];
+    case 'back': return ['帰り道','away'];
     case 'done': return [a.rep.dep!==null?`帰宅（${hm(a.rep.dep)}出発）`:'帰宅','off'];
   }
   return ['',''];
@@ -1410,7 +1411,7 @@ function renderPanel(){
   } else if(sel&&sel.kind==='building'){
     const b=at(S,sel.x,sel.y); if(!b){sel=null; return renderPanel();}
     let body='';
-    if(b.type==='house'){const a=S.advs.find(a=>a.home===b.id); body=a?`<dl class="kv"><dt>住んでいる冒険者</dt><dd>${a.name}（Lv${a.lv}）</dd><dt>性格</dt><dd>${PP(a).name}・口ぐせ「${a.k}」</dd><dt>装備</dt><dd>${WEAPONS[a.wlv]}・${ARMORS[a.alv]}</dd><dt>体力</dt><dd>${a.hp}/${a.hpMax}</dd><dt>攻撃・守り</dt><dd>${a.atk}・${a.def}</dd><dt>やる気</dt><dd>${a.morale}</dd><dt>所持金</dt><dd>${a.gold}G</dd></dl>`:'<p class="lead">だれも住んでいない</p>';}
+    if(b.type==='house'){const a=S.advs.find(a=>a.home===b.id), v=a&&shownStats(a); body=a?`<dl class="kv"><dt>住んでいる冒険者</dt><dd>${a.name}（Lv${v.lv}）</dd><dt>性格</dt><dd>${PP(a).name}・口ぐせ「${a.k}」</dd><dt>装備</dt><dd>${WEAPONS[v.wlv]}・${ARMORS[v.alv]}</dd></dl>`:'<p class="lead">だれも住んでいない</p>';}
     else if(b.type==='park')body=`<p class="lead">きょう休んだ冒険者 ${S.parkUsed}/${PARK_CAP}人</p>`;
     else body=`<p class="lead">${BUILD[b.type].desc}</p>`;
     p.dataset.mode='building';
@@ -1419,6 +1420,18 @@ function renderPanel(){
 }
 // 冒険者パネル。タブの並びは人数が変わったときだけ作り直し、中身は毎回更新する（横スクロールの位置を保つ）
 let pickAdv=0;
+// 開発中だけ見せる情報（やる気などの隠しステータス）。公開時は false にする
+const DEV=true;
+const STAT_IC={hp:'<svg viewBox="0 0 10 10"><path d="M5 9S1 6.2 1 3.6A2.1 2.1 0 0 1 5 2.7 2.1 2.1 0 0 1 9 3.6C9 6.2 5 9 5 9z" fill="#b5533c"/></svg>',
+    atk:'<svg viewBox="0 0 10 10"><path d="M7.5 1L9 2.5 4 7.5 2.5 6z" fill="#6b5a3e"/><path d="M1.5 6.5l2 2M2 8.5l-1 1" stroke="#6b5a3e" stroke-width="1.4"/></svg>',
+    def:'<svg viewBox="0 0 10 10"><path d="M5 1l4 1.5v3C9 8 5 9.5 5 9.5S1 8 1 5.5v-3z" fill="#1d6a60"/></svg>'};
+// 街の外にいる間は、出発したときの姿のまま見せる（冒険のようすは報告書で知る）
+const shownAt={};
+function shownStats(a){
+  const out=a.state==='away'||a.state==='back';
+  if(!out||!shownAt[a.id])shownAt[a.id]={lv:a.lv,hp:a.hp,hpMax:a.hpMax,atk:a.atk,def:a.def,gold:a.gold,wlv:a.wlv,alv:a.alv};
+  return shownAt[a.id];
+}
 function renderRoster(p){
   if(!S.advs.length){p.innerHTML='<h2>冒険者</h2><p class="lead">まだ冒険者がいない</p>'; p.dataset.mode=''; return;}
   if(!S.advs.some(a=>a.id===pickAdv))pickAdv=S.advs[0].id;
@@ -1428,17 +1441,21 @@ function renderRoster(p){
   }
   $('behestNow').textContent=`おふれ：${S.behest==='boss'?'親玉を倒せ':'西の洞窟を探索せよ'}`;
   p.querySelectorAll('.tabf').forEach(b=>{const a=S.advs.find(x=>x.id===+b.dataset.adv), [txt,cls]=status(a); b.setAttribute('aria-pressed',String(a.id===pickAdv)); b.querySelector('.st').className=`st ${cls}`; b.title=`${a.name}：${txt}`;});
-  const a=S.advs.find(x=>x.id===pickAdv), P=PP(a), [txt,cls]=status(a), r=a.rep;
-  const today=S.phase==='day'&&r&&!r.rested?`今日：${r.dep!=null?`${hm(r.dep)}に出発 · `:''}${r.wins}勝${r.losses}敗${r.bought.length?` · ${r.bought.map(b=>b.name).join('、')}を買った`:''}`:'';
+  const a=S.advs.find(x=>x.id===pickAdv), P=PP(a), [txt,cls]=status(a), r=a.rep, v=shownStats(a);
+  const today=S.phase==='day'&&r&&!r.rested?[r.dep!=null?`${hm(r.dep)}に出発`:'', r.bought.length?`${r.bought.map(b=>b.name).join('、')}を買った`:''].filter(Boolean).join(' · '):'';
   $('advDetail').innerHTML=`
-    <div class="ad-head"><h3>${a.name}<small>${P.name} · Lv${a.lv}</small></h3><span class="chip ${cls}">${txt}</span><q>${a.k}</q></div>
-    <dl class="meters">
-      <dt>体力</dt><dd class="meter"><i style="width:${Math.round(a.hp/a.hpMax*100)}%"></i></dd><dd>${a.hp}/${a.hpMax}</dd>
-      <dt>やる気</dt><dd class="meter mo"><i style="width:${a.morale}%"></i></dd><dd>${a.morale}</dd>
-    </dl>
-    <dl class="gains"><div><dt>攻撃</dt><dd>${a.atk}</dd></div><div><dt>守り</dt><dd>${a.def}</dd></div><div><dt>経験値</dt><dd>${a.exp}<small>/${a.lv*25}</small></dd></div><div><dt>所持金</dt><dd>${a.gold}<small>G</small></dd></div></dl>
-    <div class="gear"><span>武器 ${WEAPONS[a.wlv]}</span><span>防具 ${ARMORS[a.alv]}</span><span>お守り なし</span></div>
-    ${today?`<p class="today">${today}</p>`:''}`;
+    <div class="ad-head"><h3>${a.name}<small>${P.name} · Lv${v.lv}</small></h3><span class="chip ${cls}">${txt}</span><q>${a.k}</q></div>
+    <div class="blk"><h4 class="sec">ステータス</h4><dl class="tiles four">
+      <div class="tile"><dt>${STAT_IC.hp}体力</dt><dd>${v.hp}<small>/${v.hpMax}</small></dd></div>
+      <div class="tile"><dt>${STAT_IC.atk}攻撃</dt><dd>${v.atk}</dd></div>
+      <div class="tile"><dt>${STAT_IC.def}守り</dt><dd>${v.def}</dd></div>
+      <div class="tile"><dt><i class="coin"></i>所持金</dt><dd>${v.gold}</dd></div></dl></div>
+    <div class="blk"><h4 class="sec">装備</h4><table class="eq"><tbody>
+      <tr><th scope="row">武器</th><td>${WEAPONS[v.wlv]}</td></tr>
+      <tr><th scope="row">防具</th><td>${ARMORS[v.alv]}</td></tr>
+      <tr><th scope="row">お守り</th><td class="none">なし</td></tr></tbody></table></div>
+    ${today?`<p class="rc-note">今日：${today}</p>`:''}
+    ${DEV?`<p class="devrow">開発用　やる気 ${a.morale}　／　いまの体力 ${a.hp}　経験値 ${a.exp}/${a.lv*25}</p>`:''}`;
 }
 $('panel').addEventListener('click',e=>{
   const t=e.target.closest('button'); if(!t)return;
@@ -1539,9 +1556,7 @@ function cardHTML(r,day,rows){
   }
   const tl=r.leftHome!==null?`<div class="tlw"><div class="bar">${bar}</div>${marks}</div><div class="tlaxis"><span>6:00</span><span>10:00</span><span>14:00</span><span>17:00</span><span>20:00</span></div>`:'';
   const nw=k=>r.bought.some(b=>b.slot===k)?'<em>NEW</em>':'';
-  const IC={hp:'<svg viewBox="0 0 10 10"><path d="M5 9S1 6.2 1 3.6A2.1 2.1 0 0 1 5 2.7 2.1 2.1 0 0 1 9 3.6C9 6.2 5 9 5 9z" fill="#b5533c"/></svg>',
-    atk:'<svg viewBox="0 0 10 10"><path d="M7.5 1L9 2.5 4 7.5 2.5 6z" fill="#6b5a3e"/><path d="M1.5 6.5l2 2M2 8.5l-1 1" stroke="#6b5a3e" stroke-width="1.4"/></svg>',
-    def:'<svg viewBox="0 0 10 10"><path d="M5 1l4 1.5v3C9 8 5 9.5 5 9.5S1 8 1 5.5v-3z" fill="#1d6a60"/></svg>'};
+  const IC=STAT_IC;
   const stats=`<div class="blk"><h4 class="sec">ステータス</h4><dl class="tiles four">
       <div class="tile"><dt>${IC.hp}体力</dt><dd>${r.hp}<small>/${r.hpMax}</small></dd></div>
       <div class="tile"><dt>${IC.atk}攻撃</dt><dd>${r.atk}</dd></div>
