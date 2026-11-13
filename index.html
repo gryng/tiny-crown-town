@@ -295,13 +295,13 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .mapbox{background:#f3ead3;border:1.5px solid var(--ink);border-radius:3px 9px 4px 8px;box-shadow:2px 3px 0 #241c1426;padding:6px}
 .mapbox svg{display:block;width:100%;height:auto}
 .rd{fill:none;stroke:var(--ink);stroke-linecap:round}
-.rd.q{stroke:#241c1455;stroke-width:1.5;stroke-dasharray:1 5}
+.rd.q{stroke:#241c1477;stroke-width:1.5;stroke-dasharray:1 5}
 .rd.s1{stroke-width:2;stroke-dasharray:6 4}
 .rd.s2{stroke-width:3.5}
 .rd.new{stroke:var(--gold);stroke-width:9;opacity:.75}
 .nd{fill:#fffaf0;stroke:var(--ink);stroke-width:1.5}
-.nd.done{fill:#cfe3d6}.nd.rest{fill:#bfe0e6}.nd.foe{fill:#f1c9bd;stroke:var(--bad)}.nd.unk{fill:none;stroke:#241c1455;stroke-dasharray:2 3}
-.qm{font:700 8px var(--f-head);fill:#241c1488;text-anchor:middle}
+.nd.done{fill:#cfe3d6}.nd.rest{fill:#bfe0e6}.nd.foe{fill:#f1c9bd;stroke:var(--bad)}.nd.unk{fill:#f3ead3;stroke:#241c1499;stroke-dasharray:2 2}
+.qm{font:800 8px var(--f-head);fill:#241c14cc;text-anchor:middle}
 .foe-t{font:800 8px var(--f-head);fill:var(--bad);text-anchor:middle}
 .chk{fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .lb{font:700 8.5px var(--f-body);fill:var(--ink);text-anchor:middle;paint-order:stroke;stroke:#f3ead3;stroke-width:3px}
@@ -430,7 +430,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.7.1 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.7.2 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -738,7 +738,8 @@ function fightRound(S,F){
       ev(S,a,m.boss?'B':'w',{m:F.mid,r:F.round,c:F.crit[a.id]||0,co:names(a),e:got});
       if(m.poison&&F.hit[a.id]){a.out.poison=6; ev(S,a,'p',{});}
       gainExp(S,a,m.xp);
-      if(m.boss){a.rep.boss=true;}
+      if(m.boss){a.rep.boss=true;} if(m.master)a.rep.master=m.n;
+      for(const nm of names(a)){a.rep.coN=a.rep.coN||{}; a.rep.coN[nm]=(a.rep.coN[nm]||0)+1;}
       a.out.fight=null;
     }
     if(m.boss){S.bossDown=true; S.justWon=true; for(const a of F.members)goHome(S,a,'親玉を倒して凱旋');}
@@ -803,7 +804,7 @@ function actDone(S,a,k){
     let clue=false; if(N.clue&&!W.clue){W.clue=true; clue=true;}
     ev(S,a,'s',{n:id,e:got,first,chest,clue});
   }
-  if(k==='open'){W.cut=true; ev(S,a,'o',{});}
+  if(k==='open'&&!W.cut){W.cut=true; a.rep.opened=true; ev(S,a,'o',{});}
   if(k==='detour'){a.morale=Math.min(100,a.morale+6); a.hp=Math.min(a.hpMax,a.hp+2);}
 }
 function moveAlong(S,a,rt){const e=rt.path[0]; a.out.edge={e,to:other(e,a.out.at),left:elen(S,e)};}
@@ -823,7 +824,7 @@ function decide(S,a){
   // 部屋：調べる、近道を開く
   if(N.room&&!masterAlive(S,id)){
     if(W.searchDay[id]!==S.day&&slack>3){o.act={k:'search',left:3}; return;}
-    if(N.clue&&W.clue&&!W.cut&&slack>8){o.act={k:'open',left:6}; return;}
+    if(N.clue&&W.clue&&!W.cut&&W.opening!==S.day&&slack>8){W.opening=S.day; o.act={k:'open',left:6}; return;}
   }
   // 行き先を決める
   const brave=P.brave?-1:P.safe?.45:.15;
@@ -862,6 +863,7 @@ function endDay(S){
     if(a.rep.dep!==null&&!a.rep.wage)a.rep.missedWage=true;
     if(a.state==='away'){S.elem+=a.rep.elem; if(a.out&&a.out.poison>0)a.rep.hurt=true; a.out=null; if(!a.rep.note)a.rep.note='日が暮れても帰ってこなかった';}
     if(a.rep.shyNote&&!a.rep.ko&&!a.rep.boss)a.rep.note=a.rep.shyNote;
+    if(a.rep.coN){const best=Object.entries(a.rep.coN).sort((x,y)=>y[1]-x[1])[0]; a.rep.pal=best[0]; a.rep.palN=best[1];}
     if(a.state==='rest')a.morale=Math.min(100,a.morale+25);
     if(a.pid==='makezu'&&a.rep.losses>a.rep.wins)a.morale=Math.min(100,a.morale+10); // 負けた翌日はやる気が上がる
     a.morale=Math.min(100,a.morale+6);
@@ -1455,6 +1457,10 @@ nonbiri:{
  late:['支度してたら、お昼になってた','公園の噴水、ずっと見てられるんだよね','出発？ あ、今日はもういいかなって'],
  rest:['今日はお休み。{k}','ずっと寝てた。いい一日だった','休むのも仕事のうち、だよね'],
  normal:['いつも通りの一日。{k}','{w}回勝って、帰ってきた。ふつうだね','夕焼けがきれいだったよ'],
+ master:['{m}、倒しちゃった。大きかったなあ','部屋の主がいたんだけど、気づいたら勝ってた。{k}'],
+ opened:['近道ができたよ。これで、もっとゆっくり歩けるね','壁をどけたら泉に出た。いい昼寝場所だよ'],
+ shy:['あの主はまだ早いかな。{k}','強そうだったから、今日は手前でのんびり戦ってきた'],
+ pal:['{p}と一緒だと楽だねえ','{p}がいたから、半分くらい任せちゃった'],
  town:['{k}','いい天気だねえ','ちょっと寄り道してから行くよ','ふぁ……あ、王様。おはよう'],
  hurt:['いてて……ゆっくり帰るよ','今日はもうおしまい']},
 sekkachi:{
@@ -1467,6 +1473,10 @@ sekkachi:{
  late:['出発が遅すぎる！ 待たされるのが一番いやだ！','なんで今日はこんなに遠回りなんだ！','気づいたら昼過ぎ！ ありえない！'],
  rest:['休み！？ 体がうずうずする！','寝てるだけなんて耐えられない！','明日は誰より早く出る！ {k}'],
  normal:['今日もさっさと行って、さっさと帰ってきた！','{w}勝！ 明日はもっと勝つ！','{k} ……あれ、もう夜！？'],
+ master:['{m}、速攻で倒した！ 次の部屋はどこ！？','部屋の主？ もう倒した！ {k}'],
+ opened:['近道を開けた！ これで明日はもっと速く奥に着く！','遠回りはもうごめんだ！ 泉から一気に抜けられるぞ！'],
+ shy:['あの主、今は勝てない……！ 早く強くなりたい！','手前で腕をみがいた！ じれったい！'],
+ pal:['{p}と並んで走った！ 二人だと倍速だ！','{p}、遅れずについてきたな！'],
  town:['{k}','急いでるから、またあとで！','寄り道してる場合じゃない！','王様、今日も一番乗りで行くよ！'],
  hurt:['くっ……足が重い……','急げない日もあるのか……']},
 okubyo:{
@@ -1479,6 +1489,10 @@ okubyo:{
  late:['準備してたら遅くなっちゃった……','忘れ物がないか、何度も確かめちゃって……','出発するのが、ちょっとこわくて……'],
  rest:['今日はお休み……ほっとしました','{k} ……休めてよかった','家にいると落ち着きます'],
  normal:['今日もなんとか帰ってこられました','{w}回勝てました。少しずつ、です','{k} ……明日もがんばります'],
+ master:['ぼ、ぼくが{m}を……？ 足がまだ震えてます','こわかったけど……{m}、倒せました'],
+ opened:['近道を見つけました。これで、こわい道を通らなくてすみます……','泉に抜ける道ができました。ちょっと安心です'],
+ shy:['あの主は……まだ無理です。ごめんなさい','{k} ……今日は手前で練習してきました'],
+ pal:['{p}が一緒だったから、こわくなかったです','{p}のうしろにいたら、勝てました……'],
  town:['{k}','あ、王様……お、おはようございます','忘れ物、ないよね……','防具屋、まだ開いてるかな……'],
  hurt:['うう……いたい……','こわかった……早く帰りたい……']},
 makezu:{
@@ -1491,6 +1505,9 @@ makezu:{
  late:['出遅れた。{o:depEarlier}に先を越された','なんでこんなに支度に時間がかかるんだ','遅れた分、明日取り返す'],
  rest:['休んでる場合じゃないのに','寝てる間に{o}が強くなってたらどうする','明日は倍やる。{k}'],
  normal:['{w}勝。悪くないが、満足もしてない','{k}','今日の自分には勝った'],
+ master:['{m}を倒した。次はもっと奥だ','部屋の主だろうと関係ない。{k}'],
+ opened:['近道を切り開いた。これで誰より先に奥へ行ける','道がなければ作るまでだ'],
+ pal:['{p}には負けてない。倒した数は同じだ','{p}と組んだが、とどめは全部もらった'],
  town:['{k}','{o}はもう出たか？','王様、今日も勝ってくる','訓練が足りない……'],
  hurt:['くっ……こんなはずじゃ……','次は勝つ……次は……']},
 kuishinbo:{
@@ -1503,6 +1520,10 @@ kuishinbo:{
  late:['朝ごはん食べてたら遅くなっちゃった','{k} ……寄り道しすぎたかな','おなかいっぱいで、眠くなっちゃって'],
  rest:['今日はお休み。おやつの時間がたっぷり','{k}','休みの日のごはんは格別だね'],
  normal:['今日も元気に帰ってきた！ ごはんごはん','{w}回勝った。夕ごはん何かな','{k}'],
+ master:['{m}を倒したら、おなかがすいた！','部屋の主、大きかったなあ。……食べられないよね？'],
+ opened:['近道ができた！ これで早く帰って、早くごはん！','泉の水、おいしいんだよ。近道でいつでも寄れるね'],
+ shy:['あの主は、もっと食べて強くなってからにする','腹八分目じゃ勝てない相手だった。{k}'],
+ pal:['{p}と一緒に戦ったら、帰りにおやつを分けてくれた','{p}と並んで歩くと、おなかがすくのが早い'],
  town:['{k}','いいにおいがする……','王様、おなかすかない？','公園でちょっと休憩……'],
  hurt:['おなかすいた……力が出ない……','帰ったら、たくさん食べて寝る……']},
 yumemi:{
@@ -1515,6 +1536,10 @@ yumemi:{
  late:['学び舎を眺めてたら、時間を忘れてた','雲の形を見てたら、お昼になってた','{k} ……出発、遅れちゃった'],
  rest:['今日はお休み。続きの夢を見ていた','{k}','窓から空を眺めてた。いい一日'],
  normal:['今日のお話は、ちょっと地味だったかな','{w}回勝った。物語の、ふつうの一ページ','{k}'],
+ master:['{m}を倒したよ。物語の一場面みたいだった','部屋の主との戦い……夢で見たとおりだった'],
+ opened:['隠された道を見つけたんだ。{k}','壁の向こうに泉があるって、なんとなく分かってた'],
+ shy:['あの主を倒すのは、まだ先の章かな','いつか倒す。今日はその前のお話'],
+ pal:['{p}と肩を並べて戦うなんて、物語みたい','{p}とは、きっと前から仲間だった気がする'],
  town:['{k}','あの建物、いつか私も……','王様、今日はいい予感がするの','空がきれい……'],
  hurt:['今日の章は、ここでおしまい……','夢なら覚めてほしい……']},
 sewazuki:{
@@ -1527,6 +1552,10 @@ sewazuki:{
  late:['みんなの様子を見て回ってたら遅くなっちゃった','{o}の忘れ物を届けてたの','{k} ……出発が遅れちゃった'],
  rest:['今日はお休み。みんなは元気かな','{k}','休んでる間も、みんなのことが気になって'],
  normal:['今日もみんな無事でよかった','{w}回勝ったよ。{o}はどうだった？','{k}'],
+ master:['{m}を倒せたよ。これでみんな、奥まで安心して行けるね','部屋の主はもういないよ。{k}'],
+ opened:['近道を開けておいたよ。みんなの帰りが楽になるといいな','泉に抜ける道ができたよ。疲れたら休んでいってね'],
+ shy:['あの主にはまだ勝てそうにないの。無理はしないでおくね','今日は手前でがんばったよ。{k}'],
+ pal:['{p}が無事でよかった。わたしが前に出たからね','{p}と一緒だと、わたしもがんばれるの'],
  town:['{k}','王様、ちゃんと朝ごはん食べた？','{o}、もう出発したかな','今日も一日、気をつけてね'],
  hurt:['わたしは大丈夫……みんなは？','ちょっと休めば平気だから……']},
 ippiki:{
@@ -1539,6 +1568,9 @@ ippiki:{
  late:['人の多い道を避けてたら、遅くなった','……遠回りは嫌いじゃない','{k}'],
  rest:['……静かな一日だった','{k}','休むのも悪くない'],
  normal:['……いつも通りだ','{w}勝。……それだけだ','{k}'],
+ master:['……{m}は片づけた','部屋の主か。ひとりで十分だった'],
+ opened:['……道を開けておいた。使いたければ使え','近道だ。……別に、みんなのためじゃない'],
+ shy:['……あの主は、まだだ','焦る必要はない。{k}'],
  town:['{k}','……何か用か','……先に行く','……騒がしいのは苦手だ'],
  hurt:['……かすり傷だ','……放っておいてくれ']},
 };
@@ -1556,8 +1588,8 @@ ippiki:{board:['……{d}のおふれを受けた','{d}か。……ひとりで�
 const BEHEST_TEXT={explore:'西の洞窟の探索',boss:'西の洞窟の親玉退治'};
 // その日の出来事から、ひと言の場面を選ぶ
 function voiceScene(r){
-  if(r.boss)return 'boss'; if(r.ko)return 'ko'; if(r.ups&&r.ups.length)return 'lvup'; if(r.bought&&r.bought.length)return 'gear';
-  if(r.rested)return 'rest'; if(r.dep===null||r.dep>=720)return 'late'; if(r.wins>=5&&r.losses===0)return 'streak'; if(r.losses>r.wins)return 'lost'; return 'normal';
+  if(r.boss)return 'boss'; if(r.ko)return 'ko'; if(r.master)return 'master'; if(r.opened)return 'opened'; if(r.ups&&r.ups.length)return 'lvup'; if(r.bought&&r.bought.length)return 'gear';
+  if(r.rested)return 'rest'; if(r.dep===null||r.dep>=720)return 'late'; if(r.pal&&r.palN>=3)return 'pal'; if(r.shy&&(r.wins+r.id)%3===0)return 'shy'; if(r.wins>=5&&r.losses===0)return 'streak'; if(r.losses>r.wins)return 'lost'; return 'normal';
 }
 // 決まった材料から同じ結果を返す小さな乱数（報告書を開き直しても台詞が変わらない）
 function seeded(n){n=(n^0x9e3779b9)>>>0; n=Math.imul(n^(n>>>16),0x45d9f3b)>>>0; n=Math.imul(n^(n>>>16),0x45d9f3b)>>>0; return ((n^(n>>>16))>>>0)/4294967296;}
@@ -1572,12 +1604,12 @@ const OCOND={
 };
 // 台詞の中の {o:条件} を満たす相手の一覧。rows がない（街で聞く声など）ときは条件つきの台詞を使わない
 function candidates(cond,me,rows){if(!rows||!me)return []; return rows.filter(o=>o.id!==me.id&&OCOND[cond](me,o));}
-function usable(t,me,rows){const m=t.match(/\{o:(\w+)\}/g); if(m&&!m.every(x=>candidates(x.slice(3,-1),me,rows).length))return false; if(t.includes('{o}')&&S.advs.length<2)return false; return true;}
+function usable(t,me,rows){const m=t.match(/\{o:(\w+)\}/g); if(m&&!m.every(x=>candidates(x.slice(3,-1),me,rows).length))return false; if(t.includes('{o}')&&S.advs.length<2)return false; if(t.includes('{p}')&&!(me&&me.pal))return false; if(t.includes('{m}')&&!(me&&me.master))return false; return true;}
 function fillLine(t,a,r,seed,rows){
   const others=S.advs.filter(x=>x.id!==a.id), anyO=others.length?others[Math.floor(seeded(seed+7)*others.length)].name:'みんな';
   const item=r&&r.bought&&r.bought.length?r.bought[r.bought.length-1].name:'';
   return t.replace(/\{o:(\w+)\}/g,(_,c)=>{const cs=candidates(c,r,rows); return cs.length?cs[Math.floor(seeded(seed+11)*cs.length)].name:anyO;})
-    .replace(/\{k\}/g,`「${a.k}」`).replace(/\{o\}/g,anyO).replace(/\{w\}/g,r?r.wins:0).replace(/\{i\}/g,item);
+    .replace(/\{k\}/g,`「${a.k}」`).replace(/\{o\}/g,anyO).replace(/\{w\}/g,r?r.wins:0).replace(/\{i\}/g,item).replace(/\{p\}/g,r&&r.pal||'').replace(/\{m\}/g,r&&r.master||'');
 }
 function pickLine(a,scene,seed,r,rows){
   let pool=(VOICE[a.pid][scene]||[]).filter(t=>usable(t,r,rows));
@@ -1794,7 +1826,12 @@ function logHTML(r){
       case 'w': {
         const crit=e.c?'会心の一撃が決まり、':'';
         if(m.master)txt=`${withCo(e)}${crit}部屋の主・${m.n}を${e.r}ラウンドで倒した！`;
-        else if(e.r<=2)txt=`${withCo(e)}${crit}${m.n}をあっさり倒した`;
+        else if(e.r<=2){ // 楽に勝った戦いが続いたら1行にまとめる（同じ仲間との共闘どうしもまとめる）
+          const key=(e.co||[]).join('と'), last=L[L.length-1];
+          if(last&&last.q&&last.qk===key){last.q[m.n]=(last.q[m.n]||0)+1; last.c=last.c||e.c;} else {add(e.t,''); Object.assign(L[L.length-1],{q:{[m.n]:1},qk:key,c:e.c});}
+          const cur=L[L.length-1], q=cur.q, names=Object.keys(q).map(k=>q[k]>1?`${k}${q[k]}匹`:k), n=Object.values(q).reduce((x,y)=>x+y,0);
+          cur.txt=n===1?`${withCo(e)}${cur.c?'会心の一撃が決まり、':''}${names[0]}をあっさり倒した`:`${withCo(e)}${names.join('、')}を次つぎに倒した`;
+          continue; }
         else if(m.hard&&e.r>=5)txt=`${withCo(e)}${m.n}の硬さに手こずったが、${crit}${e.r}ラウンドかけて倒した`;
         else txt=`${withCo(e)}${crit}${m.n}を${e.r}ラウンドで倒した`;
         break; }
@@ -1806,7 +1843,7 @@ function logHTML(r){
       case 'u': txt='レベルが上がった'; break;
       case 'p': txt='毒を受けてしまった'; break;
       case 'r': if(prevRest===e.n){L[L.length-1].txt=`${node.n}でしばらく休んだ`; continue;} prevRest=e.n; txt=`${node.n}でひと休みした`; break;
-      case 's': txt=`${node.n}を${e.first?'初めて':''}調べ、${RES}を${e.e}見つけた`+(e.chest?`。宝箱から${e.chest}ゴールド！`:'')+(e.clue?'。近道の手がかりも見つけた':''); break;
+      case 's': txt=`${node.n}を${e.first?'初めて':''}調べ、${RES}を${e.e}見つけた`+(e.chest?`。宝箱から${e.chest}ゴールドも出てきた`:'')+(e.clue?'。近道の手がかりも見つけた':''); break;
       case 'o': txt='泉へ抜ける近道を切り開いた！'; break;
       case 'd': txt=`寄り道：${(DT[e.z==='forest'?'forest':'cave'])[e.v%6]}`; break;
     }
@@ -1888,7 +1925,7 @@ function mapHTML(rep){
   }
   // きょう、それぞれがいちばん奥まで行った場所に顔を置く
   const at={}; for(const r of rep.advs){ if(!r.reach||r.reach==='gate')continue; (at[r.reach]=at[r.reach]||[]).push(r); }
-  for(const id in at){ const [x,y]=P(id), below=(id==='spring'||id==='boss'||id==='r2'); at[id].forEach((r,i)=>{ const fx=x-((at[id].length-1)*7)+i*14-7, fy=below?y+10:y-27;
+  for(const id in at){ const [x,y]=P(id), below=(id==='spring'||id==='boss'||id==='r2'||id==='hall'); at[id].forEach((r,i)=>{ const fx=below?x+12+i*15:x-((at[id].length-1)*7)+i*14-7, fy=below?y-7:y-27;
       faces+=`<g><circle cx="${fx+7}" cy="${fy+7}" r="8" class="fc"/><image href="${faceURL(r)}" x="${fx}" y="${fy}" width="14" height="14" clip-path="circle(7px at 7px 7px)" style="image-rendering:pixelated"/><title>${r.name}</title></g>`; }); }
   const newN=EDGES.filter(e=>trips(e.id)&&!W0.trips[e.id]).length;
   const news=[]; if(newN)news.push(`新しい道 ${newN}本`);
@@ -2036,6 +2073,8 @@ function loop(now){
 }
 $('resLbl').textContent=RES;
 $('startBtn').addEventListener('click',()=>{$('titleModal').hidden=true; openReport();});
+// 開発用：コンソールやテストから日を早送りする  __tct.skip(3) で3日進めて報告書を開く
+if(DEV)window.__tct={get S(){return S;},skip(n=1){for(let i=0;i<n;i++){if(S.phase!=='day')startDay(S); tick(S,2000);} wasPhase=S.phase; $('titleModal').hidden=true; $('dayCard').hidden=true; $('duskCard').hidden=true; openReport({instant:true});}};
 updateHud(); renderPanel(); requestAnimationFrame(loop);
 initGfx().then(g=>{GFX=g;}).catch(e=>{console.error(e); $('glfail').hidden=false;});
 </script>
