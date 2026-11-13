@@ -453,7 +453,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.9.0 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.9.1 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -499,7 +499,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 /*SIM-START*/
 const W=20,H=12;
 const DAY_START=360, LEAVE=420, RETURN_TIME=1020, DAY_END=1200, TRAVEL=40;
-const WALK=6, SLOW=14, PARK_CAP=5, ENC=40;
+const WALK=9, SLOW=18, PARK_CAP=5, ENC=40;
 const GATE={x:10,y:11}, CASTLE_DOOR={x:10,y:3};
 const BUILD={
   house:{name:'民家',cost:150,max:12,desc:'家族が住む。若者がひとり冒険者になる。建てられる数は章ごとに決まっている'},
@@ -522,8 +522,8 @@ const ARMORS=['旅の服','革のよろい','鎖のよろい','鉄のよろい',
 // armorFirst:防具を先に買う walk:1マスにかかる分 retreat:引き返す体力の割合 dmg:受けるダメージ倍率 atk:攻撃の上乗せ roll:会心が出やすく未踏の道を好む
 // rest:休憩を始める体力の割合(0は休まない) detour:寄り道のしやすさ margin:帰りに見る余裕(ターン。負なら門限に遅れがち) safe:安全な道を選び主に慎重 brave:勝ち目がなくても挑む solo:共闘しない
 const PERSONAS={
-  nonbiri:{like:['mine','treasure'],name:'のんびり屋',leave:20,park:35,walk:7,retreat:.3,dmg:.85,rest:.65,detour:.2,margin:3,k:['まあ、なんとかなるって','ふぁ……いい天気','急がなくても逃げないよ']},
-  sekkachi:{like:['boss','train'],name:'せっかち',leave:-10,skipPark:true,maxShops:1,walk:5,retreat:.25,rest:0,detour:0,margin:-3,k:['よし、行こう今すぐ！','待ってられない！','ほら早く早く！']},
+  nonbiri:{like:['mine','treasure'],name:'のんびり屋',leave:20,park:35,walk:10,retreat:.3,dmg:.85,rest:.65,detour:.2,margin:3,k:['まあ、なんとかなるって','ふぁ……いい天気','急がなくても逃げないよ']},
+  sekkachi:{like:['boss','train'],name:'せっかち',leave:-10,skipPark:true,maxShops:1,walk:7,retreat:.25,rest:0,detour:0,margin:-3,k:['よし、行こう今すぐ！','待ってられない！','ほら早く早く！']},
   okubyo:{like:['mine','treasure'],name:'臆病',armorFirst:true,retreat:.5,rest:.7,margin:5,safe:true,k:['ぼ、ぼくでいいのかな……','こ、こわくないし……','だ、大丈夫かな……']},
   makezu:{like:['boss','train'],name:'負けず嫌い',retreat:.15,rest:.35,brave:true,k:['次は勝つ','負けたままじゃ終われない','見てろよ']},
   kuishinbo:{like:['treasure','mine'],name:'食いしん坊',lovePark:true,park:30,detour:.3,k:['おなかすいた……','帰ったらなに食べよう','腹が減っては戦えない！']},
@@ -830,16 +830,16 @@ function chooseBehest(S,a){
 const TURN=5, GATE_BY=1060;
 const NODES={
   gate:{n:'城門'}, fork:{n:'森の分かれ道'}, spring:{n:'森の泉',rest:true}, mouth:{n:'洞窟の入口'},
-  r1:{n:'第一の部屋',room:true,master:'bigrat',chest:30}, r2:{n:'第二の部屋',room:true,chest:40,clue:true},
-  hall:{n:'奥の広間',room:true,master:'king',chest:60}, boss:{n:'親玉の間',boss:true},
+  r1:{n:'第一の部屋',room:true,rich:.6,master:'bigrat',chest:30}, r2:{n:'第二の部屋',room:true,rich:1,chest:40,clue:true},
+  hall:{n:'奥の広間',room:true,rich:1.8,master:'king',chest:60}, boss:{n:'親玉の間',boss:true},
 };
 const EDGES=[
-  {id:'e1',a:'gate',b:'fork',len:6,risk:.16,zone:'forest',n:'森の道'},
+  {id:'e1',a:'gate',b:'fork',len:12,risk:.16,zone:'forest',n:'森の道'},
   {id:'e2',a:'fork',b:'spring',len:3,risk:.12,zone:'forest',n:'泉への小道'},
-  {id:'e3',a:'fork',b:'mouth',len:4,risk:.16,zone:'forest',n:'洞窟への道'},
+  {id:'e3',a:'fork',b:'mouth',len:8,risk:.16,zone:'forest',n:'洞窟への道'},
   {id:'e4',a:'mouth',b:'r1',len:3,risk:.27,zone:'cave',n:'洞窟の通路'},
-  {id:'e5',a:'r1',b:'r2',len:4,risk:.27,zone:'cave',n:'曲がりくねった通路'},
-  {id:'e6',a:'r2',b:'hall',len:4,risk:.3,zone:'deep',n:'深い通路'},
+  {id:'e5',a:'r1',b:'r2',len:6,risk:.27,zone:'cave',n:'曲がりくねった通路'},
+  {id:'e6',a:'r2',b:'hall',len:6,risk:.3,zone:'deep',n:'深い通路'},
   {id:'e7',a:'hall',b:'boss',len:3,risk:0,zone:'deep',n:'親玉の間への道',bossWay:true},
   {id:'cut',a:'spring',b:'r2',len:2,risk:.2,zone:'cave',n:'泉の裏の近道',cut:true},
 ];
@@ -985,14 +985,14 @@ function actDone(S,a,k){
   const o=a.out, r=S.rng, W=S.world, id=o.at, N=NODES[id];
   if(k==='rest'){const g=Math.ceil(a.hpMax*(N.rest?.3:.1)); a.hp=Math.min(a.hpMax,a.hp+g); ev(S,a,'r',{n:id,g});}
   if(k==='search'){
-    const got=10+Math.floor(r()*7); a.rep.elem+=got; W.searchDay[id]=S.day;
+    const got=Math.round((10+Math.floor(r()*7))*(N.rich||1)); a.rep.elem+=got; W.searchDay[id]=S.day;
     const first=!W.searched[id]; if(first){W.searched[id]=true; unit(S,a);}
     let chest=0; if(N.chest&&!W.chest[id]){W.chest[id]=true; chest=N.chest; a.gold+=chest; a.rep.gold+=chest;}
     let clue=false; if(N.clue&&!W.clue){W.clue=true; clue=true;}
     ev(S,a,'s',{n:id,e:got,first,chest,clue});
   }
-  if(k==='mine'){const v=W.vein[id]===undefined?1:W.vein[id], got=Math.max(2,Math.round((20+r()*8)*v)); W.vein[id]=Math.max(0,v-.06); a.rep.elem+=got; ev(S,a,'s',{n:id,e:got,mine:true});}
-  if(k==='treasure'){const v=W.veinG[id]===undefined?1:W.veinG[id], got=Math.max(2,Math.round((18+r()*8)*v)); W.veinG[id]=Math.max(0,v-.06); a.gold+=got; a.rep.gold+=got; ev(S,a,'s',{n:id,g:got,treasure:true});}
+  if(k==='mine'){const v=W.vein[id]===undefined?1:W.vein[id], got=Math.max(2,Math.round((20+r()*8)*v*(N.rich||1))); W.vein[id]=Math.max(0,v-.06); a.rep.elem+=got; ev(S,a,'s',{n:id,e:got,mine:true});}
+  if(k==='treasure'){const v=W.veinG[id]===undefined?1:W.veinG[id], got=Math.max(2,Math.round((18+r()*8)*v*(N.rich||1))); W.veinG[id]=Math.max(0,v-.06); a.gold+=got; a.rep.gold+=got; ev(S,a,'s',{n:id,g:got,treasure:true});}
   if(k==='open'&&!W.cut){W.cut=true; a.rep.opened=true; ev(S,a,'o',{});}
   if(k==='detour'){a.morale=Math.min(100,a.morale+6); a.hp=Math.min(a.hpMax,a.hp+2);}
 }
