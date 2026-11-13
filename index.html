@@ -452,7 +452,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.8.2 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.8.3 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -501,11 +501,11 @@ const DAY_START=360, LEAVE=420, RETURN_TIME=1020, DAY_END=1200, TRAVEL=40;
 const WALK=6, SLOW=14, PARK_CAP=5, ENC=40;
 const GATE={x:10,y:11}, CASTLE_DOOR={x:10,y:3};
 const BUILD={
-  house:{name:'民家',cost:100,max:12,desc:'家族が住む。若者がひとり冒険者になる。建てられる数は章ごとに決まっている'},
+  house:{name:'民家',cost:150,max:12,desc:'家族が住む。若者がひとり冒険者になる。建てられる数は章ごとに決まっている'},
   board:{name:'立て札',cost:50,max:1,desc:'おふれを貼る。冒険者は毎朝ここに寄る'},
-  park:{name:'噴水の公園',cost:150,max:1,desc:'朝に寄るとやる気が回復。1日5人まで'},
-  weapon:{name:'武器屋',cost:150,max:1,desc:'お金があれば武器を買う。攻撃+2'},
-  armor:{name:'防具屋',cost:150,max:1,desc:'お金があれば防具を買う。守り+1・体力+6'},
+  park:{name:'噴水の公園',cost:180,max:1,desc:'朝に寄るとやる気が回復。1日5人まで'},
+  weapon:{name:'武器屋',cost:220,max:1,desc:'お金があれば武器を買う。攻撃+2'},
+  armor:{name:'防具屋',cost:220,max:1,desc:'お金があれば防具を買う。守り+1・体力+6'},
 };
 const NAMES=['アルト','ベル','コナ','ダイ','エマ','フウ','ギン','ハル','イオ','ジノ','ケイ','ルカ'];
 const LOOKS=[['#3b2a1e','#c0503a'],['#e0c060','#3f78b8'],['#5a3a7a','#d08a3a'],['#1e1e22','#4c9a5a'],['#b8582e','#8a4fa0'],['#e6e2d6','#2f8f8f'],['#6b4a2a','#d0607a'],['#1d3b6b','#b0a040'],['#a03030','#6a8ad0'],['#e8e0d0','#5a5aa8'],['#40302a','#c07a40'],['#c07020','#307070']];
@@ -558,7 +558,7 @@ function bfs(g,a,b){
 }
 
 function newState(rng){
-  const S={g:makeMap(),day:1,t:DAY_START,elem:450,explore:0,bossDown:false,justWon:false,posted:['explore'],nom:{},chapter:1,b:[],advs:[],sites:[],carps:[newCarp(0)],builtToday:[],refund:0,phase:'report',parkUsed:0,demolished:0,rng:rng||Math.random,nextId:1,lastReport:null,fx:[],world:newWorld(),fights:[]};
+  const S={g:makeMap(),day:1,t:DAY_START,elem:300,explore:0,bossDown:false,justWon:false,posted:['explore'],nom:{},chapter:1,b:[],advs:[],sites:[],carps:[newCarp(0)],builtToday:[],refund:0,phase:'report',parkUsed:0,demolished:0,rng:rng||Math.random,nextId:1,lastReport:null,fx:[],world:newWorld(),fights:[]};
   // 性格の出てくる順番はプレイごとに変わる
   S.pOrder=PIDS.slice(); for(let i=S.pOrder.length-1;i>0;i--){const j=Math.floor(S.rng()*(i+1)); [S.pOrder[i],S.pOrder[j]]=[S.pOrder[j],S.pOrder[i]];}
   build(S,'house',2,2,true); build(S,'house',17,9,true); build(S,'board',12,4,true);
