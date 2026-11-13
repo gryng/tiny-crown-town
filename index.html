@@ -49,7 +49,9 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   content:"";position:absolute;inset:0;z-index:-1;background:var(--paper-bg);box-shadow:0 0 0 2.5px var(--ink),3px 5px 0 #0007;filter:url(#rough)}
 .sheet::before{filter:url(#roughL)}
 /* 大きな紙は破れた縁を一度だけ画像に焼いて使い回す（中身が動くたびにフィルタを再計算させない） */
-.sheet.baked::before{filter:none;box-shadow:none;inset:-14px;background:var(--baked) 0 0/100% 100% no-repeat,var(--baked-old,none) 0 0/100% 100% no-repeat}
+.sheet.baked::before{filter:none;box-shadow:none;inset:-14px -14px 66px -14px;background:var(--bk-body) 0 0/auto no-repeat,var(--bk-body-old,none) 0 0/auto no-repeat}
+/* 紙の下端だけは別の帯で描き、高さが変わったら下端の帯だけ描き直す。上と左右の縁は伸び縮みしても動かない */
+.sheet.baked::after{content:"";position:absolute;left:-14px;right:-14px;bottom:-14px;height:80px;z-index:-1;pointer-events:none;background:var(--bk-foot) 0 0/100% 100% no-repeat,var(--bk-foot-old,none) 0 0/100% 100% no-repeat}
 
 .hud{display:flex;align-items:center;padding:6px 4px}
 .hi{flex:1 1 auto;display:flex;align-items:center;justify-content:center;gap:5px;padding:0 8px;min-width:0}
@@ -480,7 +482,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.10.2 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.10.3 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -2500,13 +2502,16 @@ if(/\bLine\//i.test(navigator.userAgent)){
 }
 
 /* ===== 破れた紙を画像に焼く ===== */
+// 紙全体を1枚の絵として、同じ座標の揺らぎで描く。上〜胴は長めに1枚（幅が変わるまで使い回す）、下端80pxは高さが変わるたびに描き直す。
+// 揺らぎは紙の左上を原点にした座標で決まるので、どの切り出しでも縁の形がつながり、伸び縮みしても上と左右の縁は動かない
 (function(){
-  const P=14;
-  function svgFor(w,h){
+  const P=14, FOOT=80, STEP=1200;
+  function svgFor(w,h,y0,vh){ // 高さ h の紙のうち、y0 から vh ぶんを切り出した絵
     const W=w+P*2,H=h+P*2;
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`+
-    `<defs><radialGradient id="pg" cx=".5" cy=".45" r="1" gradientTransform="translate(.5 .45) scale(1.2 .9) translate(-.5 -.45)">`+
-    `<stop offset="0" stop-color="#f4ebd5"/><stop offset=".62" stop-color="#e9dcbd"/><stop offset="1" stop-color="#d2bf96"/></radialGradient>`+
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${vh}" viewBox="0 ${y0} ${W} ${vh}">`+
+    `<defs><radialGradient id="pg" gradientUnits="userSpaceOnUse" cx="${W/2}" cy="360" r="${Math.max(W,640)}">`+ // 紙の色むらも高さに関係なく同じ（継ぎ目が出ないように）
+
+    `<stop offset="0" stop-color="#f4ebd5"/><stop offset=".5" stop-color="#ece0c3"/><stop offset="1" stop-color="#d9c79f"/></radialGradient>`+
     `<filter id="r" filterUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}">`+
     `<feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="3" seed="3" result="t"/>`+
     `<feDisplacementMap in="SourceGraphic" in2="t" scale="9" result="d"/>`+
@@ -2517,22 +2522,25 @@ if(/\bLine\//i.test(navigator.userAgent)){
     `<g filter="url(#r)"><rect x="${P+3}" y="${P+5}" width="${w}" height="${h}" fill="#000" fill-opacity=".47"/>`+
     `<rect x="${P-1.25}" y="${P-1.25}" width="${w+2.5}" height="${h+2.5}" fill="url(#pg)" stroke="#241c14" stroke-width="2.5"/></g></svg>`;
   }
-  function bake(el){
-    const w=el.offsetWidth,h=el.offsetHeight; if(!w||!h)return;
-    if(el._bw===w&&el._bh===h)return; el._bw=w; el._bh=h;
-    const src='data:image/svg+xml,'+encodeURIComponent(svgFor(w,h)), url='url("'+src+'")';
-    // 新しい紙の画像を先に読み込み終えてから差し替える。古い紙は下に敷いたままにして、一瞬でも紙が消えないようにする
-    const apply=()=>{
-      if(el._bw!==w||el._bh!==h)return;
-      if(el._cur)el.style.setProperty('--baked-old',el._cur);
-      el.style.setProperty('--baked',url); el._cur=url;
-      el.classList.add('baked');
-    };
-    const img=new Image(); img.src=src;
+  const url=svg=>'url("data:image/svg+xml,'+encodeURIComponent(svg)+'")';
+  // 新しい絵を読み込み終えてから差し替える。古い絵は下に敷いたまま（一瞬でも紙が消えないように）
+  function swap(el,key,svg,check){
+    const u=url(svg), img=new Image(); img.src=u.slice(5,-2);
+    const apply=()=>{ if(!check())return; const cur=el['_'+key]; if(cur)el.style.setProperty(`--bk-${key}-old`,cur); el.style.setProperty(`--bk-${key}`,u); el['_'+key]=u; el.classList.add('baked'); };
     (img.decode?img.decode():new Promise(r=>{img.onload=img.onerror=r;})).then(apply,apply);
   }
-  const pend=new Set(); let raf=0;
-  const ro=new ResizeObserver(es=>{for(const e of es)pend.add(e.target); if(!raf)raf=requestAnimationFrame(()=>{raf=0; pend.forEach(bake); pend.clear();});});
+  function bake(el){
+    const w=el.offsetWidth,h=el.offsetHeight; if(!w||!h)return;
+    // 胴：幅が変わったときか、用意した長さが足りなくなったときだけ描き直す（下端は描かないよう、十分長い紙として描く）
+    const need=h+P*2;
+    if(el._bw!==w||!el._bodyH||need>el._bodyH-STEP/4){
+      const bh=Math.ceil((need+STEP/2)/STEP)*STEP; el._bw=w; el._bodyH=bh;
+      swap(el,'body',svgFor(w,bh+400,0,bh),()=>el._bw===w&&el._bodyH===bh);
+    }
+    // 下端の帯：高さが変わるたびに、同じ座標系で最後の80pxを切り出す
+    if(el._fw!==w||el._fh!==h){el._fw=w; el._fh=h; swap(el,'foot',svgFor(w,h,h+P*2-FOOT,FOOT),()=>el._fw===w&&el._fh===h);}
+  }
+  const ro=new ResizeObserver(es=>{for(const e of es)bake(e.target);}); // 描き直しはすぐ始める（読み込み待ちのあいだは前の絵）
   document.querySelectorAll('.sheet').forEach(el=>ro.observe(el));
 })();
 </script>
