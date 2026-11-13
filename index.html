@@ -73,6 +73,8 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 
 .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .seg{display:flex;padding:3px;gap:2px}
+.screen .seg{position:absolute;left:8px;top:8px;z-index:2;line-height:1.4}
+.screen .seg button{padding:3px 9px;min-width:38px;min-height:32px;font-size:13px}
 .seg button{background:none;border:0;padding:5px 12px;min-width:44px;font-family:var(--f-head);font-weight:800;font-size:14px;color:var(--ink);border-radius:3px}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--paper);box-shadow:inset 0 -2px 0 #0004}
 .toggle{padding:6px 14px;font-family:var(--f-head);font-weight:800;font-size:14px}
@@ -370,19 +372,14 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 
   <div class="screen">
     <canvas id="town" aria-label="城下町のジオラマ。空き地をタップして建物を建てる"></canvas>
-    <div class="daypart" id="daypart">夜明け</div>
-    <div class="voice" id="voice" hidden></div>
-    <div class="glfail" id="glfail" hidden>3D表示を読み込めませんでした。<br>通信状況を確かめて、Safari や Chrome で開き直してください。</div>
-  </div>
-
-  <div class="controls">
     <div class="seg" role="group" aria-label="時間の速さ">
       <button id="sp0" data-sp="0" aria-pressed="false">停止</button>
       <button id="sp1" data-sp="1" aria-pressed="true">×1</button>
       <button id="sp2" data-sp="2" aria-pressed="false">×2</button>
       <button id="sp4" data-sp="4" aria-pressed="false">×4</button>
     </div>
-    <button id="trails" class="toggle" aria-pressed="false">足あと</button>
+    <div class="voice" id="voice" hidden></div>
+    <div class="glfail" id="glfail" hidden>3D表示を読み込めませんでした。<br>通信状況を確かめて、Safari や Chrome で開き直してください。</div>
   </div>
 
   <section class="panel plate" id="panel" aria-live="polite"></section>
@@ -392,6 +389,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     <div class="menu plate" id="menu" hidden>
       <p class="menu-h">メニュー</p>
       <button class="mi" id="lite" aria-pressed="false"><span>軽量表示</span><small>ぼかしや光のにじみを切って軽くする</small><i class="sw"></i></button>
+      <button class="mi" id="trails" aria-pressed="false"><span>足あと</span><small>冒険者が歩いた道すじを町に重ねて見せる</small><i class="sw"></i></button>
     </div>
   </div>
 </div>
@@ -400,7 +398,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.5.2 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.5.3 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -1399,7 +1397,6 @@ function updateHud(){
   $('sun').style.width=`${pc}%`; $('sun').style.setProperty('--sunw',`${10000/Math.max(pc,1)}%`);
   $('elem').textContent=S.elem+(S.refund?` (+${S.refund})`:'');
   $('explore').textContent=`${Math.floor(S.explore)}%`+(S.bossDown?' 制覇':''); $('exbar').style.width=`${S.explore}%`;
-  $('daypart').textContent=daypart(S.t);
 }
 const PLACE={park:'公園で休憩',board:'立て札でおふれを確認',weapon:'武器屋で買い物',armor:'防具屋で買い物',gate:'城門へ',castle:'城へ報告',home:'家へ帰る'};
 function status(a){
@@ -1752,7 +1749,7 @@ function loop(now){
 $('resLbl').textContent=RES;
 $('startBtn').addEventListener('click',()=>{$('titleModal').hidden=true; openReport();});
 updateHud(); renderPanel(); requestAnimationFrame(loop);
-initGfx().then(g=>{GFX=g;}).catch(e=>{console.error(e); $('glfail').hidden=false; $('daypart').hidden=true;});
+initGfx().then(g=>{GFX=g;}).catch(e=>{console.error(e); $('glfail').hidden=false;});
 </script>
 
 <script>
