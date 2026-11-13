@@ -199,41 +199,72 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 #rpWon.in{animation:slam .4s cubic-bezier(.2,1.5,.4,1) forwards}
 @keyframes slam{from{transform:scale(1.5) rotate(-3deg);opacity:0}to{transform:scale(1) rotate(-.6deg);opacity:1}}
 /* 報告書：冒険者カード（1枚ずつ登場） */
-.rc{position:relative;background:#f3ead3;border:1.5px solid var(--ink);border-radius:3px 9px 4px 8px;box-shadow:2px 3px 0 #241c1426;color:var(--ink);padding:10px 12px;display:grid;grid-template-columns:minmax(0,1fr);gap:8px;opacity:0;transform:translateY(14px) rotate(.6deg)}
+.rc{position:relative;background:#f3ead3;border:1.5px solid var(--ink);border-radius:3px 9px 4px 8px;box-shadow:2px 3px 0 #241c1426;color:var(--ink);display:grid;grid-template-columns:minmax(0,1fr);opacity:0;transform:translateY(14px) rotate(.6deg)}
 .rc.in{animation:cardIn .34s cubic-bezier(.2,1.2,.4,1) forwards}
 @keyframes cardIn{to{opacity:1;transform:none}}
 .rc.up{border-color:var(--gold-ink);background:linear-gradient(180deg,#f8ecc4,#f3ead3 70%);box-shadow:0 0 0 2px #c9a84c88,3px 4px 0 #8a6a1e44}
 .rc.flash::after{content:"";position:absolute;inset:0;border-radius:inherit;background:#fff3c4;pointer-events:none;animation:flash .5s ease-out forwards}
 @keyframes flash{from{opacity:.85}to{opacity:0}}
-.rc-top{display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:2px 12px;align-items:center}
-.rc-face{position:relative;grid-row:1/3;width:48px;height:48px}
-.rc-face .face{width:48px;height:48px}
-.lvb{position:absolute;left:50%;bottom:-7px;transform:translateX(-50%);background:var(--ink);color:var(--paper);font-family:var(--f-head);font-weight:800;font-size:10px;line-height:1.5;padding:0 6px;border-radius:8px;white-space:nowrap}
+/* 名札の帯：顔・名前・性格・きょうの結果 */
+.rc-top{display:grid;grid-template-columns:54px minmax(0,1fr) auto;gap:12px;align-items:center;background:var(--grain),#2a2018;color:var(--paper);padding:8px 12px 8px 14px;border-radius:2px 7px 0 0}
+.rc.up .rc-top{background:var(--grain),linear-gradient(90deg,#5a4312,#2a2018 70%)}
+.rc-face{position:relative;width:54px;height:54px;margin-bottom:-16px;z-index:1}
+.rc-face .face{width:54px;height:54px;border-color:var(--paper);box-shadow:0 0 0 2px var(--ink)}
+.lvb{position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);background:var(--ink);color:var(--paper);font-family:var(--f-head);font-weight:800;font-size:10px;line-height:1.5;padding:0 7px;border-radius:8px;white-space:nowrap;box-shadow:0 0 0 1.5px var(--paper)}
 .rc.up .lvb{background:var(--gold-ink)}
 .burst{position:absolute;inset:-14px;border-radius:50%;background:repeating-conic-gradient(#c9a84c 0 8deg,transparent 8deg 24deg);-webkit-mask:radial-gradient(circle,transparent 54%,#000 56%,transparent 72%);mask:radial-gradient(circle,transparent 54%,#000 56%,transparent 72%);opacity:0;pointer-events:none}
 .rc.flash .burst{animation:burst .7s ease-out forwards}
 @keyframes burst{0%{opacity:1;transform:scale(.6) rotate(0)}99%{opacity:0;transform:scale(1.5) rotate(40deg)}100%{opacity:0;transform:scale(.6)}}
-.rc .say{grid-column:2/4;margin:0;white-space:normal;overflow:visible;font-family:var(--f-hand);font-weight:600;font-size:14px;line-height:1.5;color:var(--accent)}
-.lvbanner{display:none;min-width:0;max-width:100%;box-sizing:border-box;flex-wrap:wrap;gap:2px 12px;align-items:baseline;background:linear-gradient(90deg,#c9a84c88,#c9a84c22 85%);border-left:4px solid var(--gold-ink);padding:5px 12px;transform-origin:left center}
+.rc .who{display:grid;gap:0;min-width:0}
+.rc .who b{font-family:var(--f-head);font-weight:800;font-size:19px;line-height:1.25;color:var(--paper);letter-spacing:.04em}
+.rc .who small{font-size:10.5px;font-weight:700;letter-spacing:.1em;color:#cdbf9c}
+.rc-body{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;padding:24px 14px 12px}
+/* セリフは吹き出しで、顔から話しているように */
+.bub{position:relative;margin:0;background:#fffaf0;border:1.5px solid var(--ink);border-radius:12px 14px 13px 11px;padding:9px 13px;font-family:var(--f-hand);font-weight:600;font-size:14px;line-height:1.6;color:var(--ink);box-shadow:2px 2px 0 #241c141f}
+.bub::before{content:"";position:absolute;left:20px;top:-7px;width:11px;height:11px;background:#fffaf0;border-left:1.5px solid var(--ink);border-top:1.5px solid var(--ink);transform:rotate(45deg);border-radius:2px 0 0 0}
+.lvbanner{display:none;min-width:0;max-width:100%;box-sizing:border-box;flex-wrap:wrap;gap:2px 12px;align-items:baseline;background:linear-gradient(90deg,#c9a84c88,#c9a84c22 85%);border-left:4px solid var(--gold-ink);padding:6px 12px;transform-origin:left center}
 .rc.up .lvbanner{display:flex;animation:slam .36s cubic-bezier(.2,1.5,.4,1)}
-.lvbanner strong{font-family:var(--f-head);font-weight:800;font-size:19px;color:var(--ink);letter-spacing:.06em}
-.lvbanner span{font-family:var(--f-head);font-weight:800;font-size:13px;color:var(--ink)}
-.xp{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;font-size:11px;font-weight:700;color:var(--muted)}
-.xn{font-family:var(--f-head);font-weight:800;font-size:13px;color:var(--ink);font-variant-numeric:tabular-nums;min-width:5ch;text-align:right}
-.rc-gains{display:flex;flex-wrap:wrap;gap:6px 8px}
-.rc-gains .g{display:flex;align-items:center;gap:2px;background:var(--paper);border:1.5px solid #241c1466;border-radius:3px 6px 3px 5px;padding:1px 9px;font-family:var(--f-head);font-weight:800;font-size:15px;font-variant-numeric:tabular-nums}
-.rc-gains .g.ex{font-size:13px}
-.more summary,.log summary{cursor:pointer;list-style:none;font-size:12px;font-weight:700;color:var(--muted);display:inline-flex;align-items:center;gap:6px;padding:2px 0}
-.more summary::-webkit-details-marker,.log summary::-webkit-details-marker{display:none}
-.more summary::before,.log summary::before{content:"";width:0;height:0;border-left:6px solid var(--accent);border-top:4px solid transparent;border-bottom:4px solid transparent;transition:transform .15s}
-.more[open]>summary::before,.log[open]>summary::before{transform:rotate(90deg)}
-.more-body{display:grid;gap:8px;padding-top:6px}
-.log ol{list-style:none;margin:6px 0 0;padding:0 0 0 12px;border-left:2px solid #241c1433;display:grid;gap:3px;font-size:13px}
-.log time{display:inline-block;min-width:3.4em;font-family:var(--f-head);font-weight:800;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.lvbanner strong{font-family:var(--f-head);font-weight:800;font-size:17px;color:var(--ink);letter-spacing:.06em}
+.lvbanner span{font-family:var(--f-head);font-weight:800;font-size:12px;color:var(--ink)}
+/* 小見出し（細い罫線つき） */
+.sec{display:flex;align-items:center;gap:8px;margin:0;font-size:10.5px;font-weight:700;letter-spacing:.16em;color:var(--muted)}
+.sec::after{content:"";flex:1;height:1px;background:#241c1433}
+.blk{display:grid;grid-template-columns:minmax(0,1fr);gap:7px}
+/* 数字のタイル：小さなラベルと大きな数字 */
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:0;background:var(--paper);border:1.5px solid #241c1455;border-radius:3px 7px 4px 6px}
+.tiles.four{grid-template-columns:repeat(4,minmax(0,1fr))}
+.tile{display:grid;justify-items:center;gap:1px;padding:7px 4px 6px;min-width:0}
+.tile+.tile{border-left:1px solid #241c1426}
+.tile dt{display:flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;letter-spacing:.04em;color:var(--muted);white-space:nowrap}
+.tile dt svg{width:11px;height:11px;flex:0 0 auto}
+.tile dd{margin:0;font-family:var(--f-head);font-weight:800;font-size:20px;line-height:1.2;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tile dd small{font-size:11px;font-weight:700;color:var(--muted)}
+.tiles.four .tile dd{font-size:17px}
+.xp{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--muted)}
+.xn{font-family:var(--f-head);font-weight:800;font-size:12px;letter-spacing:0;color:var(--ink);font-variant-numeric:tabular-nums;min-width:5ch;text-align:right}
+.rc-note{margin:0;font-size:12px;line-height:1.6;color:var(--muted);border-left:3px solid #241c1433;padding-left:9px}
+.rc-note .hurt{color:var(--bad);font-weight:700}
+/* 装備の表：名前が長くなっても折り返せる */
+.eq{width:100%;border-collapse:collapse;font-size:13px}
+.eq th{width:4.6em;text-align:left;vertical-align:top;font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--muted);padding:7px 0}
+.eq td{padding:6px 0;font-weight:700;color:var(--ink);line-height:1.5}
+.eq tr+tr th,.eq tr+tr td{border-top:1px dashed #241c1433}
+.eq .none{font-weight:500;color:var(--muted)}
+.eq em{font-style:normal;font-family:var(--f-head);font-weight:800;font-size:10px;color:var(--paper);background:var(--accent);padding:0 5px;margin-left:6px;border-radius:2px;vertical-align:1px}
+.more{border-top:1px solid #241c1426;margin:0 -14px -12px;padding:0 14px}
+.more summary{cursor:pointer;list-style:none;font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 0}
+.more summary::-webkit-details-marker{display:none}
+.more summary::before{content:"";width:0;height:0;border-left:6px solid var(--accent);border-top:4px solid transparent;border-bottom:4px solid transparent;transition:transform .15s}
+.more[open]>summary::before{transform:rotate(90deg)}
+.more-body{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;padding:4px 0 16px}
+.logl{list-style:none;margin:0;padding:0;display:grid;font-size:12.5px;line-height:1.5}
+.logl li{display:grid;grid-template-columns:3.6em minmax(0,1fr);gap:8px;padding:5px 0}
+.logl li+li{border-top:1px dashed #241c1426}
+.logl time{font-family:var(--f-head);font-weight:800;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
 @media (max-width:620px){.sheet{transform:none}.rc{transform:translateY(14px)}}
 @media (prefers-reduced-motion:reduce){.rc,.stamp,#rpWon{opacity:1;transform:none;animation:none}.stamp{transform:rotate(12deg);opacity:.85}.rc.flash::after,.burst{display:none}}
 /* 報告書カード */
-.cards{display:grid;gap:10px}
+.cards{display:grid;grid-template-columns:minmax(0,1fr);gap:18px}
 .card{background:#f3ead3;border:1.5px solid var(--ink);border-radius:3px 9px 4px 8px;box-shadow:2px 3px 0 #241c1426;color:var(--ink)}
 .card:nth-child(odd){transform:rotate(-.25deg)} .card:nth-child(even){transform:rotate(.2deg)}
 .card.up{border-color:var(--gold-ink);box-shadow:0 0 0 2px #c9a84c88,3px 4px 0 #8a6a1e44;background:linear-gradient(180deg,#f7ecc8,#f3ead3 60%)}
@@ -355,7 +386,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.4.3 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.5.0 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -1496,7 +1527,7 @@ function logHTML(r){
   r.ev.forEach(e=>add(e.t,T[e.k]));
   if(r.back!=null)add(r.back,'街に帰ってきた');
   if(!L.length)return '';
-  return `<details class="log"><summary>旅の記録</summary><ol>${L.map(e=>`<li><time>${hm(e.t)}</time>${e.txt}</li>`).join('')}</ol></details>`;
+  return `<div class="blk"><h4 class="sec">旅の記録</h4><ol class="logl">${L.map(e=>`<li><time>${hm(e.t)}</time><span>${e.txt}</span></li>`).join('')}</ol></div>`;
 }
 function cardHTML(r,day,rows){
   const a=S.advs.find(x=>x.id===r.id)||r, P=PERSONAS[r.pid], scene=voiceScene(r), line=pickLine(a,scene,day*131+r.id*17,r,rows);
@@ -1508,18 +1539,38 @@ function cardHTML(r,day,rows){
   }
   const tl=r.leftHome!==null?`<div class="tlw"><div class="bar">${bar}</div>${marks}</div><div class="tlaxis"><span>6:00</span><span>10:00</span><span>14:00</span><span>17:00</span><span>20:00</span></div>`:'';
   const nw=k=>r.bought.some(b=>b.slot===k)?'<em>NEW</em>':'';
-  const gear=`<div class="gear"><span>武器 ${WEAPONS[r.wlv]}${nw('weapon')}</span><span>防具 ${ARMORS[r.alv]}${nw('armor')}</span><span>お守り なし</span></div>`;
+  const IC={hp:'<svg viewBox="0 0 10 10"><path d="M5 9S1 6.2 1 3.6A2.1 2.1 0 0 1 5 2.7 2.1 2.1 0 0 1 9 3.6C9 6.2 5 9 5 9z" fill="#b5533c"/></svg>',
+    atk:'<svg viewBox="0 0 10 10"><path d="M7.5 1L9 2.5 4 7.5 2.5 6z" fill="#6b5a3e"/><path d="M1.5 6.5l2 2M2 8.5l-1 1" stroke="#6b5a3e" stroke-width="1.4"/></svg>',
+    def:'<svg viewBox="0 0 10 10"><path d="M5 1l4 1.5v3C9 8 5 9.5 5 9.5S1 8 1 5.5v-3z" fill="#1d6a60"/></svg>'};
+  const stats=`<div class="blk"><h4 class="sec">ステータス</h4><dl class="tiles four">
+      <div class="tile"><dt>${IC.hp}体力</dt><dd>${r.hp}<small>/${r.hpMax}</small></dd></div>
+      <div class="tile"><dt>${IC.atk}攻撃</dt><dd>${r.atk}</dd></div>
+      <div class="tile"><dt>${IC.def}守り</dt><dd>${r.def}</dd></div>
+      <div class="tile"><dt><i class="coin"></i>所持金</dt><dd>${r.held}</dd></div></dl></div>`;
+  const gear=`<div class="blk"><h4 class="sec">装備</h4><table class="eq"><tbody>
+      <tr><th scope="row">武器</th><td>${WEAPONS[r.wlv]}${nw('weapon')}</td></tr>
+      <tr><th scope="row">防具</th><td>${ARMORS[r.alv]}${nw('armor')}</td></tr>
+      <tr><th scope="row">お守り</th><td class="none">なし</td></tr></tbody></table></div>`;
+  const flow=tl?`<div class="blk"><h4 class="sec">一日の流れ</h4>${tl}</div>`:'';
   const bits=[]; if(r.note)bits.push(r.note); if(r.missedWage)bits.push('日給をもらいそびれた');
   const hurt=r.ko?'<span class="hurt">やられた。あすは療養</span>':r.hurt?'<span class="hurt">傷ついて帰ってきた</span>':'';
+  const note=bits.length||hurt?`<p class="rc-note">${bits.join('。')}${bits.length?'。':''}${hurt}</p>`:'';
   const chip=r.ko?'<span class="chip hurt">やられた</span>':r.boss?'<span class="chip prep">親玉撃破</span>':r.rested?'<span class="chip off">休み</span>':r.dep!==null?`<span class="chip away">${r.wins}勝${r.losses}敗</span>`:'<span class="chip off">出発せず</span>';
   const need0=r.lvFrom*25;
   return `<article class="rc" data-id="${r.id}">
     <div class="rc-top"><div class="rc-face"><img class="face" src="${faceURL(r)}" alt=""><span class="lvb">Lv<b class="lvn">${r.lvFrom}</b></span><i class="burst"></i></div>
-      <div class="who"><b>${r.name}</b><small>${P.name}</small></div>${chip}<p class="say">${line}</p></div>
-    <div class="lvbanner"><strong>レベルアップ！</strong><span>Lv${r.lvFrom} → Lv${r.lv}</span><span>体力 +${r.ups.reduce((m,u)=>m+u.hp,0)}　攻撃 +${r.ups.reduce((m,u)=>m+u.atk,0)}</span></div>
-    ${went?`<div class="xp"><span class="xl">経験値</span><div class="xpbar"><i style="width:${r.expFrom/need0*100}%"></i></div><span class="xn"><b class="xv">${r.expFrom}</b>/<span class="xm">${need0}</span></span></div>
-    <div class="rc-gains"><span class="g res"><i class="shard"></i>+<b class="gv-res">0</b></span><span class="g"><i class="coin"></i>+<b class="gv-gold">0</b></span><span class="g ex">探索 +<b class="gv-ex">0.0</b>%</span></div>`:''}
-    <details class="more"><summary>くわしく見る</summary><div class="more-body">${tl}${gear}<p class="note">${bits.join('。')}${bits.length?'。':''}${hurt}</p>${logHTML(r)}</div></details>
+      <div class="who"><b>${r.name}</b><small>${P.name}</small></div>${chip}</div>
+    <div class="rc-body">
+      <p class="bub">${line}</p>
+      <div class="lvbanner"><strong>レベルアップ！</strong><span>Lv${r.lvFrom} → Lv${r.lv}</span><span>体力 +${r.ups.reduce((m,u)=>m+u.hp,0)}　攻撃 +${r.ups.reduce((m,u)=>m+u.atk,0)}</span></div>
+      ${went?`<div class="blk"><h4 class="sec">きょうの成果</h4><dl class="tiles">
+        <div class="tile"><dt><i class="shard"></i>${RES}</dt><dd>+<b class="gv-res">0</b></dd></div>
+        <div class="tile"><dt><i class="coin"></i>ゴールド</dt><dd>+<b class="gv-gold">0</b></dd></div>
+        <div class="tile"><dt>探索</dt><dd>+<b class="gv-ex">0.0</b><small>%</small></dd></div></dl>
+        <div class="xp"><span class="xl">経験値</span><div class="xpbar"><i style="width:${r.expFrom/need0*100}%"></i></div><span class="xn"><b class="xv">${r.expFrom}</b>/<span class="xm">${need0}</span></span></div></div>`:''}
+      ${note}
+      <details class="more"><summary>くわしく見る</summary><div class="more-body">${flow}${stats}${gear}${logHTML(r)}</div></details>
+    </div>
   </article>`;
 }
 // opts.instant: 演出なしで結果だけ見せる（指示の画面から見返すとき）
