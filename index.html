@@ -430,7 +430,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.7.2 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.7.3 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -661,18 +661,19 @@ const EDGES=[
 // 魔物。swift:先に動く・逃げにくい poison:毒 （硬さは守りの高さで表す）
 const MON={
   rat:{n:'森ネズミ',hp:6,atk:3,def:0,xp:5,elem:[4,7],gold:5},
-  bat:{n:'洞窟コウモリ',hp:5,atk:4,def:0,swift:true,xp:6,elem:[5,8],gold:6},
-  shroom:{n:'毒キノコ',hp:8,atk:2,def:0,poison:true,xp:7,elem:[6,9],gold:7},
-  lizard:{n:'岩トカゲ',hp:10,atk:4,def:2,hard:true,xp:10,elem:[9,13],gold:11},
+  bat:{n:'洞窟コウモリ',hp:8,atk:5,def:0,swift:true,xp:6,elem:[5,8],gold:6},
+  shroom:{n:'毒キノコ',hp:12,atk:3,def:0,poison:true,xp:7,elem:[6,9],gold:7},
+  lizard:{n:'岩トカゲ',hp:22,atk:7,def:3,hard:true,xp:10,elem:[9,13],gold:9},
+  golem:{n:'石の番人',hp:36,atk:9,def:5,hard:true,xp:13,elem:[12,16],gold:11},
   bigrat:{n:'大ネズミ',hp:20,atk:5,def:1,master:true,xp:20,elem:[22,28],gold:25},
   king:{n:'岩トカゲの長',hp:34,atk:7,def:3,hard:true,master:true,xp:30,elem:[30,40],gold:40},
   boss:{n:'洞窟の親玉',hp:90,atk:10,def:4,hard:true,boss:true,xp:40,elem:[120,120],gold:0},
 };
-const ZONE={forest:[['rat',1]],cave:[['bat',.45],['shroom',.35],['rat',.2]],deep:[['lizard',.5],['bat',.25],['shroom',.25]]};
+const ZONE={forest:[['rat',1]],cave:[['bat',.45],['shroom',.35],['rat',.2]],deep:[['lizard',.45],['golem',.25],['bat',.15],['shroom',.15]]};
 const DEPTH={gate:0,fork:1,spring:2,mouth:2,r1:3,r2:4,hall:5,boss:6};
 const UNITS=EDGES.filter(e=>!e.bossWay).length+Object.values(NODES).filter(n=>n.room).length+Object.values(NODES).filter(n=>n.master).length;
 function newWorld(){return {trips:{},searched:{},searchDay:{},master:{},chest:{},clue:false,cut:false};}
-const safety=(S,e)=>{const n=S.world.trips[e.id]||0; return n>=20?2:n>=1?1:0;};
+const safety=(S,e)=>{const n=S.world.trips[e.id]||0; return n>=60?2:n>=1?1:0;};
 const elen=(S,e)=>Math.max(1,Math.ceil(e.len*[1,.9,.75][safety(S,e)]));
 const erisk=(S,e)=>e.risk*[1,.8,.5][safety(S,e)];
 const other=(e,id)=>e.a===id?e.b:e.a;
@@ -1900,7 +1901,7 @@ function cardHTML(r,day,rows){
 const MAPXY={gate:[30,158],fork:[92,128],spring:[84,58],mouth:[150,146],r1:[200,116],r2:[236,66],hall:[288,104],boss:[306,40]};
 function mapHTML(rep){
   const W=rep.world, W0=rep.worldFrom; if(!W)return '';
-  const trips=id=>W.trips[id]||0, saf=id=>trips(id)>=20?2:trips(id)>=1?1:0;
+  const trips=id=>W.trips[id]||0, saf=id=>trips(id)>=60?2:trips(id)>=1?1:0;
   const known={gate:true}; for(const e of EDGES)if(trips(e.id)){known[e.a]=true; known[e.b]=true;}
   const P=id=>MAPXY[id], mid=(e)=>{const a=P(e.a),b=P(e.b); return e.cut?`M${a[0]} ${a[1]} Q ${(a[0]+b[0])/2} ${Math.min(a[1],b[1])-34} ${b[0]} ${b[1]}`:`M${a[0]} ${a[1]} L${b[0]} ${b[1]}`;};
   let roads='', glow='', marks='', labels='', faces='';
