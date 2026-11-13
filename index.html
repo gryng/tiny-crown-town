@@ -452,7 +452,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.8.1 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.8.2 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -623,8 +623,10 @@ function cancelOrder(S,site){
   if(site.done>0||site.stage)return 'もう工事が始まっている';
   S.sites=S.sites.filter(x=>x!==site); S.elem+=site.paid; for(const c of S.carps)if(c.site===site.id)c.site=null; return null;
 }
+// 大工を増やせるのは2章から。1章のあいだは1人でやりくりする
+const hireLock=S=>(S.chapter||1)<2?'1章をクリアすると雇えるようになる':S.carps.length>=CARP_MAX?'これ以上は雇えない':null;
 function hireCarp(S){
-  if(S.carps.length>=CARP_MAX)return 'これ以上は雇えない';
+  if(hireLock(S))return hireLock(S);
   const c=hireCost(S); if(S.elem<c)return `${RES}が足りない`; S.elem-=c; S.carps.push(newCarp(S.carps.length)); return null;
 }
 const hireCost=S=>200*S.carps.length;
@@ -645,14 +647,18 @@ function carpStep(S,c){
     if(t<CARP_START||t>=CARP_END)return;
     // 手の空いた大工は、まだ人のいない現場→近い現場の順に選ぶ
     let best=null,bs=1e9; for(const s of S.sites){const n=S.carps.filter(x=>x!==c&&x.site===s.id).length, d=(bfs(S.g,c.pos,siteDoor(s))||[]).length; const sc=n*1000+d; if(sc<bs){bs=sc; best=s;}}
-    if(best){c.site=best.id; carpGo(S,c,siteDoor(best));}
-    else if(c.pos.x!==CASTLE_DOOR.x||c.pos.y!==CASTLE_DOOR.y){c.site=null; carpGo(S,c,CASTLE_DOOR);}
+    if(best){c.site=best.id; c.wander=false; carpGo(S,c,siteDoor(best)); return;}
+    // 仕事がないときは街をぶらぶら見回る。ひと回りごとに、落ちている時のかけらを1つ拾う
+    if(c.pause>0){c.pause--; return;}
+    if(t>=CARP_END-40){ if(c.pos.x!==CASTLE_DOOR.x||c.pos.y!==CASTLE_DOOR.y){c.wander=false; carpGo(S,c,CASTLE_DOOR);} return; }
+    const spots=[]; for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){ if(S.g[y][x]!=='R')continue; const d=Math.abs(x-c.pos.x)+Math.abs(y-c.pos.y); if(d>=3&&d<=7)spots.push({x,y}); }
+    if(spots.length){c.site=null; c.wander=true; carpGo(S,c,spots[Math.floor(S.rng()*spots.length)]);}
     return;
   }
   if(c.state==='walk'){
     const w=c.walk; w.prog+=1/WALK;
     while(w.prog>=1&&w.i<w.path.length){c.pos={...w.path[w.i]}; w.i++; w.prog-=1;}
-    if(w.i>=w.path.length){c.walk=null; const s=site(); if(s&&t<CARP_END){const d=siteDoor(s); if(c.pos.x===d.x&&c.pos.y===d.y){c.state='work'; return;}} c.state='idle'; if(c.pos.x===CASTLE_DOOR.x&&c.pos.y===CASTLE_DOOR.y)c.hidden=true;}
+    if(w.i>=w.path.length){c.walk=null; if(c.wander){c.wander=false; c.pause=8; S.elem+=1; S.carpFound=(S.carpFound||0)+1;} const s=site(); if(s&&t<CARP_END){const d=siteDoor(s); if(c.pos.x===d.x&&c.pos.y===d.y){c.state='work'; return;}} c.state='idle'; if(c.pos.x===CASTLE_DOOR.x&&c.pos.y===CASTLE_DOOR.y)c.hidden=true;}
     return;
   }
   if(c.state==='work'){
@@ -666,7 +672,7 @@ function homeDoor(S,a){const b=S.b.find(b=>b.id===a.home); return b?b.door:CASTL
 
 function startDay(S){
   S.exploreStart=S.explore; S.worldStart=JSON.parse(JSON.stringify(S.world));
-  S.fights=[]; S.builtToday=[]; for(const c of S.carps){c.pos={...CASTLE_DOOR}; c.walk=null; c.state='idle'; c.site=null; c.hidden=true;}
+  S.fights=[]; S.builtToday=[]; S.carpFound=0; for(const c of S.carps){c.wander=false; c.pause=0; c.pos={...CASTLE_DOOR}; c.walk=null; c.state='idle'; c.site=null; c.hidden=true;}
   for(const k of ['vein','veinG'])for(const id in S.world[k])S.world[k][id]=Math.min(1,S.world[k][id]+.3);
   S.t=DAY_START; S.parkUsed=0; S.demolished=0; S.elem+=S.refund; S.refund=0; S.phase='day'; S.justWon=false;
   S.advs.forEach((a,i)=>{
@@ -994,6 +1000,7 @@ function endDay(S){
     a.lastTrail=a.trail; a.state='idle'; a.hidden=true; a.walk=null; a.pos={...homeDoor(S,a)};
   }
   for(const c of S.carps){c.hidden=true; c.walk=null; c.state='idle'; c.site=null; c.pos={...CASTLE_DOOR};}
+  if(S.carpFound)S.builtToday.push(`大工が街で${RES}を${S.carpFound}拾った`);
   S.lastReport={day:S.day,won:S.justWon,built:S.builtToday.slice(),bossDown:S.bossDown,world:JSON.parse(JSON.stringify(S.world)),worldFrom:S.worldStart||newWorld(),explore:S.explore,exploreFrom:S.exploreStart||0,elemAfter:S.elem,
     advs:S.advs.filter(a=>a.rep).map(a=>({id:a.id,name:a.name,tunic:a.tunic,hair:a.hair,pid:a.pid,k:a.k,lv:a.lv,hp:a.hp,hpMax:a.hpMax,atk:a.atk,def:a.def,morale:a.morale,gold:a.gold,wlv:a.wlv,alv:a.alv,...a.rep,held:a.gold,expNow:a.exp,ev:a.rep.ev.slice(),ups:a.rep.ups.slice(),bought:a.rep.bought.slice()}))};
   S.day++; S.phase='report';
@@ -1870,8 +1877,8 @@ function siteRow(s){
 function castleHTML(){
   const idle=S.carps.filter(c=>c.state==='idle').length;
   return `<div class="blk"><h4 class="sec">建設の掲示板</h4>${S.sites.length?S.sites.map(siteRow).join(''):'<p class="rc-note">おふれは出ていない。空き地や建物をタップすると出せる。</p>'}</div>
-    <div class="blk"><h4 class="sec">大工小屋</h4><p class="rc-note">大工 ${S.carps.length}人（うち待機 ${idle}人）。朝7時から夕方6時まで、歩いて現場へ行って作業する。城から遠い現場ほど着くのが遅れる。</p>
-    <button class="opt" id="hire" ${S.carps.length>=CARP_MAX||S.elem<hireCost(S)?'disabled':''}><b>大工を雇う</b><span>${S.carps.length>=CARP_MAX?'これ以上は雇えない':'人数が増えると、同時に建てたり早く建てたりできる'}</span><em>${S.carps.length>=CARP_MAX?'—':hireCost(S)}</em></button></div>`;
+    <div class="blk"><h4 class="sec">大工小屋</h4><p class="rc-note">大工 ${S.carps.length}人（うち待機 ${idle}人）。朝7時から夕方6時まで、歩いて現場へ行って作業する。城から遠い現場ほど着くのが遅れる。仕事がないときは街を見回って、落ちている${RES}を少しずつ拾ってくる${S.carpFound?`（きょう ${S.carpFound}）`:''}。</p>
+    <button class="opt" id="hire" ${hireLock(S)||S.elem<hireCost(S)?'disabled':''}><b>大工を雇う</b><span>${hireLock(S)||'人数が増えると、同時に建てたり早く建てたりできる'}</span><em>${hireLock(S)?'—':hireCost(S)}</em></button></div>`;
 }
 function liveHTML(){
   if(!sel)return null;
@@ -1973,7 +1980,7 @@ function hintsFor(rep){
     h.push(`いちばん支度に時間がかかったのは${slow.name}。家を出てから城門まで${mins}分${mins>=150?'。寄り道先が遠すぎるかもしれません':''}。`);}
   if(rep&&rep.advs.some(a=>a.note.includes('暮れて')&&a.wins+a.losses<=2))h.push('出発が遅く、洞窟でほとんど戦えなかった冒険者がいます。店と立て札を城門の近くにまとめると早く出られます。');
   if(!first(S,'weapon')&&!S.sites.some(x=>x.type==='weapon')&&S.day>=2)h.push('武器屋を建てると、冒険者が出発前に寄って強くなります。');
-  if(S.sites.length>=2&&S.carps.length<CARP_MAX)h.push(`建設のおふれが${S.sites.length}件たまっています。城で大工を雇うと早く進みます。`);
+  if(S.sites.length>=2&&!hireLock(S))h.push(`建設のおふれが${S.sites.length}件たまっています。城で大工を雇うと早く進みます。`);
   if(rep&&rep.advs.some(a=>a.note.includes('やる気'))&&!first(S,'park'))h.push('やる気が切れた冒険者がいます。噴水の公園で回復できます。');
   if(S.explore>=100&&!S.bossDown)h.push('探索100%。おふれを「親玉を倒せ」に変えましょう。');
   return h.slice(0,3);
