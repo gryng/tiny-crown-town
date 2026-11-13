@@ -135,6 +135,29 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .ad-band .who b{font-family:var(--f-head);font-weight:800;font-size:19px;line-height:1.25;color:var(--paper);letter-spacing:.04em}
 .ad-band .who small{font-size:10.5px;font-weight:700;letter-spacing:.1em;color:#cdbf9c}
 .linkb{background:none;border:0;padding:4px 2px;font-family:var(--f-body);font-size:12px;font-weight:700;color:var(--accent);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.hlinks{display:inline-flex;gap:12px}
+.siterow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 10px;align-items:center;padding:8px 0}
+.siterow+.siterow{border-top:1px dashed #241c1433}
+.siterow b{font-family:var(--f-head);font-weight:800;font-size:14px;color:var(--ink)}
+.siterow .xpbar{grid-column:1/-1}
+.siterow small{font-size:11.5px;color:var(--muted)}
+.actrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.notice .nm,.nm{font-family:var(--f-head);font-weight:800;font-size:10px;color:var(--paper);background:var(--accent);padding:0 6px;margin-left:8px;border-radius:2px;vertical-align:1px}
+.bhlist{display:grid;gap:7px}
+.bhopt{display:grid;grid-template-columns:auto minmax(0,1fr);gap:1px 10px;align-items:center;border:1.5px solid var(--ink);border-radius:3px 8px 4px 7px;background:#f3ead3;padding:8px 12px;cursor:pointer;color:var(--ink)}
+.bhopt input{grid-row:1/3;accent-color:var(--accent);width:18px;height:18px}
+.bhopt b{font-family:var(--f-head);font-weight:800;font-size:15px}
+.bhopt small{font-size:11.5px;line-height:1.5;color:var(--muted)}
+.bhopt:has(input:checked){border-color:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent),2px 3px 0 var(--accent)}
+.bhopt.lock{opacity:.5;cursor:not-allowed}
+.nomlist{display:grid;gap:0}
+.nomrow{display:grid;grid-template-columns:36px minmax(0,1fr) minmax(0,auto);gap:10px;align-items:center;padding:7px 0}
+.nomrow+.nomrow{border-top:1px dashed #241c1433}
+.nomrow .face{width:36px;height:36px;grid-row:auto}
+.nomrow .nn{display:grid;min-width:0}
+.nomrow .nn b{font-family:var(--f-head);font-weight:800;font-size:15px;color:var(--ink)}
+.nomrow .nn small{font-size:10.5px;font-weight:700;color:var(--muted)}
+.nomrow select{font:700 13px var(--f-body);color:var(--ink);background:#fffaf0;border:1.5px solid var(--ink);border-radius:3px 7px 4px 6px;padding:6px 8px;max-width:11.5em}
 /* 張り紙：おふれ1枚 */
 .notice{position:relative;margin:0;background:#fffaf0;border:1.5px solid var(--ink);border-radius:2px 6px 3px 5px;padding:8px 12px 8px 26px;font-family:var(--f-head);font-weight:800;font-size:14px;line-height:1.5;color:var(--ink);box-shadow:2px 2px 0 #241c141f}
 .notice::before{content:"";position:absolute;left:10px;top:13px;width:8px;height:8px;border-radius:50%;background:#a84a32;box-shadow:0 0 0 1.5px var(--ink)}
@@ -430,7 +453,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.7.4 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.8.0 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -498,18 +521,18 @@ const ARMORS=['旅の服','革のよろい','鎖のよろい','鉄のよろい',
 // armorFirst:防具を先に買う walk:1マスにかかる分 retreat:引き返す体力の割合 dmg:受けるダメージ倍率 atk:攻撃の上乗せ roll:会心が出やすく未踏の道を好む
 // rest:休憩を始める体力の割合(0は休まない) detour:寄り道のしやすさ margin:帰りに見る余裕(ターン。負なら門限に遅れがち) safe:安全な道を選び主に慎重 brave:勝ち目がなくても挑む solo:共闘しない
 const PERSONAS={
-  nonbiri:{name:'のんびり屋',leave:20,park:35,walk:7,retreat:.3,dmg:.85,rest:.65,detour:.2,margin:3,k:['まあ、なんとかなるって','ふぁ……いい天気','急がなくても逃げないよ']},
-  sekkachi:{name:'せっかち',leave:-10,skipPark:true,maxShops:1,walk:5,retreat:.25,rest:0,detour:0,margin:-3,k:['よし、行こう今すぐ！','待ってられない！','ほら早く早く！']},
-  okubyo:{name:'臆病',armorFirst:true,retreat:.5,rest:.7,margin:5,safe:true,k:['ぼ、ぼくでいいのかな……','こ、こわくないし……','だ、大丈夫かな……']},
-  makezu:{name:'負けず嫌い',retreat:.15,rest:.35,brave:true,k:['次は勝つ','負けたままじゃ終われない','見てろよ']},
-  kuishinbo:{name:'食いしん坊',lovePark:true,park:30,detour:.3,k:['おなかすいた……','帰ったらなに食べよう','腹が減っては戦えない！']},
-  yumemi:{name:'夢見がち',roll:5,detour:.35,k:['いつかきっと','夢で見たんだ','物語の続きみたい']},
-  sewazuki:{name:'世話好き',leave:-15,k:['みんな無事でよかった','無理しちゃだめだよ','わたしに任せて']},
-  ippiki:{name:'一匹狼',skipPark:true,atk:1,solo:true,k:['……ひとりで行く','群れるのは苦手だ','……別に']},
+  nonbiri:{like:['mine','treasure'],name:'のんびり屋',leave:20,park:35,walk:7,retreat:.3,dmg:.85,rest:.65,detour:.2,margin:3,k:['まあ、なんとかなるって','ふぁ……いい天気','急がなくても逃げないよ']},
+  sekkachi:{like:['boss','train'],name:'せっかち',leave:-10,skipPark:true,maxShops:1,walk:5,retreat:.25,rest:0,detour:0,margin:-3,k:['よし、行こう今すぐ！','待ってられない！','ほら早く早く！']},
+  okubyo:{like:['mine','treasure'],name:'臆病',armorFirst:true,retreat:.5,rest:.7,margin:5,safe:true,k:['ぼ、ぼくでいいのかな……','こ、こわくないし……','だ、大丈夫かな……']},
+  makezu:{like:['boss','train'],name:'負けず嫌い',retreat:.15,rest:.35,brave:true,k:['次は勝つ','負けたままじゃ終われない','見てろよ']},
+  kuishinbo:{like:['treasure','mine'],name:'食いしん坊',lovePark:true,park:30,detour:.3,k:['おなかすいた……','帰ったらなに食べよう','腹が減っては戦えない！']},
+  yumemi:{like:['explore','treasure'],name:'夢見がち',roll:5,detour:.35,k:['いつかきっと','夢で見たんだ','物語の続きみたい']},
+  sewazuki:{like:['mine','explore'],name:'世話好き',leave:-15,k:['みんな無事でよかった','無理しちゃだめだよ','わたしに任せて']},
+  ippiki:{like:['train','explore'],name:'一匹狼',skipPark:true,atk:1,solo:true,k:['……ひとりで行く','群れるのは苦手だ','……別に']},
 };
 const PIDS=Object.keys(PERSONAS);
 const PP=a=>PERSONAS[a.pid];
-const stepTicks=a=>a.slow?SLOW:(PP(a).walk||WALK);
+const stepTicks=a=>a.carp?WALK:a.slow?SLOW:(PP(a).walk||WALK);
 function react(a,k){a.react={k,n:(a.react?a.react.n:0)+1};}
 
 function makeMap(){
@@ -536,7 +559,7 @@ function bfs(g,a,b){
 }
 
 function newState(rng){
-  const S={g:makeMap(),day:1,t:DAY_START,elem:450,explore:0,bossDown:false,justWon:false,behest:'explore',chapter:1,b:[],advs:[],refund:0,phase:'report',parkUsed:0,demolished:0,rng:rng||Math.random,nextId:1,lastReport:null,fx:[],world:newWorld(),fights:[]};
+  const S={g:makeMap(),day:1,t:DAY_START,elem:450,explore:0,bossDown:false,justWon:false,posted:['explore'],nom:{},chapter:1,b:[],advs:[],sites:[],carps:[newCarp(0)],builtToday:[],refund:0,phase:'report',parkUsed:0,demolished:0,rng:rng||Math.random,nextId:1,lastReport:null,fx:[],world:newWorld(),fights:[]};
   // 性格の出てくる順番はプレイごとに変わる
   S.pOrder=PIDS.slice(); for(let i=S.pOrder.length-1;i>0;i--){const j=Math.floor(S.rng()*(i+1)); [S.pOrder[i],S.pOrder[j]]=[S.pOrder[j],S.pOrder[i]];}
   build(S,'house',2,2,true); build(S,'house',17,9,true); build(S,'board',12,4,true);
@@ -551,8 +574,10 @@ function first(S,type){return S.b.find(b=>b.type===type)||null;}
 function canBuild(S,type,x,y){
   if(!isLot(S.g,x,y))return 'ここには建てられない';
   if(at(S,x,y))return 'すでに建物がある';
-  if(type==='house'&&count(S,'house')>=advCap(S))return `この章の冒険者は${advCap(S)}人まで`;
-  if(count(S,type)>=BUILD[type].max)return 'もう建てられない';
+  if(siteAt(S,x,y))return 'すでにおふれが出ている';
+  const n=count(S,type)+S.sites.filter(s=>s.kind==='build'&&s.type===type).length;
+  if(type==='house'&&n>=advCap(S))return `この章の冒険者は${advCap(S)}人まで`;
+  if(n>=BUILD[type].max)return 'もう建てられない';
   if(S.elem<BUILD[type].cost)return `${RES}が足りない`;
   return null;
 }
@@ -569,16 +594,82 @@ function newAdv(S,b){
     joinDay:S.phase==='report'?S.day:S.day+1,last:null,state:'idle',pos:{...b.door},hidden:true,ko:false,slow:false,rep:null,trail:[],lastTrail:[],walk:null,goal:null,bubble:null,react:null};
 }
 function demolish(S,b){
-  if(S.demolished>=5)return '撤去は1日5件まで';
   S.b=S.b.filter(x=>x!==b); S.refund+=BUILD[b.type].cost; S.demolished++;
   if(b.type==='house'){const a=S.advs.find(a=>a.home===b.id); if(a)a.home=null;}
   return null;
+}
+// ================= 大工と建設のおふれ =================
+// 建物は王様が直接建てない。おふれを城の掲示板に貼ると、大工が昼のあいだに歩いて現場へ行き、作業する
+const WORK={house:180,board:45,park:210,weapon:240,armor:240}; // 建てるのに必要な作業量（大工1人で1分に1進む）
+const CARP_START=420, CARP_END=1080, CARP_MAX=3;
+function newCarp(i){return {id:1000+i,carp:true,name:'大工',hair:'#e8b828',tunic:'#8a5a2a',wlv:0,alv:0,slow:false,hidden:true,pos:{...CASTLE_DOOR},walk:null,state:'idle',site:null};}
+function siteAt(S,x,y){return S.sites.find(s=>(s.x===x&&s.y===y)||(s.to&&s.to.x===x&&s.to.y===y))||null;}
+function orderBuild(S,type,x,y){
+  const e=canBuild(S,type,x,y); if(e)return e; S.elem-=BUILD[type].cost;
+  S.sites.push({id:S.nextId++,kind:'build',type,x,y,door:doorOf(S.g,x,y),need:WORK[type],done:0,paid:BUILD[type].cost}); return null;
+}
+function orderDemolish(S,b){
+  if(siteAt(S,b.x,b.y))return 'すでにおふれが出ている';
+  S.sites.push({id:S.nextId++,kind:'demolish',type:b.type,bid:b.id,x:b.x,y:b.y,door:b.door,need:Math.round(WORK[b.type]/3),done:0,paid:0}); return null;
+}
+const moveCost=type=>Math.round(BUILD[type].cost*.2);
+function orderMove(S,b,x,y){
+  if(siteAt(S,b.x,b.y))return 'すでにおふれが出ている';
+  if(!isLot(S.g,x,y)||at(S,x,y)||siteAt(S,x,y))return 'そこには移せない';
+  const c=moveCost(b.type); if(S.elem<c)return `${RES}が足りない`; S.elem-=c;
+  S.sites.push({id:S.nextId++,kind:'move',type:b.type,bid:b.id,x:b.x,y:b.y,door:b.door,to:{x,y,door:doorOf(S.g,x,y)},stage:0,need:Math.round(WORK[b.type]/3),done:0,paid:c}); return null;
+}
+// まだ誰も手をつけていないおふれは取り下げられる（払った分は戻る）
+function cancelOrder(S,site){
+  if(site.done>0||site.stage)return 'もう工事が始まっている';
+  S.sites=S.sites.filter(x=>x!==site); S.elem+=site.paid; for(const c of S.carps)if(c.site===site.id)c.site=null; return null;
+}
+function hireCarp(S){
+  if(S.carps.length>=CARP_MAX)return 'これ以上は雇えない';
+  const c=hireCost(S); if(S.elem<c)return `${RES}が足りない`; S.elem-=c; S.carps.push(newCarp(S.carps.length)); return null;
+}
+const hireCost=S=>200*S.carps.length;
+const siteDoor=s=>s.kind==='move'&&s.stage===1?s.to.door:s.door;
+function finishSite(S,s){
+  if(s.kind==='build'){build(S,s.type,s.x,s.y,true); S.builtToday.push(`${BUILD[s.type].name}が完成`);}
+  else if(s.kind==='demolish'){const b=S.b.find(b=>b.id===s.bid); if(b){demolish(S,b); S.builtToday.push(`${BUILD[s.type].name}を撤去`);}}
+  else if(s.kind==='move'){
+    if(s.stage===0){const b=S.b.find(b=>b.id===s.bid); s.b=b; S.b=S.b.filter(x=>x!==b); s.stage=1; s.done=0; s.need=Math.round(WORK[s.type]/2); S.dirty=true; return;} // 解体おわり→新しい場所で建て直す
+    const b=s.b; b.x=s.to.x; b.y=s.to.y; b.door=s.to.door; S.b.push(b); S.fx.push({x:b.x,y:b.y,age:0}); S.builtToday.push(`${BUILD[s.type].name}の移設が完了`);
+  }
+  S.sites=S.sites.filter(x=>x!==s); S.dirty=true;
+}
+function carpGo(S,c,dest){c.walk={path:bfs(S.g,c.pos,dest)||[],i:0,prog:0}; c.state='walk'; c.hidden=false;}
+function carpStep(S,c){
+  const t=S.t, site=()=>S.sites.find(s=>s.id===c.site)||null;
+  if(c.state==='idle'){
+    if(t<CARP_START||t>=CARP_END)return;
+    // 手の空いた大工は、まだ人のいない現場→近い現場の順に選ぶ
+    let best=null,bs=1e9; for(const s of S.sites){const n=S.carps.filter(x=>x!==c&&x.site===s.id).length, d=(bfs(S.g,c.pos,siteDoor(s))||[]).length; const sc=n*1000+d; if(sc<bs){bs=sc; best=s;}}
+    if(best){c.site=best.id; carpGo(S,c,siteDoor(best));}
+    else if(c.pos.x!==CASTLE_DOOR.x||c.pos.y!==CASTLE_DOOR.y){c.site=null; carpGo(S,c,CASTLE_DOOR);}
+    return;
+  }
+  if(c.state==='walk'){
+    const w=c.walk; w.prog+=1/WALK;
+    while(w.prog>=1&&w.i<w.path.length){c.pos={...w.path[w.i]}; w.i++; w.prog-=1;}
+    if(w.i>=w.path.length){c.walk=null; const s=site(); if(s&&t<CARP_END){const d=siteDoor(s); if(c.pos.x===d.x&&c.pos.y===d.y){c.state='work'; return;}} c.state='idle'; if(c.pos.x===CASTLE_DOOR.x&&c.pos.y===CASTLE_DOOR.y)c.hidden=true;}
+    return;
+  }
+  if(c.state==='work'){
+    const s=site(); if(!s){c.state='idle'; return;}
+    if(t>=CARP_END){c.site=null; carpGo(S,c,CASTLE_DOOR); return;}
+    const d=siteDoor(s); if(c.pos.x!==d.x||c.pos.y!==d.y){carpGo(S,c,d); return;} // 移設で現場が変わった
+    s.done++; if(s.done>=s.need){finishSite(S,s); if(!S.sites.includes(s))c.site=null; c.state='idle';}
+  }
 }
 function homeDoor(S,a){const b=S.b.find(b=>b.id===a.home); return b?b.door:CASTLE_DOOR;}
 
 function startDay(S){
   S.exploreStart=S.explore; S.worldStart=JSON.parse(JSON.stringify(S.world));
-  S.fights=[]; S.t=DAY_START; S.parkUsed=0; S.demolished=0; S.elem+=S.refund; S.refund=0; S.phase='day'; S.justWon=false;
+  S.fights=[]; S.builtToday=[]; for(const c of S.carps){c.pos={...CASTLE_DOOR}; c.walk=null; c.state='idle'; c.site=null; c.hidden=true;}
+  for(const k of ['vein','veinG'])for(const id in S.world[k])S.world[k][id]=Math.min(1,S.world[k][id]+.3);
+  S.t=DAY_START; S.parkUsed=0; S.demolished=0; S.elem+=S.refund; S.refund=0; S.phase='day'; S.justWon=false;
   S.advs.forEach((a,i)=>{
     a.rep={leftHome:null,dep:null,back:null,wins:0,losses:0,elem:0,explore:0,wage:false,bought:[],note:'',ko:false,boss:false,rested:false,missedWage:false,
       ev:[],exp:0,gold:0,lvFrom:a.lv,expFrom:a.exp,ups:[],hurt:false,late:false};
@@ -590,7 +681,7 @@ function startDay(S){
     const P=PP(a); a.state='home'; a.leaveAt=LEAVE+i*5+(P.leave||0); a.todo={park:!P.skipPark,board:true,shops:P.armorFirst?['armor','weapon']:['weapon','armor'],shopsVisited:0};
   });
 }
-function tick(S,mins){for(let m=0;m<mins;m++){if(S.phase!=='day')return; S.t++; for(const a of S.advs)step(S,a); if(S.t%TURN===0)outTurnAll(S); if(S.t>=DAY_END)endDay(S);}}
+function tick(S,mins){for(let m=0;m<mins;m++){if(S.phase!=='day')return; S.t++; for(const a of S.advs)step(S,a); for(const c of S.carps)carpStep(S,c); if(S.t%TURN===0)outTurnAll(S); if(S.t>=DAY_END)endDay(S);}}
 function step(S,a){
   const t=S.t;
   switch(a.state){
@@ -619,7 +710,8 @@ function arrive(S,a){
 function finish(S,a){
   const w=a.stopWhat; a.hidden=false;
   if(w==='park'){a.morale=Math.min(100,a.morale+25); a.todo.park=false;}
-  if(w==='board'){a.todo.board=false; a.behest=S.behest; a.rep.behest=S.behest; react(a,'excl'); a.last={k:'board',b:S.behest};}
+  if(w==='board'){a.todo.board=false; a.behest=chooseBehest(S,a); a.rep.behest=a.behest; a.rep.named=S.nom[a.id]===a.behest; react(a,'excl'); a.last={k:'board',b:a.behest};
+    if(a.behest==='rest'){a.rep.rested=true; a.rep.note='おふれに従って、きょうは休んだ'; a.restDay=true; goTo(S,a,homeDoor(S,a),'home'); return;}}
   if(w==='weapon'||w==='armor'){buy(a,w); a.todo.shopsVisited++;}
   if(w==='castle'){goTo(S,a,homeDoor(S,a),'home'); return;}
   next(S,a);
@@ -643,6 +735,27 @@ function next(S,a){
     td.shops=td.shops.filter(x=>x!==best); goTo(S,a,first(S,best).door,best); return;
   }
   goTo(S,a,GATE,'gate');
+}
+// ================= 冒険のおふれ =================
+// 立て札1つにつき2枚まで貼れる。王様は冒険者を指名でき、指名しなかった子は性格に合わせて自分で選ぶ
+const BEHESTS=['explore','boss','mine','treasure','train','rest'];
+const postCap=S=>Math.max(1,count(S,'board'))*2;
+function behestLock(S,k){
+  if(k==='boss')return S.bossDown?'親玉はもう倒した':S.explore<100?'探索100%で解放':null;
+  if(k==='mine'||k==='treasure'||k==='train')return Object.keys(S.world.searched).length?null:'部屋を1つ調べると解放';
+  return null;
+}
+function chooseBehest(S,a){
+  const nom=S.nom[a.id]; if(nom&&S.posted.includes(nom))return nom;
+  const like=PP(a).like||[]; let best=S.posted[0], bs=-1e9;
+  for(const k of S.posted){
+    let sc=1+S.rng()*.5; const i=like.indexOf(k); if(i>=0)sc+=3-i;
+    if(k==='rest')sc+=a.morale<45?5:-6;
+    if(k==='boss')sc+=PP(a).brave||winnable(a,MON.boss,PP(a).safe?.3:0)?4:-3; // 勝ち目があれば親玉へ、なければほかのおふれへ
+    if(k==='explore'&&S.explore>=100)sc-=3;
+    if(sc>bs){bs=sc; best=k;}
+  }
+  return best;
 }
 // ================= 町の外：すべてターン（5分）で進む =================
 // 地点と道。len:通るのに必要なターン risk:1ターンごとに魔物と出くわす確率 zone:出る魔物の顔ぶれ
@@ -676,7 +789,7 @@ const MON={
 const ZONE={forest:[['rat',1]],cave:[['bat',.45],['shroom',.35],['rat',.2]],deep:[['lizard',.45],['golem',.25],['bat',.15],['shroom',.15]]};
 const DEPTH={gate:0,fork:1,spring:2,mouth:2,r1:3,r2:4,hall:5,boss:6};
 const UNITS=EDGES.filter(e=>!e.bossWay).length+Object.values(NODES).filter(n=>n.room).length+Object.values(NODES).filter(n=>n.master).length;
-function newWorld(){return {trips:{},searched:{},searchDay:{},master:{},chest:{},clue:false,cut:false};}
+function newWorld(){return {trips:{},searched:{},searchDay:{},master:{},chest:{},clue:false,cut:false,vein:{},veinG:{}};}
 const safety=(S,e)=>{const n=S.world.trips[e.id]||0; return n>=60?2:n>=1?1:0;};
 const elen=(S,e)=>Math.max(1,Math.ceil(e.len*[1,.9,.75][safety(S,e)]));
 const erisk=(S,e)=>e.risk*[1,.8,.5][safety(S,e)];
@@ -742,7 +855,7 @@ function fightRound(S,F){
       a.rep.elem+=got; a.gold+=m.gold; a.rep.gold+=m.gold; a.rep.wins++; a.morale=Math.max(0,a.morale-3);
       ev(S,a,m.boss?'B':'w',{m:F.mid,r:F.round,c:F.crit[a.id]||0,co:names(a),e:got});
       if(m.poison&&F.hit[a.id]){a.out.poison=6; ev(S,a,'p',{});}
-      gainExp(S,a,m.xp);
+      gainExp(S,a,a.behest==='train'?Math.round(m.xp*1.5):m.xp);
       if(m.boss){a.rep.boss=true;} if(m.master)a.rep.master=m.n;
       for(const nm of names(a)){a.rep.coN=a.rep.coN||{}; a.rep.coN[nm]=(a.rep.coN[nm]||0)+1;}
       a.out.fight=null;
@@ -809,6 +922,8 @@ function actDone(S,a,k){
     let clue=false; if(N.clue&&!W.clue){W.clue=true; clue=true;}
     ev(S,a,'s',{n:id,e:got,first,chest,clue});
   }
+  if(k==='mine'){const v=W.vein[id]===undefined?1:W.vein[id], got=Math.max(2,Math.round((20+r()*8)*v)); W.vein[id]=Math.max(0,v-.06); a.rep.elem+=got; ev(S,a,'s',{n:id,e:got,mine:true});}
+  if(k==='treasure'){const v=W.veinG[id]===undefined?1:W.veinG[id], got=Math.max(2,Math.round((18+r()*8)*v)); W.veinG[id]=Math.max(0,v-.06); a.gold+=got; a.rep.gold+=got; ev(S,a,'s',{n:id,g:got,treasure:true});}
   if(k==='open'&&!W.cut){W.cut=true; a.rep.opened=true; ev(S,a,'o',{});}
   if(k==='detour'){a.morale=Math.min(100,a.morale+6); a.hp=Math.min(a.hpMax,a.hp+2);}
 }
@@ -828,7 +943,9 @@ function decide(S,a){
   o.rests=0;
   // 部屋：調べる、近道を開く
   if(N.room&&!masterAlive(S,id)){
-    if(W.searchDay[id]!==S.day&&slack>3){o.act={k:'search',left:3}; return;}
+    const dig=a.behest==='mine'||a.behest==='treasure';
+    if(dig){o.digs=o.digs||{}; const vk=a.behest==='mine'?'vein':'veinG', v=W[vk][id]===undefined?1:W[vk][id]; if((o.digs[id]||0)<3&&v>.25&&slack>3){o.digs[id]=(o.digs[id]||0)+1; o.act={k:a.behest,left:3}; return;}}
+    else if(a.behest!=='train'&&W.searchDay[id]!==S.day&&slack>3){o.act={k:'search',left:3}; return;}
     if(N.clue&&W.clue&&!W.cut&&W.opening!==S.day&&slack>8){W.opening=S.day; o.act={k:'open',left:6}; return;}
   }
   // 行き先を決める
@@ -840,15 +957,18 @@ function decide(S,a){
     if(winnable(a,MON.boss,P.brave?-1:P.safe?.3:0))offer('boss',50,'boss',{boss:true});
     else if(!a.rep.shy){a.rep.shy=true; a.rep.shyNote='親玉にはまだ勝てそうにないと見て、腕をみがいた';}
   }
-  for(const nid in NODES){ const n=NODES[nid]; if(!n.room)continue;
+  const dig=a.behest==='mine'||a.behest==='treasure', vk=a.behest==='mine'?'vein':'veinG';
+  for(const nid in NODES){ const n=NODES[nid]; if(!n.room||a.behest==='train')continue;
+    if(dig){ if(masterAlive(S,nid))continue; const v=W[vk][nid]===undefined?1:W[vk][nid]; if(((o.digs||{})[nid]||0)<3&&v>.25)offer(nid,0,'dig',{safe:true}); continue; }
     if(masterAlive(S,nid)){ if(can(nid))offer(nid,P.roll?6:3,'master'); else if(!a.rep.shy){a.rep.shy=true; a.rep.shyNote=`${n.n}の主にはまだ勝てそうにないと見て、手前で腕をみがいた`;} continue; }
     if(W.searchDay[nid]!==S.day)offer(nid,W.searched[nid]?0:(P.roll?6:3),'room');
   }
-  for(const e of EDGES){ if(e.bossWay||(e.cut&&!W.cut)||W.trips[e.id])continue;
+  for(const e of EDGES){ if(a.behest!=='explore'&&a.behest!=='boss')break; if(e.bossWay||(e.cut&&!W.cut)||W.trips[e.id])continue;
     for(const end of [e.a,e.b]){ const far=other(e,end); if(block(end)&&end!==id)continue; if(masterAlive(S,far)&&!can(far))continue;
       const rt0=end===id?{path:[],cost:0}:route(S,id,end,{block,safe:P.safe}); if(!rt0)continue;
       const rt={path:[...rt0.path,e],cost:rt0.cost+elen(S,e)}, back=route(S,far,'gate'); if(rt.cost+(back?back.cost:99)+margin+3>left)continue;
       const sc=rt.cost-(P.roll?8:2); if(!best||sc<best.sc)best={sc,rt,what:'new',to:far}; } }
+  if(!best&&dig){goHome(S,a,a.behest==='mine'?'掘れるだけ掘って、早めに帰った':'探せるだけ探して、早めに帰った'); return decide(S,a);}
   if(!best){ // 見回り：行ける範囲でいちばん手ごたえのある道を歩いて腕をみがく
     let pick=null; for(const e of EDGES){ if(e.bossWay||(e.cut&&!W.cut))continue; if(e.a!==id&&e.b!==id)continue; const far=other(e,id); if(masterAlive(S,far))continue; if(far==='gate')continue;
       const back=route(S,far,'gate'); if(elen(S,e)+(back?back.cost:99)+margin+2>left)continue; const sc=erisk(S,e)*(P.safe?-1:1)+r()*.05; if(!pick||sc>pick.sc)pick={sc,e}; }
@@ -869,12 +989,13 @@ function endDay(S){
     if(a.state==='away'){S.elem+=a.rep.elem; if(a.out&&a.out.poison>0)a.rep.hurt=true; a.out=null; if(!a.rep.note)a.rep.note='日が暮れても帰ってこなかった';}
     if(a.rep.shyNote&&!a.rep.ko&&!a.rep.boss)a.rep.note=a.rep.shyNote;
     if(a.rep.coN){const best=Object.entries(a.rep.coN).sort((x,y)=>y[1]-x[1])[0]; a.rep.pal=best[0]; a.rep.palN=best[1];}
-    if(a.state==='rest')a.morale=Math.min(100,a.morale+25);
+    if(a.state==='rest'||a.restDay){a.morale=Math.min(100,a.morale+25); a.restDay=false;}
     if(a.pid==='makezu'&&a.rep.losses>a.rep.wins)a.morale=Math.min(100,a.morale+10); // 負けた翌日はやる気が上がる
     a.morale=Math.min(100,a.morale+6);
     a.lastTrail=a.trail; a.state='idle'; a.hidden=true; a.walk=null; a.pos={...homeDoor(S,a)};
   }
-  S.lastReport={day:S.day,won:S.justWon,bossDown:S.bossDown,world:JSON.parse(JSON.stringify(S.world)),worldFrom:S.worldStart||newWorld(),explore:S.explore,exploreFrom:S.exploreStart||0,elemAfter:S.elem,
+  for(const c of S.carps){c.hidden=true; c.walk=null; c.state='idle'; c.site=null; c.pos={...CASTLE_DOOR};}
+  S.lastReport={day:S.day,won:S.justWon,built:S.builtToday.slice(),bossDown:S.bossDown,world:JSON.parse(JSON.stringify(S.world)),worldFrom:S.worldStart||newWorld(),explore:S.explore,exploreFrom:S.exploreStart||0,elemAfter:S.elem,
     advs:S.advs.filter(a=>a.rep).map(a=>({id:a.id,name:a.name,tunic:a.tunic,hair:a.hair,pid:a.pid,k:a.k,lv:a.lv,hp:a.hp,hpMax:a.hpMax,atk:a.atk,def:a.def,morale:a.morale,gold:a.gold,wlv:a.wlv,alv:a.alv,...a.rep,held:a.gold,expNow:a.exp,ev:a.rep.ev.slice(),ups:a.rep.ups.slice(),bought:a.rep.bought.slice()}))};
   S.day++; S.phase='report';
 }
@@ -1167,13 +1288,36 @@ async function initGfx(){
     firstSync=false;
   }
 
+  /* ----- 工事中の現場：足場と、進み具合で高くなる骨組み ----- */
+  const smap=new Map();
+  const woodM=new T.MeshLambertMaterial({color:0x9a6a3a,flatShading:true}), frameM=new T.MeshLambertMaterial({color:0xd9c08a,flatShading:true}), tarpM=new T.MeshLambertMaterial({color:0x1d6a60,flatShading:true});
+  function mkSite(){
+    const grp=new T.Group(), post=new T.BoxGeometry(.05,.95,.05).translate(0,.475,0), beam=new T.BoxGeometry(.86,.04,.04);
+    for(const [x,z] of [[-.4,-.36],[.4,-.36],[-.4,.36],[.4,.36]])add(new T.Mesh(post,woodM),x,0,z,grp);
+    for(const y of [.4,.9])for(const z of [-.36,.36])add(new T.Mesh(beam,woodM),0,y,z,grp);
+    const core=add(new T.Mesh(new T.BoxGeometry(.62,1,.5).translate(0,.5,0),frameM),0,0,0,grp); grp.userData.core=core;
+    const flag=add(new T.Mesh(new T.BoxGeometry(.2,.13,.02),tarpM),.4,1.02,-.36,grp); grp.userData.flag=flag;
+    return grp;
+  }
+  function syncSites(now){
+    const live=new Set(S.sites.map(x=>x.id));
+    for(const [id,g] of smap)if(!live.has(id)){scene.remove(g); smap.delete(id);}
+    for(const st of S.sites){
+      let g=smap.get(st.id); if(!g){g=mkSite(); smap.set(st.id,g); scene.add(g);}
+      const at2=st.kind==='move'&&st.stage===1?st.to:st, k=st.done/st.need, grow=st.kind==='build'||(st.kind==='move'&&st.stage===1);
+      g.position.set(wx(at2.x),0,wz(at2.y));
+      g.userData.core.visible=grow; g.userData.core.scale.y=Math.max(.04,k*.8);
+      g.userData.flag.rotation.y=Math.sin(now/400+st.id)*.5;
+    }
+  }
+
   /* ----- 空き地の目印・選択枠・足あと（地面に重ねる板） ----- */
   const lotCv=canvasOf(W*16,H*16), lotTex=texOf(lotCv);
   const lotMesh=add(new T.Mesh(new T.PlaneGeometry(W,H).rotateX(-Math.PI/2),new T.MeshBasicMaterial({map:lotTex,transparent:true,depthWrite:false,fog:false})),0,.02,0,scene,false);
   function paintLots(){
     const g=lotCv.getContext('2d'); g.clearRect(0,0,lotCv.width,lotCv.height); const c='#f6e7a8';
     for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){
-      if(!isLot(S.g,x,y)||at(S,x,y))continue; const ox=x*16, oy=y*16;
+      if(!isLot(S.g,x,y)||at(S,x,y)||siteAt(S,x,y))continue; const ox=x*16, oy=y*16;
       P(g,c,ox+1,oy+1,3,1);P(g,c,ox+1,oy+1,1,3);P(g,c,ox+12,oy+1,3,1);P(g,c,ox+14,oy+1,1,3);
       P(g,c,ox+1,oy+14,3,1);P(g,c,ox+1,oy+12,1,3);P(g,c,ox+12,oy+14,3,1);P(g,c,ox+14,oy+12,1,3);
     }
@@ -1216,6 +1360,7 @@ async function initGfx(){
       if(a.wlv>0){p('#e4e4ee',10,4,1,6); p('#b4b4c4',11,5,1,5); p('#c9a84c',10,10,2,1);}
       if(a.alv>0&&!back){p('#9aa0b0',0,7,3,4); p('#c2c8d6',0,7,3,1); p('#c9a84c',1,8,1,2); p('#70768a',1,11,1,1);}
       if(a.alv>0&&back){p('#9aa0b0',4,8,4,3); p('#c9a84c',5,9,2,1);}
+      if(a.carp){p('#e8b828',2,0,8,2); p('#b88a18',1,2,10,1); p('#6b4426',10,5,1,6); p('#9aa0b0',9,4,3,2);} // 大工：黄色いかぶとと金づち
     }
     outline(g,FW*6,FH,'#231a14');
   }
@@ -1246,7 +1391,7 @@ async function initGfx(){
     return {mesh,bub,c,t,fs,key:'',flip:1,back:false,rn:0};
   }
   function updWalkers(now){
-    for(const a of S.advs){
+    for(const a of S.advs.concat(S.carps)){
       let w=walkers.get(a.id); if(!w){w=mkWalker(a); walkers.set(a.id,w);}
       const vis=!a.hidden&&S.phase==='day'; w.mesh.visible=vis; w.fs[0].visible=w.fs[1].visible=false; if(!vis)continue;
       const key=`${a.wlv>0}|${a.alv>0}|${a.slow}`; if(key!==w.key){w.key=key; paintWalker(w.c.getContext('2d'),a); w.t.needsUpdate=true;}
@@ -1406,6 +1551,7 @@ async function initGfx(){
   let smokeAcc=0, flyAcc=0, torchAcc=0, jetAcc=0;
   function draw(now,dt){
     if(baseDirty){syncBuildings(); paintLots(); baseDirty=false;}
+    syncSites(now);
     for(const f of S.fx)sparkle(wx(f.x),wz(f.y)); S.fx.length=0;
     const t=S.t; placeCam(now); updEnv(t,dt);
     const night=Math.max(sm(1060,1130,t),1-sm(350,395,t)), amb=1-.62*night;
@@ -1419,7 +1565,7 @@ async function initGfx(){
     {const on=t>=1058||t<372; castleGlow.userData.g=(castleGlow.userData.g||0)+((on?1:0)-(castleGlow.userData.g||0))*Math.min(1,dt*3); castleGlow.opacity=castleGlow.userData.g;}
     // 空き地の目印と選択枠
     lotMesh.material.opacity=(.3+.16*Math.sin(now/400))*(1-.6*night);
-    const s=sel&&(sel.kind==='lot'||sel.kind==='building'); selMesh.visible=!!s; if(s){selMesh.position.set(wx(sel.x),.03,wz(sel.y)); selMesh.material.opacity=.8+.2*Math.sin(now/180);}
+    const s=sel&&(sel.kind==='lot'||sel.kind==='building'||sel.kind==='site'); selMesh.visible=!!s; if(s){selMesh.position.set(wx(sel.x),.03,wz(sel.y)); selMesh.material.opacity=.8+.2*Math.sin(now/180);}
     trMesh.visible=showTrails; if(showTrails&&(trTick++%8===0))paintTrails();
     updWalkers(now);
     // 木と旗のゆれ
@@ -1590,7 +1736,7 @@ yumemi:{board:['{d}のおふれを受けたの。物語が始まる予感','{d}�
 sewazuki:{board:['{d}のおふれを受けたよ。みんなの分もがんばるね','{d}だって。誰か一緒に行かないかな'],park:['公園は気持ちがいいね。みんなも休んでいけばいいのに','ここでひと休み。王様も休んでね'],buy:['{i}を買ったよ。これでみんなを守れるかな','{i}、大事に使うね'],back:['ただいま。みんなはもう帰ってる？','帰ったよ。けが人はいない？'],wage:['日給をもらったよ。ありがとう、王様','お給料、少しはみんなのために使おうかな']},
 ippiki:{board:['……{d}のおふれを受けた','{d}か。……ひとりで十分だ'],park:['……公園は、朝は静かでいい','……少し休んだだけだ'],buy:['……{i}を買った','{i}。……使えればいい'],back:['……戻った','……今日も、いつも通りだ'],wage:['……日給は受け取った','……それだけだ']},
 };
-const BEHEST_TEXT={explore:'西の洞窟の探索',boss:'西の洞窟の親玉退治'};
+const BEHEST_TEXT={explore:'西の洞窟の探索',boss:'西の洞窟の親玉退治',mine:'時のかけら掘り',treasure:'宝探し',train:'修行',rest:'お休み'};
 // その日の出来事から、ひと言の場面を選ぶ
 function voiceScene(r){
   if(r.boss)return 'boss'; if(r.ko)return 'ko'; if(r.master)return 'master'; if(r.opened)return 'opened'; if(r.ups&&r.ups.length)return 'lvup'; if(r.bought&&r.bought.length)return 'gear';
@@ -1668,35 +1814,75 @@ function status(a){
 }
 function renderPanel(){
   const p=$('panel');
+  if(sel&&sel.kind==='lot'&&siteAt(S,sel.x,sel.y)){const st=siteAt(S,sel.x,sel.y); sel={kind:'site',id:st.id,x:sel.x,y:sel.y};}
   if(sel&&sel.kind==='lot'){
     const opts=Object.keys(BUILD).map(k=>{const e=canBuild(S,k,sel.x,sel.y); return `<button class="opt" data-build="${k}" ${e?'disabled':''}><b>${BUILD[k].name}</b><span>${e&&e!==`${RES}が足りない`?e:BUILD[k].desc}</span><em>${BUILD[k].cost}</em></button>`;}).join('');
     p.dataset.mode='lot';
-    p.innerHTML=`<h2>空き地に建てる <button class="x" id="close">閉じる</button></h2><div class="opts">${opts}</div><p class="msg" id="msg"></p>`;
+    p.innerHTML=`<h2>建設のおふれを出す <button class="x" id="close">閉じる</button></h2><p class="rc-note">選ぶと城の掲示板におふれが貼られ、大工が歩いて建てに来る。</p><div class="opts">${opts}</div><p class="msg" id="msg"></p>`;
+  } else if(sel&&sel.kind==='castle'){
+    p.dataset.mode='castle'; lastLive=castleHTML();
+    p.innerHTML=`<h2>城 <button class="x" id="close">閉じる</button></h2><div id="liveBox" class="ad">${lastLive}</div><p class="msg" id="msg"></p>`;
+  } else if(sel&&sel.kind==='site'){
+    const st=S.sites.find(x=>x.id===sel.id); if(!st){sel=null; return renderPanel();}
+    p.dataset.mode='site'; lastLive=siteRow(st);
+    p.innerHTML=`<h2>工事の現場 <button class="x" id="close">閉じる</button></h2><div id="liveBox" class="ad">${lastLive}</div><p class="msg" id="msg"></p>`;
   } else if(sel&&sel.kind==='building'){
     const b=at(S,sel.x,sel.y); if(!b){sel=null; return renderPanel();}
     let body='';
-    if(b.type==='house'){const a=S.advs.find(a=>a.home===b.id), v=a&&shownStats(a); body=a?`<dl class="kv"><dt>住んでいる冒険者</dt><dd>${a.name}（Lv${v.lv}）</dd><dt>性格</dt><dd>${PP(a).name}・口ぐせ「${a.k}」</dd><dt>装備</dt><dd>${WEAPONS[v.wlv]}・${ARMORS[v.alv]}</dd></dl>`:'<p class="lead">だれも住んでいない</p>';}
-    else if(b.type==='board')body=`<div id="boardLive" class="ad">${boardHTML()}</div>`;
+    if(b.type==='house'){const a=S.advs.find(a=>a.home===b.id), v=a&&shownStats(a); body=a?`<dl class="kv"><dt>住んでいる冒険者</dt><dd>${a.name}（Lv${v.lv}）</dd><dt>性格</dt><dd>${PP(a).name}</dd><dt>装備</dt><dd>${WEAPONS[v.wlv]}・${ARMORS[v.alv]}</dd></dl>`:'<p class="lead">だれも住んでいない</p>';}
     else if(b.type==='park')body=`<p class="lead">きょう休んだ冒険者 ${S.parkUsed}/${PARK_CAP}人</p>`;
-    else body=`<p class="lead">${BUILD[b.type].desc}</p>`;
+    else if(b.type!=='board')body=`<p class="lead">${BUILD[b.type].desc}</p>`;
+    const st=siteAt(S,b.x,b.y), live=b.type==='board'||st; lastLive=live?liveHTML():'';
+    const acts=st?'':sel.moving?`<p class="rc-note">移設先の空き地をタップしてください（${RES} ${moveCost(b.type)}）。</p><button class="toggle" id="moveOff">やめる</button>`
+      :`<div class="actrow"><button class="toggle" id="moveOn">移設</button><button class="danger" id="demo">${sel.confirm?`撤去のおふれを出す（${RES}は撤去の翌朝もどる）`:'撤去'}</button></div>`;
     p.dataset.mode='building';
-    p.innerHTML=`<h2>${BUILD[b.type].name} <button class="x" id="close">閉じる</button></h2>${body}<button class="danger" id="demo">${sel.confirm?`撤去する（${RES}は明朝もどる）`:'撤去'}</button><p class="msg" id="msg"></p>`;
+    p.innerHTML=`<h2>${BUILD[b.type].name} <button class="x" id="close">閉じる</button></h2>${body}${live?`<div id="liveBox" class="ad">${lastLive}</div>`:''}${acts}<p class="msg" id="msg"></p>`;
   } else renderRoster(p);
 }
 // 冒険者パネル。タブの並びは人数が変わったときだけ作り直し、中身は毎回更新する（横スクロールの位置を保つ）
 let pickAdv=0;
 // おふれの名前と中身（立て札・冒険者パネルで共通）
-const BH={explore:{name:'西の洞窟を探索せよ',desc:'まだ歩いていない道や部屋を調べ、魔物と戦って時のかけらを持ち帰る。'},boss:{name:'親玉を倒せ',desc:'洞窟のいちばん奥、親玉の間をめざす。勝ち目がないと見た冒険者は、手前で腕をみがく。'}};
+const BH={
+  explore:{name:'西の洞窟を探索せよ',desc:'まだ歩いていない道や部屋を調べ、魔物と戦って時のかけらを持ち帰る。'},
+  boss:{name:'親玉を倒せ',desc:'洞窟のいちばん奥、親玉の間をめざす。勝ち目がないと見た冒険者は、手前で腕をみがく。'},
+  mine:{name:'時のかけらを掘れ',desc:'調べ終えた部屋で時のかけらを多めに掘る。戦いは少なめ。掘るほど減り、日がたつと戻る。'},
+  treasure:{name:'宝を探せ',desc:'調べ終えた部屋でゴールドを探す。見つけた分は本人の財布に入る。'},
+  train:{name:'修行せよ',desc:'魔物の多い道を歩き続けて、経験値を多めに稼ぐ。'},
+  rest:{name:'休みをとれ',desc:'その日は家で休んで、やる気を回復する。'},
+};
 const mini=a=>`<span class="tk"><img src="${faceURL(a)}" alt="">${a.name}</span>`;
 // 立て札：張り出したおふれと、それを受けた冒険者
 function boardHTML(){
   const day=S.phase==='day', got=S.advs.filter(a=>a.rep&&a.rep.behest), rest=S.advs.filter(a=>a.rep&&a.rep.rested), yet=S.advs.filter(a=>!got.includes(a)&&!rest.includes(a));
-  const posted=[S.behest, ...new Set(got.map(a=>a.rep.behest).filter(k=>k!==S.behest))];
+  const posted=[...S.posted, ...new Set(got.map(a=>a.rep.behest).filter(k=>!S.posted.includes(k)))];
   return `<div class="blk"><h4 class="sec">張り出したおふれ</h4>${posted.map(k=>{const who=got.filter(a=>a.rep.behest===k);
-      return `<div class="notice big"><b>${BH[k].name}</b><p>${BH[k].desc}</p><div class="takers"><span class="tkl">受けた冒険者</span>${who.length?who.map(mini).join(''):'<span class="tn">まだいない</span>'}</div></div>`;}).join('')}</div>
+      const named=S.advs.filter(a=>S.nom[a.id]===k&&!who.includes(a));
+      return `<div class="notice big"><b>${BH[k].name}</b><p>${BH[k].desc}</p><div class="takers"><span class="tkl">受けた冒険者</span>${who.length?who.map(mini).join(''):'<span class="tn">まだいない</span>'}</div>${named.length?`<div class="takers"><span class="tkl">指名中</span>${named.map(mini).join('')}</div>`:''}</div>`;}).join('')}</div>
     ${day&&yet.length?`<div class="blk"><h4 class="sec">まだ見ていない</h4><div class="takers">${yet.map(mini).join('')}</div></div>`:''}
     ${rest.length?`<div class="blk"><h4 class="sec">きょうはお休み</h4><div class="takers">${rest.map(mini).join('')}</div></div>`:''}`;
 }
+// 建設のおふれ1件ぶんの表示
+const SITE_VERB={build:'を建設',demolish:'を撤去',move:'を移設'};
+function siteRow(s){
+  const n=S.carps.filter(c=>c.site===s.id).length, pc=Math.round(s.done/s.need*100), stage=s.kind==='move'?(s.stage?'（建て直し中）':'（解体中）'):'';
+  const st=s.done===0&&!s.stage?(n?'大工が向かっている':'大工の手が空くのを待っている'):`作業 ${pc}%${stage}・大工${n}人`;
+  return `<div class="siterow"><b>${BUILD[s.type].name}${SITE_VERB[s.kind]}</b><div class="xpbar"><i style="width:${pc}%"></i></div><small>${st}</small>${s.done===0&&!s.stage?`<button class="linkb" data-cancel="${s.id}">取り下げる</button>`:''}</div>`;
+}
+function castleHTML(){
+  const idle=S.carps.filter(c=>c.state==='idle').length;
+  return `<div class="blk"><h4 class="sec">建設の掲示板</h4>${S.sites.length?S.sites.map(siteRow).join(''):'<p class="rc-note">おふれは出ていない。空き地や建物をタップすると出せる。</p>'}</div>
+    <div class="blk"><h4 class="sec">大工小屋</h4><p class="rc-note">大工 ${S.carps.length}人（うち待機 ${idle}人）。朝7時から夕方6時まで、歩いて現場へ行って作業する。城から遠い現場ほど着くのが遅れる。</p>
+    <button class="opt" id="hire" ${S.carps.length>=CARP_MAX||S.elem<hireCost(S)?'disabled':''}><b>大工を雇う</b><span>${S.carps.length>=CARP_MAX?'これ以上は雇えない':'人数が増えると、同時に建てたり早く建てたりできる'}</span><em>${S.carps.length>=CARP_MAX?'—':hireCost(S)}</em></button></div>`;
+}
+function liveHTML(){
+  if(!sel)return null;
+  if(sel.kind==='castle')return castleHTML();
+  if(sel.kind==='site'){const st=S.sites.find(x=>x.id===sel.id); return st?siteRow(st):'<p class="rc-note">工事が終わった。</p>';}
+  if(sel.kind==='building'){const b=at(S,sel.x,sel.y); if(b&&b.type==='board')return boardHTML(); const st=b&&siteAt(S,b.x,b.y); if(st)return siteRow(st);}
+  return null;
+}
+let lastLive='';
+function updLive(){const el=$('liveBox'); if(!el)return; const h=liveHTML(); if(h!==null&&h!==lastLive){lastLive=h; el.innerHTML=h;}}
 // 開発中だけ見せる情報（やる気などの隠しステータス）。公開時は false にする
 const DEV=true;
 const STAT_IC={hp:'<svg viewBox="0 0 10 10"><path d="M5 9S1 6.2 1 3.6A2.1 2.1 0 0 1 5 2.7 2.1 2.1 0 0 1 9 3.6C9 6.2 5 9 5 9z" fill="#b5533c"/></svg>',
@@ -1713,16 +1899,16 @@ function renderRoster(p){
   if(!S.advs.length){p.innerHTML='<h2>冒険者</h2><p class="lead">まだ冒険者がいない</p>'; p.dataset.mode=''; return;}
   if(!S.advs.some(a=>a.id===pickAdv))pickAdv=S.advs[0].id;
   if(p.dataset.mode!=='roster'||p.dataset.n!==String(S.advs.length)){
-    p.innerHTML=`<h2><span>冒険者 <small id="advCount"></small></span><button class="linkb" id="seeBoard">おふれを見る</button></h2><div class="tabs" role="tablist">${S.advs.map(a=>`<button class="tabf" role="tab" data-adv="${a.id}" aria-label="${a.name}"><img src="${faceURL(a)}" alt=""><i class="st"></i></button>`).join('')}</div><div class="ad" id="advDetail" role="tabpanel"></div>`;
+    p.innerHTML=`<h2><span>冒険者 <small id="advCount"></small></span><span class="hlinks"><button class="linkb" id="seeCastle">工事</button><button class="linkb" id="seeBoard">おふれ</button></span></h2><div class="tabs" role="tablist">${S.advs.map(a=>`<button class="tabf" role="tab" data-adv="${a.id}" aria-label="${a.name}"><img src="${faceURL(a)}" alt=""><i class="st"></i></button>`).join('')}</div><div class="ad" id="advDetail" role="tabpanel"></div>`;
     p.dataset.mode='roster'; p.dataset.n=String(S.advs.length);
   }
-  $('seeBoard').hidden=!first(S,'board'); $('advCount').textContent=`${S.advs.length}/${advCap(S)}人`;
+  $('seeBoard').hidden=!first(S,'board'); $('seeCastle').textContent=S.sites.length?`工事 ${S.sites.length}件`:'工事'; $('advCount').textContent=`${S.advs.length}/${advCap(S)}人`;
   p.querySelectorAll('.tabf').forEach(b=>{const a=S.advs.find(x=>x.id===+b.dataset.adv), [txt,cls]=status(a); b.setAttribute('aria-pressed',String(a.id===pickAdv)); b.querySelector('.st').className=`st ${cls}`; b.title=`${a.name}：${txt}`;});
   const a=S.advs.find(x=>x.id===pickAdv), P=PP(a), [txt,cls]=status(a), r=a.rep, v=shownStats(a);
   const today=S.phase==='day'&&r&&!r.rested?[r.dep!=null?`${hm(r.dep)}に出発`:'', r.bought.length?`${r.bought.map(b=>b.name).join('、')}を買った`:''].filter(Boolean).join(' · '):'';
   $('advDetail').innerHTML=`
     <div class="ad-band"><div class="who"><b>${a.name}</b><small>${P.name} · Lv${v.lv}</small></div><span class="chip ${cls}">${txt}</span></div>
-    <div class="blk"><h4 class="sec">受けたおふれ</h4>${r&&r.behest?`<p class="notice">${BH[r.behest].name}</p>`:`<p class="rc-note">${r&&r.rested?'きょうはお休み':S.phase==='day'?'まだ立て札を見ていない':'朝、立て札を見てから出発する'}</p>`}</div>
+    <div class="blk"><h4 class="sec">受けたおふれ</h4>${r&&r.behest?`<p class="notice">${BH[r.behest].name}${r.named?'<small class="nm">指名</small>':''}</p>`:`<p class="rc-note">${r&&r.rested?'きょうはお休み':S.phase==='day'?'まだ立て札を見ていない':'朝、立て札を見てから出発する'}</p>`}</div>
     <div class="blk"><h4 class="sec">ステータス</h4><dl class="tiles four">
       <div class="tile"><dt>${STAT_IC.hp}体力</dt><dd>${v.hp}<small>/${v.hpMax}</small></dd></div>
       <div class="tile"><dt>${STAT_IC.atk}攻撃</dt><dd>${v.atk}</dd></div>
@@ -1740,10 +1926,15 @@ $('panel').addEventListener('click',e=>{
   if(t.dataset.adv!==undefined){pickAdv=+t.dataset.adv; renderPanel(); return;}
   if(t.id==='close'){sel=null; renderPanel(); return;}
   if(t.id==='seeBoard'){const b=first(S,'board'); if(b){sel={kind:'building',x:b.x,y:b.y}; renderPanel();} return;}
-  if(t.dataset.build){const err=build(S,t.dataset.build,sel.x,sel.y); if(err){$('msg').textContent=err; return;} baseDirty=true; sel=null; renderPanel(); updateHud(); return;}
+  if(t.dataset.build){const err=orderBuild(S,t.dataset.build,sel.x,sel.y); if(err){$('msg').textContent=err; return;} baseDirty=true; const st=siteAt(S,sel.x,sel.y); sel={kind:'site',id:st.id,x:sel.x,y:sel.y}; renderPanel(); updateHud(); return;}
+  if(t.dataset.cancel){const st=S.sites.find(x=>x.id===+t.dataset.cancel), err=st?cancelOrder(S,st):null; if(err){$('msg').textContent=err; return;} baseDirty=true; if(sel&&sel.kind==='site')sel=null; renderPanel(); updateHud(); return;}
+  if(t.id==='hire'){const err=hireCarp(S); if(err){$('msg').textContent=err; return;} renderPanel(); updateHud(); return;}
+  if(t.id==='seeCastle'){sel={kind:'castle'}; renderPanel(); return;}
+  if(t.id==='moveOn'){sel.moving=true; sel.confirm=false; renderPanel(); return;}
+  if(t.id==='moveOff'){sel.moving=false; renderPanel(); return;}
   if(t.id==='demo'){
     if(!sel.confirm){sel.confirm=true; renderPanel(); return;}
-    const b=at(S,sel.x,sel.y); const err=demolish(S,b); if(err){$('msg').textContent=err; return;} baseDirty=true; sel=null; renderPanel(); updateHud();
+    const b=at(S,sel.x,sel.y); const err=orderDemolish(S,b); if(err){$('msg').textContent=err; return;} baseDirty=true; sel={kind:'building',x:sel.x,y:sel.y}; renderPanel(); updateHud();
   }
 });
 $('town').addEventListener('pointerdown',e=>{
@@ -1753,7 +1944,14 @@ $('town').addEventListener('pointerdown',e=>{
     // 冒険者をタップすると声が聞ける（効果はなし）
     const a=hit.adv; sayLine(a,now); return;
   }
+  if(sel&&sel.kind==='building'&&sel.moving&&hit&&isLot(S.g,hit.x,hit.y)&&!at(S,hit.x,hit.y)){
+    const b=at(S,sel.x,sel.y), err=b?orderMove(S,b,hit.x,hit.y):'建物がない';
+    if(err){$('msg').textContent=err; return;} baseDirty=true; sel={kind:'building',x:sel.x,y:sel.y}; renderPanel(); updateHud(); return;
+  }
+  const st=hit&&siteAt(S,hit.x,hit.y);
   if(hit&&at(S,hit.x,hit.y))sel={kind:'building',x:hit.x,y:hit.y};
+  else if(st)sel={kind:'site',id:st.id,x:hit.x,y:hit.y};
+  else if(hit&&S.g[hit.y]&&S.g[hit.y][hit.x]==='C')sel={kind:'castle'};
   else if(hit&&isLot(S.g,hit.x,hit.y))sel={kind:'lot',x:hit.x,y:hit.y};
   else sel=null;
   renderPanel();
@@ -1775,7 +1973,8 @@ function hintsFor(rep){
   if(dep.length){const slow=dep.reduce((m,a)=>(a.dep-a.leftHome)>(m.dep-m.leftHome)?a:m); const mins=slow.dep-slow.leftHome;
     h.push(`いちばん支度に時間がかかったのは${slow.name}。家を出てから城門まで${mins}分${mins>=150?'。寄り道先が遠すぎるかもしれません':''}。`);}
   if(rep&&rep.advs.some(a=>a.note.includes('暮れて')&&a.wins+a.losses<=2))h.push('出発が遅く、洞窟でほとんど戦えなかった冒険者がいます。店と立て札を城門の近くにまとめると早く出られます。');
-  if(!first(S,'weapon')&&S.day>=2)h.push('武器屋を建てると、冒険者が出発前に寄って強くなります。');
+  if(!first(S,'weapon')&&!S.sites.some(x=>x.type==='weapon')&&S.day>=2)h.push('武器屋を建てると、冒険者が出発前に寄って強くなります。');
+  if(S.sites.length>=2&&S.carps.length<CARP_MAX)h.push(`建設のおふれが${S.sites.length}件たまっています。城で大工を雇うと早く進みます。`);
   if(rep&&rep.advs.some(a=>a.note.includes('やる気'))&&!first(S,'park'))h.push('やる気が切れた冒険者がいます。噴水の公園で回復できます。');
   if(S.explore>=100&&!S.bossDown)h.push('探索100%。おふれを「親玉を倒せ」に変えましょう。');
   return h.slice(0,3);
@@ -1848,7 +2047,12 @@ function logHTML(r){
       case 'u': txt='レベルが上がった'; break;
       case 'p': txt='毒を受けてしまった'; break;
       case 'r': if(prevRest===e.n){L[L.length-1].txt=`${node.n}でしばらく休んだ`; continue;} prevRest=e.n; txt=`${node.n}でひと休みした`; break;
-      case 's': txt=`${node.n}を${e.first?'初めて':''}調べ、${RES}を${e.e}見つけた`+(e.chest?`。宝箱から${e.chest}ゴールドも出てきた`:'')+(e.clue?'。近道の手がかりも見つけた':''); break;
+      case 's': if(e.mine||e.treasure){ // 同じ部屋で続けて掘ったら1行にまとめる
+          const last=L[L.length-1], key=(e.mine?'m':'t')+e.n, v=e.mine?e.e:e.g;
+          if(last&&last.dk===key){last.dn++; last.dv+=v;} else {add(e.t,''); Object.assign(L[L.length-1],{dk:key,dn:1,dv:v});}
+          const c=L[L.length-1]; c.txt=e.mine?`${node.n}で${RES}を${c.dn>1?`${c.dn}回掘り、あわせて`:''}${c.dv}掘り出した`:`${node.n}で宝を${c.dn>1?`${c.dn}回探し、あわせて`:'探し、'}${c.dv}ゴールドを見つけた`;
+          continue; }
+        txt=`${node.n}を${e.first?'初めて':''}調べ、${RES}を${e.e}見つけた`+(e.chest?`。宝箱から${e.chest}ゴールドも出てきた`:'')+(e.clue?'。近道の手がかりも見つけた':''); break;
       case 'o': txt='泉へ抜ける近道を切り開いた！'; break;
       case 'd': txt=`寄り道：${(DT[e.z==='forest'?'forest':'cave'])[e.v%6]}`; break;
     }
@@ -1878,7 +2082,7 @@ function cardHTML(r,day,rows){
       <tr><th scope="row">武器</th><td>${WEAPONS[r.wlv]}${nw('weapon')}</td></tr>
       <tr><th scope="row">防具</th><td>${ARMORS[r.alv]}${nw('armor')}</td></tr>
       <tr><th scope="row">お守り</th><td class="none">なし</td></tr></tbody></table></div>`;
-  const flow=tl?`<div class="blk"><h4 class="sec">一日の流れ</h4>${tl}</div>`:'';
+  const flow=tl?`<div class="blk"><h4 class="sec">一日の流れ</h4>${tl}${r.behest?`<p class="rc-note">受けたおふれ：${BH[r.behest].name}${r.named?'（指名）':''}</p>`:''}</div>`:'';
   const bits=[]; if(r.note)bits.push(r.note); if(r.missedWage)bits.push('日給をもらいそびれた');
   const hurt=r.ko?'<span class="hurt">やられた。あすは療養</span>':r.hurt?'<span class="hurt">傷ついて帰ってきた</span>':'';
   const note=bits.length||hurt?`<p class="rc-note">${bits.join('。')}${bits.length?'。':''}${hurt}</p>`:'';
@@ -1954,6 +2158,7 @@ function openReport(opts={}){
       <div class="t-res"><span class="t-lbl"><i class="shard"></i>${RES}</span><b id="tRes">${res0}</b><em id="tAdd">+0</em></div>
       <div class="t-ex"><span class="t-lbl">洞窟の探索</span><div class="xpbar big"><i id="tExBar" style="width:${ex0}%"></i></div><b id="tEx">${Math.floor(ex0)}%</b></div>
     </div>
+    ${rep.built&&rep.built.length?`<p class="rc-note">街のできごと：${rep.built.join(' ／ ')}</p>`:''}
     <div class="won" id="rpWon" ${rep.won?'':'hidden'}>西の洞窟の親玉を倒した！ ここまでがこの版の目標です。</div>
     <div class="cards">${rep.advs.map(r=>cardHTML(r,rep.day,rep.advs)).join('')}</div>
     ${mapHTML(rep)}`;
@@ -2040,22 +2245,29 @@ function showDayCard(){
 function openOrders(){
   const rep=S.lastReport;
   const hints=hintsFor(rep);
-  const canBoss=S.explore>=100&&!S.bossDown;
-  if(!canBoss&&S.behest==='boss')S.behest='explore';
+  const cap=postCap(S);
+  S.posted=S.posted.filter(k=>!behestLock(S,k)).slice(0,cap); if(!S.posted.length)S.posted=['explore'];
+  for(const id in S.nom)if(!S.posted.includes(S.nom[id]))delete S.nom[id];
   $('reportSheet').innerHTML=`
     ${stepBar(2)}
     <h2>${S.day}日目の指示</h2>
-    ${rep?'':'<p>城下町には家が2軒と立て札だけ。冒険者が毎朝歩く道を考えて、武器屋や公園を建てていきましょう。</p>'}
+    ${rep?'':'<p>城下町には家が2軒と立て札だけ。空き地をタップして建設のおふれを出すと、大工が建てに行きます。冒険者が毎朝歩く道を考えて、武器屋や公園を建てていきましょう。</p>'}
     ${hints.length?`<div class="hints">${hints.map(h=>`<span>${h}</span>`).join('')}</div>`:''}
-    <div><p class="lead" style="margin-bottom:6px">きょうのおふれ（立て札に貼る）</p>
-    <div class="behest">
-      <label><input type="radio" name="bh" value="explore" ${S.behest==='explore'?'checked':''}> 西の洞窟を探索せよ</label>
-      <label><input type="radio" name="bh" value="boss" ${S.behest==='boss'?'checked':''} ${canBoss?'':'disabled'}> 親玉を倒せ${canBoss?'':'（探索100%で解放）'}</label>
-    </div></div>
+    <div class="blk"><h4 class="sec">立て札に貼るおふれ（${S.posted.length}/${cap}枚）</h4>
+    <div class="bhlist">${BEHESTS.map(k=>{const lock=behestLock(S,k), on=S.posted.includes(k);
+      return `<label class="bhopt ${lock?'lock':''}"><input type="checkbox" name="bh" value="${k}" ${on?'checked':''} ${lock?'disabled':''}><b>${BH[k].name}</b><small>${lock||BH[k].desc}</small></label>`;}).join('')}</div>
+    <p class="msg" id="bhMsg"></p></div>
+    <div class="blk"><h4 class="sec">指名（しなければ、本人が性格に合わせて選ぶ）</h4>
+    <div class="nomlist">${S.advs.map(a=>`<label class="nomrow"><img class="face" src="${faceURL(a)}" alt=""><span class="nn"><b>${a.name}</b><small>${PP(a).name} · Lv${a.lv}</small></span>
+      <select data-nom="${a.id}" aria-label="${a.name}への指名"><option value="">おまかせ</option>${S.posted.map(k=>`<option value="${k}" ${S.nom[a.id]===k?'selected':''}>${BH[k].name}</option>`).join('')}</select></label>`).join('')}</div></div>
 `;
   $('reportActions').innerHTML=`${rep?'<button class="toggle" id="back3">報告書をもう一度見る</button>':''}<button class="primary" id="go">${S.day}日目をはじめる</button>`;
   $('reportModal').hidden=false;
-  $('reportSheet').querySelectorAll('input[name=bh]').forEach(i=>i.addEventListener('change',()=>{S.behest=i.value;}));
+  $('reportSheet').querySelectorAll('input[name=bh]').forEach(i=>i.addEventListener('change',()=>{
+    if(i.checked){ if(S.posted.length>=cap){i.checked=false; $('bhMsg').textContent=`貼れるのは${cap}枚まで。先にどれかを外してください。`; return;} S.posted.push(i.value); }
+    else { if(S.posted.length<=1){i.checked=true; $('bhMsg').textContent='おふれは1枚以上貼ってください。'; return;} S.posted=S.posted.filter(k=>k!==i.value); }
+    const y=$('reportModal').scrollTop; openOrders(); $('reportModal').scrollTop=y; }));
+  $('reportSheet').querySelectorAll('select[data-nom]').forEach(el=>el.addEventListener('change',()=>{ if(el.value)S.nom[el.dataset.nom]=el.value; else delete S.nom[el.dataset.nom]; }));
   if(rep)$('back3').addEventListener('click',()=>{openReportOnly();});
   $('go').addEventListener('click',()=>{ $('reportModal').hidden=true; startDay(S); if(speed===0)setSpeed(1); renderPanel(); updateHud(); });
 }
@@ -2073,12 +2285,13 @@ function loop(now){
   wasPhase=S.phase;
   if(GFX&&!townHidden())GFX.draw(now,dt);
   updVoice(now);
-  if(now-panelClock>300&&!townHidden()){panelClock=now; updateHud(); if(!sel)renderPanel(); else if($('boardLive'))$('boardLive').innerHTML=boardHTML();}
+  if(now-panelClock>300&&!townHidden()){panelClock=now; updateHud(); if(S.dirty){S.dirty=false; baseDirty=true; if(sel&&sel.kind!=='castle')renderPanel();} if(!sel)renderPanel(); else updLive();}
   requestAnimationFrame(loop);
 }
 $('resLbl').textContent=RES;
 $('startBtn').addEventListener('click',()=>{$('titleModal').hidden=true; openReport();});
 // 開発用：コンソールやテストから日を早送りする  __tct.skip(3) で3日進めて報告書を開く
+if(DEV)window.__sel=v=>{sel=v; renderPanel();};
 if(DEV)window.__tct={get S(){return S;},skip(n=1){for(let i=0;i<n;i++){if(S.phase!=='day')startDay(S); tick(S,2000);} wasPhase=S.phase; $('titleModal').hidden=true; $('dayCard').hidden=true; $('duskCard').hidden=true; openReport({instant:true});}};
 updateHud(); renderPanel(); requestAnimationFrame(loop);
 initGfx().then(g=>{GFX=g;}).catch(e=>{console.error(e); $('glfail').hidden=false;});
