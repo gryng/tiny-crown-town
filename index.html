@@ -480,7 +480,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.10.1 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.10.2 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -2348,7 +2348,6 @@ function openReport(opts={}){
   const tok=++repTok; repFast=!!opts.instant;
   const total=rep.advs.reduce((m,a)=>m+(a.elem||0),0), res0=(rep.elemAfter??S.elem)-total, ex0=rep.exploreFrom??rep.explore;
   $('reportSheet').innerHTML=`
-    ${stepBar(0)}
     <div class="rp-head"><h2>${rep.day}日目の報告書</h2><div class="stamp" id="rpStamp"><span>第${rep.day}日</span></div></div>
     <div class="tally">
       <div class="t-res"><span class="t-lbl"><i class="shard"></i>${RES}</span><b id="tRes">${res0}</b><em id="tAdd">+0</em></div>
@@ -2444,7 +2443,6 @@ function openOrders(){
   S.posted=S.posted.filter(k=>!behestLock(S,k)).slice(0,cap); if(!S.posted.length)S.posted=['explore'];
   for(const id in S.nom)if(!S.posted.includes(S.nom[id]))delete S.nom[id];
   $('reportSheet').innerHTML=`
-    ${stepBar(2)}
     <h2>${S.day}日目の指示</h2>
     ${rep?'':'<p>城下町には家が2軒と立て札だけ。空き地をタップして建設のおふれを出すと、大工が建てに行きます。冒険者が毎朝歩く道を考えて、武器屋や公園を建てていきましょう。</p>'}
     ${hints.length?`<div class="hints">${hints.map(h=>`<span>${h}</span>`).join('')}</div>`:''}
