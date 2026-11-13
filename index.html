@@ -409,7 +409,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.6.0 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.7.0 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -474,16 +474,17 @@ const WEAPONS=['素手','木の剣','銅の剣','鉄の剣','鋼の剣','白銀�
 const ARMORS=['旅の服','革のよろい','鎖のよろい','鉄のよろい','鋼のよろい','白銀のよろい','金のよろい'];
 // 性格：朝の動き・冒険中の振る舞い・口ぐせ
 // leave:家を出る時刻のずれ(分) park:公園の長さ skipPark:公園に寄らない lovePark:元気でも公園に寄る maxShops:寄る店の数
-// armorFirst:防具を先に買う walk:1マスにかかる分 retreat:引き返す体力の割合 dmg:受けるダメージ倍率 atk:攻撃の上乗せ roll:運のふれ幅
+// armorFirst:防具を先に買う walk:1マスにかかる分 retreat:引き返す体力の割合 dmg:受けるダメージ倍率 atk:攻撃の上乗せ roll:会心が出やすく未踏の道を好む
+// rest:休憩を始める体力の割合(0は休まない) detour:寄り道のしやすさ margin:帰りに見る余裕(ターン。負なら門限に遅れがち) safe:安全な道を選び主に慎重 brave:勝ち目がなくても挑む solo:共闘しない
 const PERSONAS={
-  nonbiri:{name:'のんびり屋',leave:20,park:35,walk:7,retreat:.3,dmg:.85,k:['まあ、なんとかなるって','ふぁ……いい天気','急がなくても逃げないよ']},
-  sekkachi:{name:'せっかち',leave:-10,skipPark:true,maxShops:1,walk:5,retreat:.25,k:['よし、行こう今すぐ！','待ってられない！','ほら早く早く！']},
-  okubyo:{name:'臆病',armorFirst:true,retreat:.5,k:['ぼ、ぼくでいいのかな……','こ、こわくないし……','だ、大丈夫かな……']},
-  makezu:{name:'負けず嫌い',retreat:.15,k:['次は勝つ','負けたままじゃ終われない','見てろよ']},
-  kuishinbo:{name:'食いしん坊',lovePark:true,park:30,k:['おなかすいた……','帰ったらなに食べよう','腹が減っては戦えない！']},
-  yumemi:{name:'夢見がち',roll:5,k:['いつかきっと','夢で見たんだ','物語の続きみたい']},
+  nonbiri:{name:'のんびり屋',leave:20,park:35,walk:7,retreat:.3,dmg:.85,rest:.65,detour:.2,margin:3,k:['まあ、なんとかなるって','ふぁ……いい天気','急がなくても逃げないよ']},
+  sekkachi:{name:'せっかち',leave:-10,skipPark:true,maxShops:1,walk:5,retreat:.25,rest:0,detour:0,margin:-3,k:['よし、行こう今すぐ！','待ってられない！','ほら早く早く！']},
+  okubyo:{name:'臆病',armorFirst:true,retreat:.5,rest:.7,margin:5,safe:true,k:['ぼ、ぼくでいいのかな……','こ、こわくないし……','だ、大丈夫かな……']},
+  makezu:{name:'負けず嫌い',retreat:.15,rest:.35,brave:true,k:['次は勝つ','負けたままじゃ終われない','見てろよ']},
+  kuishinbo:{name:'食いしん坊',lovePark:true,park:30,detour:.3,k:['おなかすいた……','帰ったらなに食べよう','腹が減っては戦えない！']},
+  yumemi:{name:'夢見がち',roll:5,detour:.35,k:['いつかきっと','夢で見たんだ','物語の続きみたい']},
   sewazuki:{name:'世話好き',leave:-15,k:['みんな無事でよかった','無理しちゃだめだよ','わたしに任せて']},
-  ippiki:{name:'一匹狼',skipPark:true,atk:1,k:['……ひとりで行く','群れるのは苦手だ','……別に']},
+  ippiki:{name:'一匹狼',skipPark:true,atk:1,solo:true,k:['……ひとりで行く','群れるのは苦手だ','……別に']},
 };
 const PIDS=Object.keys(PERSONAS);
 const PP=a=>PERSONAS[a.pid];
@@ -514,7 +515,7 @@ function bfs(g,a,b){
 }
 
 function newState(rng){
-  const S={g:makeMap(),day:1,t:DAY_START,elem:450,explore:0,bossDown:false,justWon:false,behest:'explore',b:[],advs:[],refund:0,phase:'report',parkUsed:0,demolished:0,rng:rng||Math.random,nextId:1,lastReport:null,fx:[]};
+  const S={g:makeMap(),day:1,t:DAY_START,elem:450,explore:0,bossDown:false,justWon:false,behest:'explore',b:[],advs:[],refund:0,phase:'report',parkUsed:0,demolished:0,rng:rng||Math.random,nextId:1,lastReport:null,fx:[],world:newWorld(),fights:[]};
   // 性格の出てくる順番はプレイごとに変わる
   S.pOrder=PIDS.slice(); for(let i=S.pOrder.length-1;i>0;i--){const j=Math.floor(S.rng()*(i+1)); [S.pOrder[i],S.pOrder[j]]=[S.pOrder[j],S.pOrder[i]];}
   build(S,'house',2,2,true); build(S,'house',17,9,true); build(S,'board',12,4,true);
@@ -552,7 +553,7 @@ function homeDoor(S,a){const b=S.b.find(b=>b.id===a.home); return b?b.door:CASTL
 
 function startDay(S){
   S.exploreStart=S.explore;
-  S.t=DAY_START; S.parkUsed=0; S.demolished=0; S.elem+=S.refund; S.refund=0; S.phase='day'; S.justWon=false;
+  S.fights=[]; S.t=DAY_START; S.parkUsed=0; S.demolished=0; S.elem+=S.refund; S.refund=0; S.phase='day'; S.justWon=false;
   S.advs.forEach((a,i)=>{
     a.rep={leftHome:null,dep:null,back:null,wins:0,losses:0,elem:0,explore:0,wage:false,bought:[],note:'',ko:false,boss:false,rested:false,missedWage:false,
       ev:[],exp:0,gold:0,lvFrom:a.lv,expFrom:a.exp,ups:[],hurt:false,late:false};
@@ -564,15 +565,13 @@ function startDay(S){
     const P=PP(a); a.state='home'; a.leaveAt=LEAVE+i*5+(P.leave||0); a.todo={park:!P.skipPark,board:true,shops:P.armorFirst?['armor','weapon']:['weapon','armor'],shopsVisited:0};
   });
 }
-function tick(S,mins){for(let m=0;m<mins;m++){if(S.phase!=='day')return; S.t++; for(const a of S.advs)step(S,a); if(S.t>=DAY_END)endDay(S);}}
+function tick(S,mins){for(let m=0;m<mins;m++){if(S.phase!=='day')return; S.t++; for(const a of S.advs)step(S,a); if(S.t%TURN===0)outTurnAll(S); if(S.t>=DAY_END)endDay(S);}}
 function step(S,a){
   const t=S.t;
   switch(a.state){
     case 'home': if(t>=a.leaveAt){a.rep.leftHome=t; a.hidden=false; a.trail.push({...a.pos}); if(a.morale<40)react(a,'sweat'); next(S,a);} break;
     case 'walk': advance(S,a); break;
     case 'stop': if(t>=a.until)finish(S,a); break;
-    case 'away': away(S,a); break;
-    case 'back': if(t>=a.backAt){a.pos={...GATE}; a.hidden=false; S.elem+=a.rep.elem; a.rep.back=t; a.slow=a.ko; if(a.ko||a.rep.losses>a.rep.wins)react(a,'sad'); a.last={k:'back'}; goTo(S,a,CASTLE_DOOR,'castle');} break;
   }
 }
 function goTo(S,a,dest,goal){a.walk={path:bfs(S.g,a.pos,dest)||[],i:0,prog:0}; a.goal=goal; a.state='walk';}
@@ -587,7 +586,7 @@ function arrive(S,a){
     case 'park': if(S.parkUsed<PARK_CAP){S.parkUsed++; react(a,'heart'); a.last={k:'park'}; stopAt(S,a,PP(a).park||20,'park');} else next(S,a); break;
     case 'board': stopAt(S,a,10,'board'); break;
     case 'weapon': case 'armor': a.hidden=true; stopAt(S,a,25,a.goal); break;
-    case 'gate': a.rep.dep=S.t; a.state='away'; a.hidden=true; a.dungeonAt=S.t+TRAVEL; a.inDungeon=false; break;
+    case 'gate': depart(S,a); break;
     case 'castle': a.gold+=30; a.rep.gold+=30; a.rep.wage=true; a.last={k:'wage'}; a.hidden=true; stopAt(S,a,10,'castle'); break;
     case 'home': a.state='done'; a.hidden=true; break;
   }
@@ -600,7 +599,7 @@ function finish(S,a){
   if(w==='castle'){goTo(S,a,homeDoor(S,a),'home'); return;}
   next(S,a);
 }
-const price=lv=>40+lv*20;
+const price=lv=>60+lv*30;
 function canBuy(a,type){return a.gold>=price(type==='weapon'?a.wlv:a.alv);}
 function buy(a,type){
   if(type==='weapon'){const p=price(a.wlv); if(a.gold>=p){a.gold-=p; a.wlv=Math.min(a.wlv+1,WEAPONS.length-1); a.atk+=2; a.rep.bought.push({slot:'weapon',name:WEAPONS[a.wlv]}); react(a,'sparkle'); a.last={k:'buy',i:WEAPONS[a.wlv]};}}
@@ -620,35 +619,217 @@ function next(S,a){
   }
   goTo(S,a,GATE,'gate');
 }
-function away(S,a){
-  const t=S.t;
-  if(!a.inDungeon){if(t>=a.dungeonAt){a.inDungeon=true; a.nextEnc=t+ENC; if(t>=RETURN_TIME)turnBack(S,a,'着いたころには日が暮れていた');} return;}
-  if(t>=a.nextEnc){
-    encounter(S,a); a.nextEnc+=ENC;
-    if(a.ko)return turnBack(S,a,'やられて逃げ帰った');
-    if(a.rep.boss)return turnBack(S,a,'親玉を倒して凱旋');
-    if(a.hp<=a.hpMax*(PP(a).retreat||.3)){a.rep.hurt=true; return turnBack(S,a,'傷ついて引き返した');}
+// ================= 町の外：すべてターン（5分）で進む =================
+// 地点と道。len:通るのに必要なターン risk:1ターンごとに魔物と出くわす確率 zone:出る魔物の顔ぶれ
+const TURN=5, GATE_BY=1060;
+const NODES={
+  gate:{n:'城門'}, fork:{n:'森の分かれ道'}, spring:{n:'森の泉',rest:true}, mouth:{n:'洞窟の入口'},
+  r1:{n:'第一の部屋',room:true,master:'bigrat',chest:30}, r2:{n:'第二の部屋',room:true,chest:40,clue:true},
+  hall:{n:'奥の広間',room:true,master:'king',chest:60}, boss:{n:'親玉の間',boss:true},
+};
+const EDGES=[
+  {id:'e1',a:'gate',b:'fork',len:6,risk:.16,zone:'forest',n:'森の道'},
+  {id:'e2',a:'fork',b:'spring',len:3,risk:.12,zone:'forest',n:'泉への小道'},
+  {id:'e3',a:'fork',b:'mouth',len:4,risk:.16,zone:'forest',n:'洞窟への道'},
+  {id:'e4',a:'mouth',b:'r1',len:3,risk:.27,zone:'cave',n:'洞窟の通路'},
+  {id:'e5',a:'r1',b:'r2',len:4,risk:.27,zone:'cave',n:'曲がりくねった通路'},
+  {id:'e6',a:'r2',b:'hall',len:4,risk:.3,zone:'deep',n:'深い通路'},
+  {id:'e7',a:'hall',b:'boss',len:3,risk:0,zone:'deep',n:'親玉の間への道',bossWay:true},
+  {id:'cut',a:'spring',b:'r2',len:2,risk:.2,zone:'cave',n:'泉の裏の近道',cut:true},
+];
+// 魔物。swift:先に動く・逃げにくい poison:毒 （硬さは守りの高さで表す）
+const MON={
+  rat:{n:'森ネズミ',hp:6,atk:3,def:0,xp:5,elem:[4,7],gold:5},
+  bat:{n:'洞窟コウモリ',hp:5,atk:4,def:0,swift:true,xp:6,elem:[5,8],gold:6},
+  shroom:{n:'毒キノコ',hp:8,atk:2,def:0,poison:true,xp:7,elem:[6,9],gold:7},
+  lizard:{n:'岩トカゲ',hp:10,atk:4,def:2,hard:true,xp:10,elem:[9,13],gold:11},
+  bigrat:{n:'大ネズミ',hp:20,atk:5,def:1,master:true,xp:20,elem:[22,28],gold:25},
+  king:{n:'岩トカゲの長',hp:34,atk:7,def:3,hard:true,master:true,xp:30,elem:[30,40],gold:40},
+  boss:{n:'洞窟の親玉',hp:90,atk:10,def:4,hard:true,boss:true,xp:40,elem:[120,120],gold:0},
+};
+const ZONE={forest:[['rat',1]],cave:[['bat',.45],['shroom',.35],['rat',.2]],deep:[['lizard',.5],['bat',.25],['shroom',.25]]};
+const UNITS=EDGES.filter(e=>!e.bossWay).length+Object.values(NODES).filter(n=>n.room).length+Object.values(NODES).filter(n=>n.master).length;
+function newWorld(){return {trips:{},searched:{},searchDay:{},master:{},chest:{},clue:false,cut:false};}
+const safety=(S,e)=>{const n=S.world.trips[e.id]||0; return n>=20?2:n>=1?1:0;};
+const elen=(S,e)=>Math.max(1,Math.ceil(e.len*[1,.9,.75][safety(S,e)]));
+const erisk=(S,e)=>e.risk*[1,.8,.5][safety(S,e)];
+const other=(e,id)=>e.a===id?e.b:e.a;
+const masterAlive=(S,id)=>NODES[id].master&&!S.world.master[id];
+function unit(S,a){const d=100/UNITS; S.explore=Math.min(100,S.explore+d); if(a)a.rep.explore+=d; if(S.explore>99.99)S.explore=100;}
+// 使える道だけで最短の道のりを調べる。block(nodeId)が真の地点は通り抜けない（目的地にはできる）
+function route(S,from,to,opt={}){
+  const dist={[from]:0}, prev={}, done={};
+  for(;;){
+    let u=null; for(const k in dist)if(!done[k]&&(u===null||dist[k]<dist[u]))u=k;
+    if(u===null)return null; if(u===to)break; done[u]=true;
+    if(u!==from&&opt.block&&opt.block(u))continue;
+    for(const e of EDGES){
+      if(e.a!==u&&e.b!==u)continue; if(e.cut&&!S.world.cut)continue; if(e.bossWay&&!opt.boss&&from!=='boss')continue;
+      const v=other(e,u), c=dist[u]+elen(S,e)+(opt.safe?erisk(S,e)*25:0);
+      if(dist[v]===undefined||c<dist[v]){dist[v]=c; prev[v]=e;}
+    }
   }
-  if(t>=RETURN_TIME)turnBack(S,a,'日が暮れて引き返した');
+  const path=[]; let n=to, cost=0; while(n!==from){const e=prev[n]; path.unshift(e); cost+=elen(S,e); n=other(e,n);}
+  return {path,cost};
 }
-function turnBack(S,a,why){a.state='back'; a.backAt=S.t+(a.ko?70:TRAVEL); a.rep.note=why;}
-function encounter(S,a){
-  const r=S.rng, P=PP(a), ap=a.atk+a.lv+(P.atk||0)+r()*(P.roll||3), dm=P.dmg||1, lv0=a.lv, ev=k=>a.rep.ev.push({t:S.t,k});
-  if(a.behest==='boss'&&S.explore>=100&&!S.bossDown&&a.rep.wins+a.rep.losses>=1){
-    const bp=13+r()*5;
-    if(ap>=bp){S.bossDown=true; S.justWon=true; a.rep.boss=true; a.exp+=40; a.rep.exp+=40; a.rep.elem+=120; a.rep.wins++; ev('B');}
-    else {a.hp-=Math.round(Math.max(3,Math.round(bp-a.def*1.5))*dm); a.rep.losses++; a.morale-=8; ev('b');}
-  } else {
-    const e=3+S.explore/12+r()*3;
-    if(ap>=e){
-      a.hp-=Math.round(Math.max(0,Math.round(e*0.35-a.def))*dm); a.exp+=6; a.rep.exp+=6; const got=6+Math.floor(r()*6); a.rep.elem+=got; a.rep.wins++; a.gold+=4; a.rep.gold+=4; ev('w');
-      if(S.explore<100){const d=Math.min(0.5,100-S.explore); S.explore+=d; a.rep.explore+=d;}
-    } else {a.hp-=Math.round(Math.max(1,Math.round(e*0.9-a.def))*dm); a.rep.losses++; ev('l');}
-    a.morale-=2;
+function gainExp(S,a,n){a.exp+=n; a.rep.exp+=n; while(a.exp>=a.lv*25){a.exp-=a.lv*25; a.lv++; a.hpMax+=3; a.atk+=1; a.rep.ups.push({lv:a.lv,hp:3,atk:1}); a.rep.ev.push({t:S.t,k:'u'});}}
+const atkOf=a=>a.atk+(PP(a).atk||0);
+// 勝てそうかの見立て（部屋の主や親玉に挑むかどうか）
+function winnable(a,m,slack){
+  const rounds=Math.ceil(m.hp/Math.max(1,atkOf(a)-m.def)), hurt=rounds*Math.max(1,m.atk-a.def)*(PP(a).dmg||1);
+  return a.hp-hurt>a.hpMax*slack;
+}
+function depart(S,a){
+  a.rep.dep=S.t; a.state='away'; a.hidden=true;
+  a.out={at:'gate',edge:null,act:null,fight:null,mode:'go',poison:0,detours:0,rests:0,want:null};
+}
+const turnsLeft=S=>Math.floor((GATE_BY-S.t)/TURN);
+const locKey=o=>o.edge?'e:'+o.edge.e.id:'n:'+o.at;
+function ev(S,a,k,d){a.rep.ev.push({t:S.t,k,...d});}
+function goHome(S,a,why,flag){const o=a.out; if(o.mode==='go'){o.mode='home'; a.rep.note=why; if(flag)a.rep[flag]=true;} o.want=null;}
+function comeBack(S,a){
+  const o=a.out; if(o.poison>0)a.rep.hurt=true;
+  a.out=null; a.pos={...GATE}; a.hidden=false; S.elem+=a.rep.elem; a.rep.back=S.t; a.slow=a.ko;
+  if(a.ko||a.rep.losses>a.rep.wins)react(a,'sad'); a.last={k:'back'}; goTo(S,a,CASTLE_DOOR,'castle');
+}
+function startFight(S,a,mid,key,atNode){
+  const m=MON[mid], F={mid,m,hp:m.hp,key,members:[a],round:0,crit:{},hit:{},atNode};
+  a.out.fight=F; S.fights.push(F);
+  if(PP(a).solo)return;
+  for(const b of S.advs){ if(b===a||b.state!=='away'||!b.out||b.out.fight||b.out.act||b.out.mode!=='go'||PP(b).solo)continue; if(locKey(b.out)!==key)continue; const ea=a.out.edge, eb=b.out.edge; if(ea&&(!eb||ea.to!==eb.to||Math.abs(ea.left-eb.left)>1))continue; b.out.fight=F; F.members.push(b); F.co=true; }
+}
+function leaveFight(F,a){F.members=F.members.filter(x=>x!==a); a.out.fight=null;}
+function fightRound(S,F){
+  const r=S.rng, m=F.m; F.round++;
+  const strike=()=>{ for(const a of F.members){ if(F.hp<=0)break;
+      const crit=r()<(a.morale/1000+(PP(a).roll?.03:0)), base=atkOf(a);
+      let d=crit?base*2:Math.max(1,base-m.def+Math.floor(r()*3)-1);
+      if(crit)F.crit[a.id]=(F.crit[a.id]||0)+1; F.hp-=d; } };
+  const bite=()=>{ if(F.hp<=0||!F.members.length)return; const a=F.members[Math.floor(r()*F.members.length)];
+      const d=Math.max(1,Math.round(Math.max(1,m.atk-a.def+Math.floor(r()*3)-1)*(PP(a).dmg||1))); a.hp-=d; F.hit[a.id]=(F.hit[a.id]||0)+1; };
+  if(m.swift){bite(); strike();} else {strike(); bite();}
+  const names=a=>F.members.filter(x=>x!==a).map(x=>x.name);
+  if(F.hp<=0){
+    for(const a of F.members.slice()){
+      const got=m.elem[0]+Math.floor(r()*(m.elem[1]-m.elem[0]+1));
+      a.rep.elem+=got; a.gold+=m.gold; a.rep.gold+=m.gold; a.rep.wins++; a.morale=Math.max(0,a.morale-3);
+      ev(S,a,m.boss?'B':'w',{m:F.mid,r:F.round,c:F.crit[a.id]||0,co:names(a),e:got});
+      if(m.poison&&F.hit[a.id]){a.out.poison=6; ev(S,a,'p',{});}
+      gainExp(S,a,m.xp);
+      if(m.boss){a.rep.boss=true;}
+      a.out.fight=null;
+    }
+    if(m.boss){S.bossDown=true; S.justWon=true; for(const a of F.members)goHome(S,a,'親玉を倒して凱旋');}
+    if(m.master&&F.atNode){S.world.master[F.atNode]=true; unit(S,F.members[0]);}
+    F.members=[]; return;
   }
-  if(a.hp<=0){a.hp=0; a.ko=true; a.rep.ko=true; a.morale-=20; ev('x');}
-  while(a.exp>=a.lv*25){a.exp-=a.lv*25; a.lv++; a.hpMax+=3; a.atk+=1; a.rep.ups.push({lv:a.lv,hp:3,atk:1}); ev('u');}
-  a.morale=Math.max(0,a.morale);
+  for(const a of F.members.slice()){
+    const P=PP(a), line=(P.retreat||.3)*(m.boss?.6:1);
+    if(a.hp<=0){a.hp=0; a.ko=true; a.rep.ko=true; a.rep.losses++; a.morale=Math.max(0,a.morale-20); ev(S,a,m.boss?'b':'l',{m:F.mid,r:F.round,co:names(a)}); ev(S,a,'x',{}); leaveFight(F,a); a.out.mode='ko'; a.out.want=null; a.rep.note='やられて逃げ帰った'; continue;}
+    const late=turnsLeft(S)<=((route(S,a.out.at,'gate')||{cost:0}).cost+2);
+    if(a.hp<=a.hpMax*line||late){
+      if(m.swift&&r()<.45){ev(S,a,'f',{m:F.mid}); continue;} // すばやい魔物からは逃げそこなうことがある
+      a.rep.losses++; a.morale=Math.max(0,a.morale-(m.boss?8:3)); ev(S,a,m.boss?'b':'l',{m:F.mid,r:F.round,co:names(a),late:late&&a.hp>a.hpMax*line});
+      if(m.poison&&F.hit[a.id])a.out.poison=6;
+      leaveFight(F,a);
+      if(a.out.edge&&a.out.mode==='go'){const e=a.out.edge; a.out.edge={e:e.e,to:other(e.e,e.to),left:Math.max(1,elen(S,e.e)-e.left)};} // 来た道を戻る
+      if(late)goHome(S,a,'日が暮れて引き返した'); else if(a.hp<=a.hpMax*(P.retreat||.3))goHome(S,a,'傷ついて引き返した','hurt');
+      a.out.fled=F.atNode||null;
+    }
+  }
+}
+// 外にいる全員の1ターン
+function outTurnAll(S){
+  for(const F of S.fights.slice())fightRound(S,F);
+  S.fights=S.fights.filter(F=>F.members.length);
+  for(const a of S.advs){ if(a.state!=='away'||!a.out)continue; if(a.out.fight){continue;} outTurn(S,a); }
+}
+function outTurn(S,a){
+  const o=a.out, r=S.rng, P=PP(a);
+  if(o.justFought){o.justFought=false;}
+  if(o.poison>0&&o.mode!=='ko'){o.poison--; a.hp-=1; if(a.hp<=0){a.hp=1; o.poison=0;}}
+  if(o.act){ o.act.left--; if(o.act.left<=0){const k=o.act.k; o.act=null; actDone(S,a,k);} return; }
+  if(o.edge){
+    const E=o.edge; E.left--;
+    if(E.left<=0){ S.world.trips[E.e.id]=(S.world.trips[E.e.id]||0)+1; if(S.world.trips[E.e.id]===1&&!E.e.bossWay){unit(S,a); ev(S,a,'n',{e:E.e.id});} o.at=E.to; o.edge=null; arriveNode(S,a); return; }
+    if(o.mode!=='ko'&&!(o.mode==='home'&&a.hp<=a.hpMax*(P.retreat||.3))&&r()<erisk(S,E.e)){
+      const key='e:'+E.e.id;
+      const tbl=ZONE[E.e.zone]; let x=r(), mid=tbl[tbl.length-1][0]; for(const [id,w] of tbl){if(x<w){mid=id;break;} x-=w;}
+      startFight(S,a,mid,key,null);
+    }
+    return;
+  }
+  decide(S,a);
+}
+function arriveNode(S,a){
+  const o=a.out;
+  if(o.at==='gate'&&o.mode!=='go'){comeBack(S,a); return;}
+  if(o.mode==='go'&&NODES[o.at].boss&&!S.bossDown){startFight(S,a,'boss','n:'+o.at,o.at); return;}
+  if(o.mode==='go'&&masterAlive(S,o.at)){
+    const F=S.fights.find(f=>f.key==='n:'+o.at); if(F&&!PP(a).solo){o.fight=F; F.members.push(a); F.co=true; return;}
+    startFight(S,a,NODES[o.at].master,'n:'+o.at,o.at); return;
+  }
+}
+function actDone(S,a,k){
+  const o=a.out, r=S.rng, W=S.world, id=o.at, N=NODES[id];
+  if(k==='rest'){const g=Math.ceil(a.hpMax*(N.rest?.3:.1)); a.hp=Math.min(a.hpMax,a.hp+g); ev(S,a,'r',{n:id,g});}
+  if(k==='search'){
+    const got=10+Math.floor(r()*7); a.rep.elem+=got; W.searchDay[id]=S.day;
+    const first=!W.searched[id]; if(first){W.searched[id]=true; unit(S,a);}
+    let chest=0; if(N.chest&&!W.chest[id]){W.chest[id]=true; chest=N.chest; a.gold+=chest; a.rep.gold+=chest;}
+    let clue=false; if(N.clue&&!W.clue){W.clue=true; clue=true;}
+    ev(S,a,'s',{n:id,e:got,first,chest,clue});
+  }
+  if(k==='open'){W.cut=true; ev(S,a,'o',{});}
+  if(k==='detour'){a.morale=Math.min(100,a.morale+6); a.hp=Math.min(a.hpMax,a.hp+2);}
+}
+function moveAlong(S,a,rt){const e=rt.path[0]; a.out.edge={e,to:other(e,a.out.at),left:elen(S,e)};}
+function decide(S,a){
+  const o=a.out, r=S.rng, P=PP(a), W=S.world, id=o.at, N=NODES[id];
+  if(o.at==='gate'&&o.mode!=='go'){comeBack(S,a); return;}
+  const home=route(S,id,'gate',{safe:P.safe}), left=turnsLeft(S), margin=P.margin===undefined?2:P.margin;
+  if(o.mode==='ko'||o.mode==='home'){ if(home.path.length)moveAlong(S,a,home); else comeBack(S,a); return; }
+  // 帰る判断：時間、体力
+  if(left<=home.cost+margin){goHome(S,a,'日が暮れて引き返した'); return decide(S,a);}
+  if(a.hp<=a.hpMax*(P.retreat||.3)){goHome(S,a,'傷ついて引き返した','hurt'); return decide(S,a);}
+  const slack=left-home.cost-margin;
+  // 休憩
+  const restLine=P.rest===undefined?.5:P.rest;
+  if(a.hp<a.hpMax*(N.rest?Math.max(restLine,.8):restLine)&&slack>4&&o.rests<(N.rest?6:3)){o.rests++; o.act={k:'rest',left:2}; return;}
+  o.rests=0;
+  // 部屋：調べる、近道を開く
+  if(N.room&&!masterAlive(S,id)){
+    if(W.searchDay[id]!==S.day&&slack>3){o.act={k:'search',left:3}; return;}
+    if(N.clue&&W.clue&&!W.cut&&slack>8){o.act={k:'open',left:6}; return;}
+  }
+  // 行き先を決める
+  const brave=P.brave?-1:P.safe?.45:.15;
+  const can=nid=>!masterAlive(S,nid)||winnable(a,MON[NODES[nid].master],brave);
+  const block=nid=>masterAlive(S,nid);
+  let best=null; const offer=(to,bonus,what,opt)=>{ if(to===id)return; const rt=route(S,id,to,{block,safe:P.safe,...opt}); if(!rt)return; const back=route(S,to,'gate'); if(rt.cost+(back?back.cost:99)+margin+3>left)return; const sc=rt.cost-bonus; if(!best||sc<best.sc)best={sc,rt,what,to}; };
+  if(a.behest==='boss'&&S.explore>=100&&!S.bossDown){
+    if(winnable(a,MON.boss,P.brave?-1:P.safe?.3:0))offer('boss',50,'boss',{boss:true});
+    else if(!a.rep.shy){a.rep.shy=true; a.rep.shyNote='親玉にはまだ勝てそうにないと見て、腕をみがいた';}
+  }
+  for(const nid in NODES){ const n=NODES[nid]; if(!n.room)continue;
+    if(masterAlive(S,nid)){ if(can(nid))offer(nid,P.roll?6:3,'master'); else if(!a.rep.shy){a.rep.shy=true; a.rep.shyNote=`${n.n}の主にはまだ勝てそうにないと見て、手前で腕をみがいた`;} continue; }
+    if(W.searchDay[nid]!==S.day)offer(nid,W.searched[nid]?0:(P.roll?6:3),'room');
+  }
+  for(const e of EDGES){ if(e.bossWay||(e.cut&&!W.cut)||W.trips[e.id])continue;
+    for(const end of [e.a,e.b]){ const far=other(e,end); if(block(end)&&end!==id)continue; if(masterAlive(S,far)&&!can(far))continue;
+      const rt0=end===id?{path:[],cost:0}:route(S,id,end,{block,safe:P.safe}); if(!rt0)continue;
+      const rt={path:[...rt0.path,e],cost:rt0.cost+elen(S,e)}, back=route(S,far,'gate'); if(rt.cost+(back?back.cost:99)+margin+3>left)continue;
+      const sc=rt.cost-(P.roll?8:2); if(!best||sc<best.sc)best={sc,rt,what:'new',to:far}; } }
+  if(!best){ // 見回り：行ける範囲でいちばん手ごたえのある道を歩いて腕をみがく
+    let pick=null; for(const e of EDGES){ if(e.bossWay||(e.cut&&!W.cut))continue; if(e.a!==id&&e.b!==id)continue; const far=other(e,id); if(masterAlive(S,far))continue; if(far==='gate')continue;
+      const back=route(S,far,'gate'); if(elen(S,e)+(back?back.cost:99)+margin+2>left)continue; const sc=erisk(S,e)*(P.safe?-1:1)+r()*.05; if(!pick||sc>pick.sc)pick={sc,e}; }
+    if(!pick){goHome(S,a,left<home.cost+margin+10?'日が暮れて引き返した':'やることがなくなって早めに帰った'); return decide(S,a);}
+    best={rt:{path:[pick.e],cost:elen(S,pick.e)},what:'patrol'};
+  }
+  // 寄り道
+  const dz=P.detour===undefined?.08:P.detour;
+  if(o.detours<2&&slack>10&&r()<dz*.5){o.detours++; const n=1+Math.floor(r()*3); o.act={k:'detour',left:n}; ev(S,a,'d',{n:id,v:Math.floor(r()*6),z:(EDGES.find(e=>e.a===id||e.b===id)||{}).zone}); return;}
+  moveAlong(S,a,best.rt);
 }
 function endDay(S){
   for(const a of S.advs){
@@ -656,7 +837,8 @@ function endDay(S){
     if(a.state==='home')a.rep.note='時間切れで家を出られなかった';
     if((a.state==='walk'||a.state==='stop')&&a.rep.dep===null&&a.goal!=='home')a.rep.note='準備が終わらず出発できなかった';
     if(a.rep.dep!==null&&!a.rep.wage)a.rep.missedWage=true;
-    if(a.state==='away'||a.state==='back')S.elem+=a.rep.elem;
+    if(a.state==='away'){S.elem+=a.rep.elem; if(a.out&&a.out.poison>0)a.rep.hurt=true; a.out=null; if(!a.rep.note)a.rep.note='日が暮れても帰ってこなかった';}
+    if(a.rep.shyNote&&!a.rep.ko&&!a.rep.boss)a.rep.note=a.rep.shyNote;
     if(a.state==='rest')a.morale=Math.min(100,a.morale+25);
     if(a.pid==='makezu'&&a.rep.losses>a.rep.wins)a.morale=Math.min(100,a.morale+10); // 負けた翌日はやる気が上がる
     a.morale=Math.min(100,a.morale+6);
@@ -1444,7 +1626,7 @@ function renderPanel(){
 // 冒険者パネル。タブの並びは人数が変わったときだけ作り直し、中身は毎回更新する（横スクロールの位置を保つ）
 let pickAdv=0;
 // おふれの名前と中身（立て札・冒険者パネルで共通）
-const BH={explore:{name:'西の洞窟を探索せよ',desc:'西の洞窟を奥へ進み、魔物と戦って時のかけらを持ち帰る。'},boss:{name:'親玉を倒せ',desc:'洞窟のいちばん奥にいる親玉に挑む。'}};
+const BH={explore:{name:'西の洞窟を探索せよ',desc:'まだ歩いていない道や部屋を調べ、魔物と戦って時のかけらを持ち帰る。'},boss:{name:'親玉を倒せ',desc:'洞窟のいちばん奥、親玉の間をめざす。勝ち目がないと見た冒険者は、手前で腕をみがく。'}};
 const mini=a=>`<span class="tk"><img src="${faceURL(a)}" alt="">${a.name}</span>`;
 // 立て札：張り出したおふれと、それを受けた冒険者
 function boardHTML(){
@@ -1577,8 +1759,36 @@ function logHTML(r){
   if(r.leftHome!=null)add(r.leftHome,'家を出た');
   r.bought.forEach(b=>add(r.leftHome+1,`${b.name}を買った`));
   if(r.dep!=null)add(r.dep,'城門から出発した');
-  const T={w:'魔物と戦って勝った',l:'魔物と戦って負けた',B:'親玉を倒した！',b:'親玉に挑んだが、届かなかった',x:'力尽きて、逃げ帰ることにした',u:'レベルが上がった'};
-  r.ev.forEach(e=>add(e.t,T[e.k]));
+  const withCo=e=>e.co&&e.co.length?`${e.co.join('と')}と力を合わせて、`:'';
+  const DT={forest:['木の実を見つけてつまんだ','きれいな花に見とれた','小川で顔を洗った','鳥の声に耳をすませた','切り株に腰かけて空を見上げた','リスを追いかけた'],
+            cave:['光るコケに見とれた','水晶のかけらを眺めた','壁の古い落書きを読んだ','地底の水たまりをのぞきこんだ','こだまで遊んだ','きのこを数えた']};
+  let prevRest=null;
+  for(const e of r.ev){
+    const m=e.m&&MON[e.m], node=e.n&&NODES[e.n]; let txt='';
+    if(e.k!=='r')prevRest=null;
+    switch(e.k){
+      case 'n': txt=`${EDGES.find(x=>x.id===e.e).n}を初めて歩いた`; break;
+      case 'w': {
+        const crit=e.c?'会心の一撃が決まり、':'';
+        if(m.master)txt=`${withCo(e)}${crit}部屋の主・${m.n}を${e.r}ラウンドで倒した！`;
+        else if(e.r<=2)txt=`${withCo(e)}${crit}${m.n}をあっさり倒した`;
+        else if(m.hard&&e.r>=5)txt=`${withCo(e)}${m.n}の硬さに手こずったが、${crit}${e.r}ラウンドかけて倒した`;
+        else txt=`${withCo(e)}${crit}${m.n}を${e.r}ラウンドで倒した`;
+        break; }
+      case 'l': txt=e.late?`${m.n}と戦っているうちに日が傾き、切り上げた`:m.hard&&e.r>=5?`${m.n}に${e.r}ラウンドねばったが刃が立たず、逃げ出した`:`${m.n}に押されて、逃げ出した`; break;
+      case 'f': txt=`${m.n}がすばやくて、逃げそこなった`; break;
+      case 'B': txt=`${withCo(e)}${e.c?'会心の一撃も決まり、':''}${e.r}ラウンドの死闘の末、${m.n}を倒した！`; break;
+      case 'b': txt=`${withCo(e)}${m.n}に挑んだが、${e.r}ラウンドで押し返された`; break;
+      case 'x': txt='力尽きて、逃げ帰ることにした'; break;
+      case 'u': txt='レベルが上がった'; break;
+      case 'p': txt='毒を受けてしまった'; break;
+      case 'r': if(prevRest===e.n){L[L.length-1].txt=`${node.n}でしばらく休んだ`; continue;} prevRest=e.n; txt=`${node.n}でひと休みした`; break;
+      case 's': txt=`${node.n}を${e.first?'初めて':''}調べ、${RES}を${e.e}見つけた`+(e.chest?`。宝箱から${e.chest}ゴールド！`:'')+(e.clue?'。近道の手がかりも見つけた':''); break;
+      case 'o': txt='泉へ抜ける近道を切り開いた！'; break;
+      case 'd': txt=`寄り道：${(DT[e.z==='forest'?'forest':'cave'])[e.v%6]}`; break;
+    }
+    if(txt)add(e.t,txt);
+  }
   if(r.back!=null)add(r.back,'街に帰ってきた');
   if(!L.length)return '';
   return `<div class="blk"><h4 class="sec">旅の記録</h4><ol class="logl">${L.map(e=>`<li><time>${hm(e.t)}</time><span>${e.txt}</span></li>`).join('')}</ol></div>`;
@@ -1589,7 +1799,7 @@ function cardHTML(r,day,rows){
   let bar='', marks='';
   if(r.leftHome!==null){
     bar=r.dep!==null?`<i class="p" style="left:${pct(r.leftHome)}%;width:${pct(r.dep)-pct(r.leftHome)}%"></i><i class="a" style="left:${pct(r.dep)}%;width:${pct(r.back||RETURN_TIME)-pct(r.dep)}%"></i>`:`<i class="p" style="left:${pct(r.leftHome)}%;width:${100-pct(r.leftHome)}%"></i>`;
-    marks=r.ev.map(e=>`<i class="ev" style="left:${pct(e.t)}%" title="${hm(e.t)} ${EVN[e.k]}">${EVI[e.k]}</i>`).join('');
+    marks=r.ev.filter(e=>EVI[e.k]).map(e=>`<i class="ev" style="left:${pct(e.t)}%" title="${hm(e.t)} ${EVN[e.k]}">${EVI[e.k]}</i>`).join('');
   }
   const tl=r.leftHome!==null?`<div class="tlw"><div class="bar">${bar}</div>${marks}</div><div class="tlaxis"><span>6:00</span><span>10:00</span><span>14:00</span><span>17:00</span><span>20:00</span></div>`:'';
   const nw=k=>r.bought.some(b=>b.slot===k)?'<em>NEW</em>':'';
