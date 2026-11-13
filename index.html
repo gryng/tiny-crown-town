@@ -277,6 +277,17 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .logl li{display:grid;grid-template-columns:3.6em minmax(0,1fr);gap:8px;padding:5px 0}
 .logl li+li{border-top:1px dashed #241c1426}
 .logl time{font-family:var(--f-head);font-weight:800;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+/* 広い画面（PC・横向きタブレット）：左に町を大きく、右に情報と冒険者 */
+@media (min-width:1180px) and (min-height:520px){
+  .wrap{max-width:1680px;display:grid;grid-template-columns:minmax(0,1fr) 392px;grid-template-rows:auto auto 1fr;align-items:start;gap:14px 26px;padding-block:14px 20px}
+  .screen{grid-column:1;grid-row:1/4;position:sticky;top:24px;margin:10px;height:calc(100vh - 48px);height:calc(100dvh - 48px)}
+  #town{height:100%;aspect-ratio:auto}
+  .hud{grid-column:2;grid-row:1}
+  .panel{grid-column:2;grid-row:2}
+  .foot{grid-column:2;grid-row:3}
+  .screen .seg{left:12px;top:12px}
+  .screen .seg button{padding:5px 12px;min-width:44px;font-size:14px}
+}
 @media (max-width:620px){.sheet{transform:none}.rc{transform:translateY(14px)}}
 @media (prefers-reduced-motion:reduce){.rc,.stamp,#rpWon{opacity:1;transform:none;animation:none}.stamp{transform:rotate(12deg);opacity:.85}.rc.flash::after,.burst{display:none}}
 /* 報告書カード */
@@ -398,7 +409,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.5.3 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.6.0 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -1156,9 +1167,10 @@ async function initGfx(){
     const w=cv.clientWidth, h=cv.clientHeight; if(!w||!h)return;
     const dpr=lite?1:Math.min(window.devicePixelRatio||1,2);
     renderer.setPixelRatio(dpr); renderer.setSize(w,h,false); composer.setPixelRatio(dpr); composer.setSize(w,h);
-    cam.aspect=w/h; cam.updateProjectionMatrix();
+    // 画面が16:10より縦長のときは、町の横幅が収まるように画角を広げる（カメラは引かない＝霧のかかり方が変わらない）
+    cam.aspect=w/h; cam.fov=2*Math.atan(Math.tan(FOV*Math.PI/360)*Math.max(1,1.6/(w/h)))*180/Math.PI; cam.updateProjectionMatrix();
     for(const p of [tiltH,tiltV]){p.uniforms.res.value.set(w*dpr,h*dpr); p.uniforms.amt.value=h*dpr/300;}
-    ptScale=h*dpr*.5/Math.tan(FOV*Math.PI/360);
+    ptScale=h*dpr*.5/Math.tan(cam.fov*Math.PI/360);
     torchA.castShadow=torchB.castShadow=!lite;
   }
   new ResizeObserver(resize).observe(cv); resize();
