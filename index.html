@@ -66,7 +66,9 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .screen{position:relative;background:#0a1410;line-height:0;overflow:hidden;border-radius:3px;
   box-shadow:0 0 0 3px var(--ink),0 0 0 8px #d8c7a0,0 0 0 10.5px var(--ink),0 18px 40px #000b}
 .screen::after{content:"";position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 0 2px #0008,inset 0 0 40px #0006}
-#town{width:100%;aspect-ratio:16/10;display:block;touch-action:manipulation;cursor:pointer}
+#town{width:100%;aspect-ratio:16/10;display:block;touch-action:none;cursor:pointer}
+#town.dragging{cursor:grabbing}
+.grab{display:none}
 .daypart{position:absolute;left:10px;top:10px;z-index:2;font-family:var(--f-head);font-weight:800;font-size:13px;line-height:1.4;letter-spacing:.14em;padding:2px 10px;pointer-events:none;transform:rotate(-2deg)}
 .glfail{position:absolute;inset:0;display:grid;place-items:center;padding:16px;text-align:center;line-height:1.7;color:var(--cream-dim);background:#0a1410}
 .glfail[hidden]{display:none}
@@ -312,6 +314,31 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   .screen .seg{left:12px;top:12px}
   .screen .seg button{padding:5px 12px;min-width:44px;font-size:14px}
 }
+/* 広い画面では、引き出しはただの入れ物（中のパネルがそのまま右の列に並ぶ） */
+@media (min-width:1180px) and (min-height:520px){.drawer{display:contents}.drawer::before{display:none}}
+/* スマホ・タブレット：画面いっぱいの町に、情報を重ねる。下のパネルは引き出し式 */
+@media (max-width:1179.98px),(max-height:519.98px){
+  html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+  .wrap{position:fixed;inset:0;max-width:none;padding:0;display:block}
+  .screen{position:absolute;inset:0;border-radius:0;box-shadow:none}
+  .screen::after{box-shadow:inset 0 0 70px #0007}
+  #town{height:100%;aspect-ratio:auto}
+  .hud{position:absolute;z-index:6;top:calc(env(safe-area-inset-top,0px) + 8px);left:max(8px,env(safe-area-inset-left,0px));right:max(8px,env(safe-area-inset-right,0px))}
+  .screen .seg{top:calc(env(safe-area-inset-top,0px) + 62px);left:max(8px,env(safe-area-inset-left,0px))}
+  .foot{position:absolute;z-index:6;top:calc(env(safe-area-inset-top,0px) + 62px);right:max(8px,env(safe-area-inset-right,0px))}
+  .foot .menu{top:calc(100% + 8px);bottom:auto}
+  .drawer{--openH:min(62dvh,600px);position:absolute;z-index:7;left:max(0px,env(safe-area-inset-left,0px));right:max(0px,env(safe-area-inset-right,0px));bottom:0;height:var(--openH);
+    display:flex;flex-direction:column;transform:translateY(calc(var(--openH) - var(--peekH,150px) - env(safe-area-inset-bottom,0px)));transition:transform .26s cubic-bezier(.2,.9,.3,1);will-change:transform}
+  .drawer.open{transform:none}
+  .drawer.dragging{transition:none}
+  .drawer::before{box-shadow:0 0 0 2.5px var(--ink),0 -6px 24px #0007}
+  .grab{display:grid;place-items:center;flex:0 0 auto;height:24px;touch-action:none;cursor:grab}
+  .grab i{display:block;width:46px;height:5px;border-radius:3px;background:#241c1466}
+  .drawer .panel{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-top:2px;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+  .drawer .panel::before{display:none}
+  .drawer .panel>*{flex-shrink:0} /* 中身を縮めずにスクロールさせる */
+  .drawer .panel h2{touch-action:none}
+}
 @media (max-width:620px){.sheet{transform:none}.rc{transform:translateY(14px)}}
 @media (prefers-reduced-motion:reduce){.rc,.stamp,#rpWon{opacity:1;transform:none;animation:none}.stamp{transform:rotate(12deg);opacity:.85}.rc.flash::after,.burst{display:none}}
 .rmap{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
@@ -437,7 +464,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     <div class="glfail" id="glfail" hidden>3D表示を読み込めませんでした。<br>通信状況を確かめて、Safari や Chrome で開き直してください。</div>
   </div>
 
-  <section class="panel plate" id="panel" aria-live="polite"></section>
+  <div class="drawer plate" id="drawer"><div class="grab" id="grab" role="button" tabindex="0" aria-label="パネルを開け閉めする"><i></i></div><section class="panel plate" id="panel" aria-live="polite"></section></div>
 
   <div class="foot">
     <button class="x menu-btn" id="menuBtn" aria-expanded="false" aria-controls="menu">メニュー</button>
@@ -453,7 +480,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.9.1 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.10.0 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -1601,24 +1628,38 @@ async function initGfx(){
     fragmentShader:'uniform sampler2D tDiffuse;uniform vec3 tint;uniform float sat;uniform float vig;varying vec2 vUv;void main(){vec4 c=texture2D(tDiffuse,vUv);float l=dot(c.rgb,vec3(.2126,.7152,.0722));c.rgb=mix(vec3(l),c.rgb,sat)*tint;vec2 p=(vUv-.5)*vec2(1.,.82);c.rgb*=1.-vig*smoothstep(.3,.8,length(p)*1.3);gl_FragColor=c;}'});
   composer.addPass(tiltH); composer.addPass(tiltV); composer.addPass(bloom); composer.addPass(grade); composer.addPass(new OP.OutputPass());
 
+  const ray=new T.Raycaster(), ndc=new T.Vector2(), gplane=new T.Plane(new T.Vector3(0,1,0),0), hp=new T.Vector3(), pv=new T.Vector3();
+  // 拡大縮小と移動。zoom=1 で町の横幅がちょうど収まる。縦長の画面では最初から寄っておく
+  let zoom=null, baseFov=FOV;
+  const wideMQ=matchMedia('(min-width:1180px) and (min-height:520px)');
+  function applyFov(){cam.fov=2*Math.atan(Math.tan(baseFov*Math.PI/360)/zoom)*180/Math.PI; cam.updateProjectionMatrix(); ptScale=cv.clientHeight*renderer.getPixelRatio()*.5/Math.tan(cam.fov*Math.PI/360);}
+  function clampTgt(){tgt.x=Math.max(-W/2+1,Math.min(W/2-1,tgt.x)); tgt.z=Math.max(-H/2,Math.min(H/2+2,tgt.z));}
+  function groundAt(px,py){const r=cv.getBoundingClientRect(); ndc.set(px/r.width*2-1,1-py/r.height*2); placeCam(performance.now()); cam.updateMatrixWorld(); ray.setFromCamera(ndc,cam); return ray.ray.intersectPlane(gplane,new T.Vector3());}
+  function zoomBy(f,px,py){
+    const max=wideMQ.matches?3:4, z1=Math.max(1,Math.min(max,zoom*f)); if(z1===zoom)return;
+    const a=groundAt(px,py); zoom=z1; applyFov(); const b=groundAt(px,py);
+    if(a&&b){tgt.x+=a.x-b.x; tgt.z+=a.z-b.z;} clampTgt();
+  }
+  function panBy(dx,dy){const h=cv.clientHeight, k=2*DIST*Math.tan(cam.fov*Math.PI/360)/h; tgt.x-=dx*k; tgt.z-=dy*k/Math.sin(PITCH); clampTgt();}
   function resize(){
     const w=cv.clientWidth, h=cv.clientHeight; if(!w||!h)return;
-    const dpr=lite?1:Math.min(window.devicePixelRatio||1,2);
+    const dpr=lite?1:Math.min(window.devicePixelRatio||1,wideMQ.matches?2:1.5); // 画面いっぱいに描くスマホは、解像度を少し抑えて軽くする
     renderer.setPixelRatio(dpr); renderer.setSize(w,h,false); composer.setPixelRatio(dpr); composer.setSize(w,h);
     // 画面が16:10より縦長のときは、町の横幅が収まるように画角を広げる（カメラは引かない＝霧のかかり方が変わらない）
-    cam.aspect=w/h; cam.fov=2*Math.atan(Math.tan(FOV*Math.PI/360)*Math.max(1,1.6/(w/h)))*180/Math.PI; cam.updateProjectionMatrix();
+    cam.aspect=w/h; baseFov=2*Math.atan(Math.tan(FOV*Math.PI/360)*Math.max(1,1.6/(w/h)))*180/Math.PI;
+    if(zoom===null){zoom=w/h<1?2.1:1; if(zoom>1)tgt.z=1.2;}
+    applyFov();
     for(const p of [tiltH,tiltV]){p.uniforms.res.value.set(w*dpr,h*dpr); p.uniforms.amt.value=h*dpr/300;}
-    ptScale=h*dpr*.5/Math.tan(cam.fov*Math.PI/360);
     torchA.castShadow=torchB.castShadow=!lite;
   }
   new ResizeObserver(resize).observe(cv); resize();
 
   /* ----- タップ判定 ----- */
-  const ray=new T.Raycaster(), ndc=new T.Vector2(), gplane=new T.Plane(new T.Vector3(0,1,0),0), hp=new T.Vector3(), pv=new T.Vector3();
   function pick(e){
     const r=cv.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
     if(S.phase==='day'){
-      let hit=null, hd=Math.max(18,r.width/W*.75);
+      pv.set(tgt.x,0,tgt.z).project(cam); const p0x=pv.x; pv.set(tgt.x+1,0,tgt.z).project(cam); const tile=Math.abs(pv.x-p0x)/2*r.width;
+      let hit=null, hd=Math.max(18,tile*.75);
       for(const a of S.advs){if(a.hidden)continue; const w=walkers.get(a.id); if(!w||!w.mesh.visible)continue; pv.copy(w.mesh.position); pv.y+=.5; pv.project(cam); const d=Math.hypot((pv.x+1)/2*r.width-mx,(1-pv.y)/2*r.height-my); if(d<hd){hd=d; hit=a;}}
       if(hit)return {adv:hit};
     }
@@ -1674,7 +1715,7 @@ async function initGfx(){
   }
   const sp=new T.Vector3();
   function screenOf(a){const w=walkers.get(a.id); if(!w||!w.mesh.visible)return null; sp.copy(w.mesh.position); sp.y+=FH*U+.55; sp.project(cam); return {x:(sp.x+1)/2*cv.clientWidth, y:(1-sp.y)/2*cv.clientHeight};}
-  return {draw,pick,resize,screenOf};
+  return {draw,pick,resize,screenOf,panBy,zoomBy};
 }
 
 /*VOICE-START*/
@@ -1928,6 +1969,7 @@ function renderPanel(){
     p.dataset.mode='building';
     p.innerHTML=`<h2>${BUILD[b.type].name} <button class="x" id="close">閉じる</button></h2>${body}${live?`<div id="liveBox" class="ad">${lastLive}</div>`:''}${acts}<p class="msg" id="msg"></p>`;
   } else renderRoster(p);
+  afterPanel();
 }
 // 冒険者パネル。タブの並びは人数が変わったときだけ作り直し、中身は毎回更新する（横スクロールの位置を保つ）
 let pickAdv=0;
@@ -2013,8 +2055,8 @@ function renderRoster(p){
 }
 $('panel').addEventListener('click',e=>{
   const t=e.target.closest('button'); if(!t)return;
-  if(t.dataset.adv!==undefined){pickAdv=+t.dataset.adv; renderPanel(); return;}
-  if(t.id==='close'){sel=null; renderPanel(); return;}
+  if(t.dataset.adv!==undefined){pickAdv=+t.dataset.adv; renderPanel(); setDrawer(true); return;}
+  if(t.id==='close'){sel=null; renderPanel(); setDrawer(false); return;}
   if(t.id==='seeBoard'){const b=first(S,'board'); if(b){sel={kind:'building',x:b.x,y:b.y}; renderPanel();} return;}
   if(t.dataset.build){const err=orderBuild(S,t.dataset.build,sel.x,sel.y); if(err){$('msg').textContent=err; return;} baseDirty=true; const st=siteAt(S,sel.x,sel.y); sel={kind:'site',id:st.id,x:sel.x,y:sel.y}; renderPanel(); updateHud(); return;}
   if(t.dataset.cancel){const st=S.sites.find(x=>x.id===+t.dataset.cancel), err=st?cancelOrder(S,st):null; if(err){$('msg').textContent=err; return;} baseDirty=true; if(sel&&sel.kind==='site')sel=null; renderPanel(); updateHud(); return;}
@@ -2028,7 +2070,7 @@ $('panel').addEventListener('click',e=>{
     const b=at(S,sel.x,sel.y); const err=orderDemolish(S,b); if(err){$('msg').textContent=err; return;} baseDirty=true; sel={kind:'building',x:sel.x,y:sel.y}; renderPanel(); updateHud();
   }
 });
-$('town').addEventListener('pointerdown',e=>{
+function tapAt(e){
   if(!GFX)return;
   const hit=GFX.pick(e), now=performance.now();
   if(hit&&hit.adv){
@@ -2046,7 +2088,62 @@ $('town').addEventListener('pointerdown',e=>{
   else if(hit&&isLot(S.g,hit.x,hit.y))sel={kind:'lot',x:hit.x,y:hit.y};
   else sel=null;
   renderPanel();
-});
+}
+// 町の操作：1本指のドラッグで移動、2本指で拡大縮小、動かさずに離したらタップ。パソコンはホイールで拡大縮小
+(function(){
+  const cv=$('town'), pts=new Map(); let tap=null, pinch=null;
+  const mid=()=>{const a=[...pts.values()]; return {x:(a[0].x+a[1].x)/2, y:(a[0].y+a[1].y)/2, d:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)};};
+  const local=e=>{const r=cv.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top};};
+  cv.addEventListener('pointerdown',e=>{
+    cv.setPointerCapture(e.pointerId); pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(pts.size===1)tap={x:e.clientX,y:e.clientY,moved:false,e}; else {tap=null; pinch=mid();}
+  });
+  cv.addEventListener('pointermove',e=>{
+    const p=pts.get(e.pointerId); if(!p||!GFX)return;
+    const dx=e.clientX-p.x, dy=e.clientY-p.y; p.x=e.clientX; p.y=e.clientY;
+    if(pts.size>=2&&pinch){const m=mid(), r=cv.getBoundingClientRect(); GFX.panBy(m.x-pinch.x,m.y-pinch.y); if(pinch.d>0)GFX.zoomBy(m.d/pinch.d,m.x-r.left,m.y-r.top); pinch=m; return;}
+    if(tap&&!tap.moved&&Math.hypot(e.clientX-tap.x,e.clientY-tap.y)>8){tap.moved=true; cv.classList.add('dragging');}
+    if(tap&&tap.moved)GFX.panBy(dx,dy);
+  });
+  const end=e=>{
+    if(!pts.has(e.pointerId))return; pts.delete(e.pointerId);
+    if(e.type==='pointerup'&&tap&&!tap.moved&&pts.size===0)tapAt(tap.e);
+    if(pts.size===0){tap=null; pinch=null; cv.classList.remove('dragging');} else if(pts.size===1){pinch=null; tap=null;}
+  };
+  cv.addEventListener('pointerup',end); cv.addEventListener('pointercancel',end);
+  cv.addEventListener('wheel',e=>{if(!GFX)return; e.preventDefault(); const q=local(e); GFX.zoomBy(Math.exp(-e.deltaY*.0015),q.x,q.y);},{passive:false});
+})();
+// 引き出し式のパネル（スマホ）。顔の列まで見える低い状態と、開いた状態の2段。つまみか見出しを引っぱるか、タップで開け閉めする
+const wideMQ=matchMedia('(min-width:1180px) and (min-height:520px)');
+let drawerOpen=false, prevSel=null;
+function setDrawer(open){drawerOpen=open; const d=$('drawer'); d.classList.toggle('open',open); d.style.transform='';}
+function measurePeek(){
+  if(wideMQ.matches)return; const p=$('panel'), d=$('drawer');
+  const els=[...p.querySelectorAll('.tabs .tabf')]; if(!els.length){const h=p.querySelector('h2'); if(h)els.push(h);} if(!els.length)return;
+  const top=d.getBoundingClientRect().top, px=Math.ceil(Math.max(...els.map(e=>e.getBoundingClientRect().bottom))-top+6);
+  if(d._peek!==px){d._peek=px; d.style.setProperty('--peekH',px+'px');}
+}
+function afterPanel(){
+  if(sel&&sel!==prevSel)setDrawer(true);
+  prevSel=sel; measurePeek();
+}
+(function(){
+  const d=$('drawer'), g=$('grab'); let drag=null;
+  const safeB=()=>{const t=document.createElement('div'); t.style.cssText='position:fixed;height:env(safe-area-inset-bottom,0px)'; document.body.appendChild(t); const h=t.offsetHeight; t.remove(); return h;};
+  const closedY=()=>d.offsetHeight-(d._peek||150)-safeB();
+  const start=e=>{ if(wideMQ.matches)return; if(e.target.closest('button,a,select,input,label'))return;
+    drag={y0:e.clientY,base:drawerOpen?0:closedY(),moved:false,id:e.pointerId}; d.classList.add('dragging'); e.currentTarget.setPointerCapture(e.pointerId); };
+  const move=e=>{ if(!drag||e.pointerId!==drag.id)return; const dy=e.clientY-drag.y0; if(Math.abs(dy)>6)drag.moved=true;
+    const y=Math.max(0,Math.min(closedY(),drag.base+dy)); d.style.transform=`translateY(${y}px)`; drag.y=y; };
+  const end=e=>{ if(!drag||e.pointerId!==drag.id)return; d.classList.remove('dragging');
+    const open=drag.moved?(drag.y<closedY()/2):!drawerOpen; drag=null; setDrawer(open); };
+  for(const el of [g,$('panel')]){
+    el.addEventListener('pointerdown',e=>{ if(el===$('panel')&&!e.target.closest('h2'))return; start(e); });
+    el.addEventListener('pointermove',move); el.addEventListener('pointerup',end); el.addEventListener('pointercancel',end);
+  }
+  g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault(); setDrawer(!drawerOpen);}});
+  addEventListener('resize',measurePeek);
+})();
 document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>setSpeed(+b.dataset.sp)));
 function setSpeed(s){speed=s; document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.sp===s)));}
 $('trails').addEventListener('click',()=>{showTrails=!showTrails; $('trails').setAttribute('aria-pressed',String(showTrails));});
