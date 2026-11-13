@@ -290,6 +290,27 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 }
 @media (max-width:620px){.sheet{transform:none}.rc{transform:translateY(14px)}}
 @media (prefers-reduced-motion:reduce){.rc,.stamp,#rpWon{opacity:1;transform:none;animation:none}.stamp{transform:rotate(12deg);opacity:.85}.rc.flash::after,.burst{display:none}}
+.rmap{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;opacity:0;transform:translateY(10px)}
+.rmap.in{animation:cardIn .4s ease-out forwards}
+.mapbox{background:#f3ead3;border:1.5px solid var(--ink);border-radius:3px 9px 4px 8px;box-shadow:2px 3px 0 #241c1426;padding:6px}
+.mapbox svg{display:block;width:100%;height:auto}
+.rd{fill:none;stroke:var(--ink);stroke-linecap:round}
+.rd.q{stroke:#241c1455;stroke-width:1.5;stroke-dasharray:1 5}
+.rd.s1{stroke-width:2;stroke-dasharray:6 4}
+.rd.s2{stroke-width:3.5}
+.rd.new{stroke:var(--gold);stroke-width:9;opacity:.75}
+.nd{fill:#fffaf0;stroke:var(--ink);stroke-width:1.5}
+.nd.done{fill:#cfe3d6}.nd.rest{fill:#bfe0e6}.nd.foe{fill:#f1c9bd;stroke:var(--bad)}.nd.unk{fill:none;stroke:#241c1455;stroke-dasharray:2 3}
+.qm{font:700 8px var(--f-head);fill:#241c1488;text-anchor:middle}
+.foe-t{font:800 8px var(--f-head);fill:var(--bad);text-anchor:middle}
+.chk{fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.lb{font:700 8.5px var(--f-body);fill:var(--ink);text-anchor:middle;paint-order:stroke;stroke:#f3ead3;stroke-width:3px}
+.fc{fill:var(--paper);stroke:var(--ink);stroke-width:1.5}
+.maplg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:10.5px;font-weight:700;color:var(--muted)}
+.maplg span{display:inline-flex;align-items:center;gap:5px}
+.maplg .l{display:inline-block;width:22px;height:0;border-top:2px dashed var(--ink)}
+.maplg .l.q{border-top:1.5px dotted #241c1466}.maplg .l.s2{border-top:3.5px solid var(--ink)}.maplg .l.new{border-top:6px solid var(--gold);opacity:.8}
+@media (prefers-reduced-motion:reduce){.rmap{opacity:1;transform:none;animation:none}}
 /* 報告書カード */
 .cards{display:grid;grid-template-columns:minmax(0,1fr);gap:18px}
 .card{background:#f3ead3;border:1.5px solid var(--ink);border-radius:3px 9px 4px 8px;box-shadow:2px 3px 0 #241c1426;color:var(--ink)}
@@ -409,7 +430,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.7.0 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.7.1 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -552,7 +573,7 @@ function demolish(S,b){
 function homeDoor(S,a){const b=S.b.find(b=>b.id===a.home); return b?b.door:CASTLE_DOOR;}
 
 function startDay(S){
-  S.exploreStart=S.explore;
+  S.exploreStart=S.explore; S.worldStart=JSON.parse(JSON.stringify(S.world));
   S.fights=[]; S.t=DAY_START; S.parkUsed=0; S.demolished=0; S.elem+=S.refund; S.refund=0; S.phase='day'; S.justWon=false;
   S.advs.forEach((a,i)=>{
     a.rep={leftHome:null,dep:null,back:null,wins:0,losses:0,elem:0,explore:0,wage:false,bought:[],note:'',ko:false,boss:false,rested:false,missedWage:false,
@@ -648,6 +669,7 @@ const MON={
   boss:{n:'洞窟の親玉',hp:90,atk:10,def:4,hard:true,boss:true,xp:40,elem:[120,120],gold:0},
 };
 const ZONE={forest:[['rat',1]],cave:[['bat',.45],['shroom',.35],['rat',.2]],deep:[['lizard',.5],['bat',.25],['shroom',.25]]};
+const DEPTH={gate:0,fork:1,spring:2,mouth:2,r1:3,r2:4,hall:5,boss:6};
 const UNITS=EDGES.filter(e=>!e.bossWay).length+Object.values(NODES).filter(n=>n.room).length+Object.values(NODES).filter(n=>n.master).length;
 function newWorld(){return {trips:{},searched:{},searchDay:{},master:{},chest:{},clue:false,cut:false};}
 const safety=(S,e)=>{const n=S.world.trips[e.id]||0; return n>=20?2:n>=1?1:0;};
@@ -680,7 +702,7 @@ function winnable(a,m,slack){
   return a.hp-hurt>a.hpMax*slack;
 }
 function depart(S,a){
-  a.rep.dep=S.t; a.state='away'; a.hidden=true;
+  a.rep.dep=S.t; a.state='away'; a.hidden=true; a.rep.reach='gate';
   a.out={at:'gate',edge:null,act:null,fight:null,mode:'go',poison:0,detours:0,rests:0,want:null};
 }
 const turnsLeft=S=>Math.floor((GATE_BY-S.t)/TURN);
@@ -763,6 +785,7 @@ function outTurn(S,a){
 }
 function arriveNode(S,a){
   const o=a.out;
+  if(o.mode==='go'&&DEPTH[o.at]>DEPTH[a.rep.reach||'gate'])a.rep.reach=o.at;
   if(o.at==='gate'&&o.mode!=='go'){comeBack(S,a); return;}
   if(o.mode==='go'&&NODES[o.at].boss&&!S.bossDown){startFight(S,a,'boss','n:'+o.at,o.at); return;}
   if(o.mode==='go'&&masterAlive(S,o.at)){
@@ -844,7 +867,7 @@ function endDay(S){
     a.morale=Math.min(100,a.morale+6);
     a.lastTrail=a.trail; a.state='idle'; a.hidden=true; a.walk=null; a.pos={...homeDoor(S,a)};
   }
-  S.lastReport={day:S.day,won:S.justWon,explore:S.explore,exploreFrom:S.exploreStart||0,elemAfter:S.elem,
+  S.lastReport={day:S.day,won:S.justWon,bossDown:S.bossDown,world:JSON.parse(JSON.stringify(S.world)),worldFrom:S.worldStart||newWorld(),explore:S.explore,exploreFrom:S.exploreStart||0,elemAfter:S.elem,
     advs:S.advs.filter(a=>a.rep).map(a=>({id:a.id,name:a.name,tunic:a.tunic,hair:a.hair,pid:a.pid,k:a.k,lv:a.lv,hp:a.hp,hpMax:a.hpMax,atk:a.atk,def:a.def,morale:a.morale,gold:a.gold,wlv:a.wlv,alv:a.alv,...a.rep,held:a.gold,expNow:a.exp,ev:a.rep.ev.slice(),ups:a.rep.ups.slice(),bought:a.rep.bought.slice()}))};
   S.day++; S.phase='report';
 }
@@ -1835,6 +1858,47 @@ function cardHTML(r,day,rows){
     </div>
   </article>`;
 }
+// ---------- 報告書：探索の地図 ----------
+// 行ったことのある場所だけを描く。道は安全度で線が変わり、きょう初めて歩いた道は金色で目立たせる
+const MAPXY={gate:[30,158],fork:[92,128],spring:[84,58],mouth:[150,146],r1:[200,116],r2:[236,66],hall:[288,104],boss:[306,40]};
+function mapHTML(rep){
+  const W=rep.world, W0=rep.worldFrom; if(!W)return '';
+  const trips=id=>W.trips[id]||0, saf=id=>trips(id)>=20?2:trips(id)>=1?1:0;
+  const known={gate:true}; for(const e of EDGES)if(trips(e.id)){known[e.a]=true; known[e.b]=true;}
+  const P=id=>MAPXY[id], mid=(e)=>{const a=P(e.a),b=P(e.b); return e.cut?`M${a[0]} ${a[1]} Q ${(a[0]+b[0])/2} ${Math.min(a[1],b[1])-34} ${b[0]} ${b[1]}`:`M${a[0]} ${a[1]} L${b[0]} ${b[1]}`;};
+  let roads='', glow='', marks='', labels='', faces='';
+  for(const e of EDGES){
+    if(e.cut&&!W.cut){ if(W.clue&&known[e.b])roads+=`<path d="${mid(e)}" class="rd q"/>`; continue; }
+    if(e.bossWay&&!trips(e.id)){ if(known[e.a]&&rep.explore>=100)roads+=`<path d="${mid(e)}" class="rd q"/>`; continue; }
+    if(!trips(e.id)){ if(known[e.a]||known[e.b])roads+=`<path d="${mid(e)}" class="rd q"/>`; continue; }
+    if(!(W0.trips[e.id]))glow+=`<path d="${mid(e)}" class="rd new"/>`;
+    roads+=`<path d="${mid(e)}" class="rd s${saf(e.id)}"/>`;
+  }
+  for(const id in NODES){
+    const n=NODES[id], [x,y]=P(id);
+    const near=EDGES.some(e=>(e.a===id||e.b===id)&&(known[e.a]||known[e.b])&&!(e.cut&&!W.cut)&&!(e.bossWay&&rep.explore<100));
+    if(!known[id]){ if(near)marks+=`<circle cx="${x}" cy="${y}" r="5" class="nd unk"/><text x="${x}" y="${y+3}" class="qm">?</text>`; continue; }
+    const alive=n.master&&!W.master[id], bossAlive=n.boss&&!rep.bossDown;
+    if(n.room||n.boss)marks+=`<rect x="${x-7}" y="${y-7}" width="14" height="14" rx="2" class="nd ${alive||bossAlive?'foe':W.searched[id]||n.boss?'done':''}"/>`;
+    else marks+=`<circle cx="${x}" cy="${y}" r="${id==='gate'?7:5}" class="nd ${n.rest?'rest':''}"/>`;
+    if(alive||bossAlive)marks+=`<text x="${x}" y="${y+3.5}" class="foe-t">${n.boss?'親':'主'}</text>`;
+    else if((n.master&&W.master[id])||(n.boss&&rep.bossDown))marks+=`<path d="M${x-3.5} ${y} l2.5 3 l4.5 -6" class="chk"/>`;
+    const below=!(id==='spring'||id==='boss'||id==='r2');
+    labels+=`<text x="${x}" y="${below?y+19:y-12}" class="lb">${n.n}</text>`;
+  }
+  // きょう、それぞれがいちばん奥まで行った場所に顔を置く
+  const at={}; for(const r of rep.advs){ if(!r.reach||r.reach==='gate')continue; (at[r.reach]=at[r.reach]||[]).push(r); }
+  for(const id in at){ const [x,y]=P(id), below=(id==='spring'||id==='boss'||id==='r2'); at[id].forEach((r,i)=>{ const fx=x-((at[id].length-1)*7)+i*14-7, fy=below?y+10:y-27;
+      faces+=`<g><circle cx="${fx+7}" cy="${fy+7}" r="8" class="fc"/><image href="${faceURL(r)}" x="${fx}" y="${fy}" width="14" height="14" clip-path="circle(7px at 7px 7px)" style="image-rendering:pixelated"/><title>${r.name}</title></g>`; }); }
+  const newN=EDGES.filter(e=>trips(e.id)&&!W0.trips[e.id]).length;
+  const news=[]; if(newN)news.push(`新しい道 ${newN}本`);
+  for(const id in NODES){ if(W.master[id]&&!W0.master[id])news.push(`${NODES[id].n}の主を倒した`); }
+  if(W.clue&&!W0.clue&&!W.cut)news.push('近道の手がかりを発見'); if(W.cut&&!W0.cut)news.push('近道が開通');
+  return `<section class="rmap" id="rpMap"><h4 class="sec">探索の地図</h4>
+    <div class="mapbox"><svg viewBox="0 0 336 188" role="img" aria-label="これまでに歩いた道と、きょうの到達点">${glow}${roads}${marks}${labels}${faces}</svg></div>
+    <div class="maplg"><span><i class="l q"></i>未踏</span><span><i class="l s1"></i>踏みあと</span><span><i class="l s2"></i>ならされた道</span><span><i class="l new"></i>きょう初めて</span></div>
+    ${news.length?`<p class="rc-note">${news.join(' ／ ')}</p>`:''}</section>`;
+}
 // opts.instant: 演出なしで結果だけ見せる（指示の画面から見返すとき）
 function openReport(opts={}){
   const rep=S.lastReport;
@@ -1849,7 +1913,8 @@ function openReport(opts={}){
       <div class="t-ex"><span class="t-lbl">洞窟の探索</span><div class="xpbar big"><i id="tExBar" style="width:${ex0}%"></i></div><b id="tEx">${Math.floor(ex0)}%</b></div>
     </div>
     <div class="won" id="rpWon" ${rep.won?'':'hidden'}>西の洞窟の親玉を倒した！ ここまでがこの版の目標です。</div>
-    <div class="cards">${rep.advs.map(r=>cardHTML(r,rep.day,rep.advs)).join('')}</div>`;
+    <div class="cards">${rep.advs.map(r=>cardHTML(r,rep.day,rep.advs)).join('')}</div>
+    ${mapHTML(rep)}`;
   $('reportActions').innerHTML='<button class="toggle" id="skipRep">スキップ</button>';
   $('reportModal').hidden=false; $('reportModal').scrollTop=0;
   const sheet=$('reportSheet');
@@ -1906,6 +1971,7 @@ async function playReport(rep,tok,res0,ex0,total){
   if(!alive())return;
   tRes.textContent=res0+total; tAdd.textContent=`+${total}`; tExBar.style.width=`${rep.explore}%`; tEx.textContent=`${Math.floor(rep.explore)}%`;
   tAdd.classList.add('done'); if(rep.won)$('rpWon').classList.add('in');
+  if($('rpMap')){await wait(200); if(!alive())return; $('rpMap').classList.add('in'); if(!repFast&&!RM)$('rpMap').scrollIntoView({behavior:'smooth',block:'nearest'});}
 }
 // 全画面カード：タップ・キー・時間経過のどれかで次へ
 let cardTimer=null;
