@@ -430,7 +430,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.7.3 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.7.4 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -479,7 +479,7 @@ const DAY_START=360, LEAVE=420, RETURN_TIME=1020, DAY_END=1200, TRAVEL=40;
 const WALK=6, SLOW=14, PARK_CAP=5, ENC=40;
 const GATE={x:10,y:11}, CASTLE_DOOR={x:10,y:3};
 const BUILD={
-  house:{name:'民家',cost:100,max:12,desc:'家族が住む。若者がひとり冒険者になる'},
+  house:{name:'民家',cost:100,max:12,desc:'家族が住む。若者がひとり冒険者になる。建てられる数は章ごとに決まっている'},
   board:{name:'立て札',cost:50,max:1,desc:'おふれを貼る。冒険者は毎朝ここに寄る'},
   park:{name:'噴水の公園',cost:150,max:1,desc:'朝に寄るとやる気が回復。1日5人まで'},
   weapon:{name:'武器屋',cost:150,max:1,desc:'お金があれば武器を買う。攻撃+2'},
@@ -536,18 +536,22 @@ function bfs(g,a,b){
 }
 
 function newState(rng){
-  const S={g:makeMap(),day:1,t:DAY_START,elem:450,explore:0,bossDown:false,justWon:false,behest:'explore',b:[],advs:[],refund:0,phase:'report',parkUsed:0,demolished:0,rng:rng||Math.random,nextId:1,lastReport:null,fx:[],world:newWorld(),fights:[]};
+  const S={g:makeMap(),day:1,t:DAY_START,elem:450,explore:0,bossDown:false,justWon:false,behest:'explore',chapter:1,b:[],advs:[],refund:0,phase:'report',parkUsed:0,demolished:0,rng:rng||Math.random,nextId:1,lastReport:null,fx:[],world:newWorld(),fights:[]};
   // 性格の出てくる順番はプレイごとに変わる
   S.pOrder=PIDS.slice(); for(let i=S.pOrder.length-1;i>0;i--){const j=Math.floor(S.rng()*(i+1)); [S.pOrder[i],S.pOrder[j]]=[S.pOrder[j],S.pOrder[i]];}
   build(S,'house',2,2,true); build(S,'house',17,9,true); build(S,'board',12,4,true);
   return S;
 }
+// 章ごとの冒険者の上限（民家1軒につき冒険者1人）。章が進むと増える
+const ADV_CAP=[4,4,6,8,10];
+const advCap=S=>ADV_CAP[Math.min(S.chapter||1,ADV_CAP.length-1)];
 function count(S,type){return S.b.filter(b=>b.type===type).length;}
 function at(S,x,y){return S.b.find(b=>b.x===x&&b.y===y)||null;}
 function first(S,type){return S.b.find(b=>b.type===type)||null;}
 function canBuild(S,type,x,y){
   if(!isLot(S.g,x,y))return 'ここには建てられない';
   if(at(S,x,y))return 'すでに建物がある';
+  if(type==='house'&&count(S,'house')>=advCap(S))return `この章の冒険者は${advCap(S)}人まで`;
   if(count(S,type)>=BUILD[type].max)return 'もう建てられない';
   if(S.elem<BUILD[type].cost)return `${RES}が足りない`;
   return null;
@@ -1709,10 +1713,10 @@ function renderRoster(p){
   if(!S.advs.length){p.innerHTML='<h2>冒険者</h2><p class="lead">まだ冒険者がいない</p>'; p.dataset.mode=''; return;}
   if(!S.advs.some(a=>a.id===pickAdv))pickAdv=S.advs[0].id;
   if(p.dataset.mode!=='roster'||p.dataset.n!==String(S.advs.length)){
-    p.innerHTML=`<h2>冒険者 <button class="linkb" id="seeBoard">おふれを見る</button></h2><div class="tabs" role="tablist">${S.advs.map(a=>`<button class="tabf" role="tab" data-adv="${a.id}" aria-label="${a.name}"><img src="${faceURL(a)}" alt=""><i class="st"></i></button>`).join('')}</div><div class="ad" id="advDetail" role="tabpanel"></div>`;
+    p.innerHTML=`<h2><span>冒険者 <small id="advCount"></small></span><button class="linkb" id="seeBoard">おふれを見る</button></h2><div class="tabs" role="tablist">${S.advs.map(a=>`<button class="tabf" role="tab" data-adv="${a.id}" aria-label="${a.name}"><img src="${faceURL(a)}" alt=""><i class="st"></i></button>`).join('')}</div><div class="ad" id="advDetail" role="tabpanel"></div>`;
     p.dataset.mode='roster'; p.dataset.n=String(S.advs.length);
   }
-  $('seeBoard').hidden=!first(S,'board');
+  $('seeBoard').hidden=!first(S,'board'); $('advCount').textContent=`${S.advs.length}/${advCap(S)}人`;
   p.querySelectorAll('.tabf').forEach(b=>{const a=S.advs.find(x=>x.id===+b.dataset.adv), [txt,cls]=status(a); b.setAttribute('aria-pressed',String(a.id===pickAdv)); b.querySelector('.st').className=`st ${cls}`; b.title=`${a.name}：${txt}`;});
   const a=S.advs.find(x=>x.id===pickAdv), P=PP(a), [txt,cls]=status(a), r=a.rep, v=shownStats(a);
   const today=S.phase==='day'&&r&&!r.rested?[r.dep!=null?`${hm(r.dep)}に出発`:'', r.bought.length?`${r.bought.map(b=>b.name).join('、')}を買った`:''].filter(Boolean).join(' · '):'';
