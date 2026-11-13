@@ -313,8 +313,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 }
 @media (max-width:620px){.sheet{transform:none}.rc{transform:translateY(14px)}}
 @media (prefers-reduced-motion:reduce){.rc,.stamp,#rpWon{opacity:1;transform:none;animation:none}.stamp{transform:rotate(12deg);opacity:.85}.rc.flash::after,.burst{display:none}}
-.rmap{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;opacity:0;transform:translateY(10px)}
-.rmap.in{animation:cardIn .4s ease-out forwards}
+.rmap{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
 .mapbox{background:#f3ead3;border:1.5px solid var(--ink);border-radius:3px 9px 4px 8px;box-shadow:2px 3px 0 #241c1426;padding:6px}
 .mapbox svg{display:block;width:100%;height:auto}
 .rd{fill:none;stroke:var(--ink);stroke-linecap:round}
@@ -453,7 +452,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.8.0 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.8.1 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -600,7 +599,7 @@ function demolish(S,b){
 }
 // ================= 大工と建設のおふれ =================
 // 建物は王様が直接建てない。おふれを城の掲示板に貼ると、大工が昼のあいだに歩いて現場へ行き、作業する
-const WORK={house:180,board:45,park:210,weapon:240,armor:240}; // 建てるのに必要な作業量（大工1人で1分に1進む）
+const WORK={house:225,board:55,park:260,weapon:300,armor:300}; // 建てるのに必要な作業量（大工1人で1分に1進む）
 const CARP_START=420, CARP_END=1080, CARP_MAX=3;
 function newCarp(i){return {id:1000+i,carp:true,name:'大工',hair:'#e8b828',tunic:'#8a5a2a',wlv:0,alv:0,slow:false,hidden:true,pos:{...CASTLE_DOOR},walk:null,state:'idle',site:null};}
 function siteAt(S,x,y){return S.sites.find(s=>(s.x===x&&s.y===y)||(s.to&&s.to.x===x&&s.to.y===y))||null;}
@@ -2160,8 +2159,8 @@ function openReport(opts={}){
     </div>
     ${rep.built&&rep.built.length?`<p class="rc-note">街のできごと：${rep.built.join(' ／ ')}</p>`:''}
     <div class="won" id="rpWon" ${rep.won?'':'hidden'}>西の洞窟の親玉を倒した！ ここまでがこの版の目標です。</div>
-    <div class="cards">${rep.advs.map(r=>cardHTML(r,rep.day,rep.advs)).join('')}</div>
-    ${mapHTML(rep)}`;
+    ${mapHTML(rep)}
+    <div class="cards">${rep.advs.map(r=>cardHTML(r,rep.day,rep.advs)).join('')}</div>`;
   $('reportActions').innerHTML='<button class="toggle" id="skipRep">スキップ</button>';
   $('reportModal').hidden=false; $('reportModal').scrollTop=0;
   const sheet=$('reportSheet');
@@ -2218,7 +2217,6 @@ async function playReport(rep,tok,res0,ex0,total){
   if(!alive())return;
   tRes.textContent=res0+total; tAdd.textContent=`+${total}`; tExBar.style.width=`${rep.explore}%`; tEx.textContent=`${Math.floor(rep.explore)}%`;
   tAdd.classList.add('done'); if(rep.won)$('rpWon').classList.add('in');
-  if($('rpMap')){await wait(200); if(!alive())return; $('rpMap').classList.add('in'); if(!repFast&&!RM)$('rpMap').scrollIntoView({behavior:'smooth',block:'nearest'});}
 }
 // 全画面カード：タップ・キー・時間経過のどれかで次へ
 let cardTimer=null;
