@@ -452,7 +452,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.8.3 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.8.4 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -1561,6 +1561,7 @@ async function initGfx(){
     for(const f of S.fx)sparkle(wx(f.x),wz(f.y)); S.fx.length=0;
     const t=S.t; placeCam(now); updEnv(t,dt);
     const night=Math.max(sm(1060,1130,t),1-sm(350,395,t)), amb=1-.62*night;
+    lotMesh.material.opacity=.34*(1-.7*night); // 空き地の目印は控えめに。夜はさらに沈める
     // 建物：建設時のぽよん、窓のあかり
     for(const g of bGroups){
       const u=g.userData, age=(now-u.born)/520;
