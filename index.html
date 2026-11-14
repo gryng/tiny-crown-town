@@ -508,7 +508,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.16.0 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.16.1 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 広場の立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -2013,7 +2013,8 @@ async function initGfx(){
       if(hit)return {adv:hit};
     }
     ndc.set(mx/r.width*2-1,1-my/r.height*2); ray.setFromCamera(ndc,cam);
-    for(const h of ray.intersectObjects(bGroups,true)){let o=h.object; while(o&&o.userData.bid===undefined)o=o.parent; const b=o&&S.b.find(b=>b.id===o.userData.bid); if(b)return {x:b.x,y:b.y};}
+    // 窓あかりの光だまり（地面の板）や影だけの板は、隣の空き地のタップを奪うので当たり判定から外す
+    for(const h of ray.intersectObjects(bGroups,true)){if(h.point.y<.06||h.object.material.colorWrite===false)continue; let o=h.object; while(o&&o.userData.bid===undefined)o=o.parent; const b=o&&S.b.find(b=>b.id===o.userData.bid); if(b)return {x:b.x,y:b.y};}
     if(ray.ray.intersectPlane(gplane,hp))return {x:Math.floor(hp.x+W/2),y:Math.floor(hp.z+H/2)};
     return null;
   }
@@ -2064,7 +2065,8 @@ async function initGfx(){
   }
   const sp=new T.Vector3();
   function screenOf(a){const w=walkers.get(a.id); if(!w||!w.mesh.visible)return null; sp.copy(w.mesh.position); sp.y+=FH*U+.55; sp.project(cam); return {x:(sp.x+1)/2*cv.clientWidth, y:(1-sp.y)/2*cv.clientHeight};}
-  return {draw,pick,resize,screenOf,panBy,zoomBy};
+  function tileScreen(x,y){sp.set(wx(x),0,wz(y)).project(cam); const r=cv.getBoundingClientRect(); return {x:r.left+(sp.x+1)/2*r.width, y:r.top+(1-sp.y)/2*r.height};} // 開発用：マスの中心の画面位置
+  return {draw,pick,resize,screenOf,panBy,zoomBy,tileScreen};
 }
 
 /*VOICE-START*/
@@ -2881,7 +2883,7 @@ if(DEV)window.__sel=v=>{sel=v; renderPanel();};
 if(DEV)window.__orders=()=>openOrders();
 if(DEV)window.__tct={get S(){return S;},skip(n=1){for(let i=0;i<n;i++){if(S.phase!=='day')startDay(S); tick(S,2000);} wasPhase=S.phase; $('titleModal').hidden=true; $('dayCard').hidden=true; $('duskCard').hidden=true; openReport({instant:true});}};
 updateHud(); renderPanel(); requestAnimationFrame(loop);
-initGfx().then(g=>{GFX=g;}).catch(e=>{console.error(e); $('glfail').hidden=false;});
+initGfx().then(g=>{GFX=g; if(DEV)window.__gfx=g;}).catch(e=>{console.error(e); $('glfail').hidden=false;});
 </script>
 
 <script>
