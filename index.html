@@ -508,7 +508,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.14.0 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.15.0 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -517,7 +517,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
     </ol>
   </div>
   <div class="actions"><button class="primary" id="startBtn">はじめる</button><button id="ch2Btn">2章から始める</button></div>
-    <p class="ch2-note">2章からは、1章をよくある建て方で12日かけて終えたところから始まります（冒険者4人・Lv3〜6、武器屋と防具屋は4段階目まで入荷）。</p>
+    <p class="ch2-note">2章からは、1章をよくある建て方で13日かけて終えたところから始まります（冒険者4人・Lv3〜6、武器屋と防具屋は4段階目まで入荷）。</p>
 </div>
 
 <div class="modal" id="reportModal" hidden>
@@ -619,10 +619,11 @@ function bfs(g,a,b){
 }
 
 function newState(rng){
-  const S={g:makeMap(),day:1,t:DAY_START,elem:300,explore:0,bossDown:false,justWon:false,area:0,bossGo:false,nom:{},chapter:1,b:[],advs:[],sites:[],carps:[newCarp(0)],docs:[],builtToday:[],stock:{weapon:1,armor:1},used:{weapon:[],armor:[]},refund:0,phase:'report',parkUsed:0,demolished:0,rng:rng||Math.random,nextId:1,lastReport:null,fx:[],world:newWorld(),fights:[]};
+  const S={g:makeMap(),day:1,t:DAY_START,elem:START_ELEM,explore:0,bossDown:false,justWon:false,area:0,bossGo:false,nom:{},chapter:1,b:[],advs:[],sites:[],carps:[newCarp(0)],docs:[],builtToday:[],stock:{weapon:1,armor:1},used:{weapon:[],armor:[]},refund:0,phase:'report',parkUsed:0,demolished:0,rng:rng||Math.random,nextId:1,lastReport:null,fx:[],world:newWorld(),fights:[]};
   // 性格の出てくる順番はプレイごとに変わる
   S.pOrder=PIDS.slice(); for(let i=S.pOrder.length-1;i>0;i--){const j=Math.floor(S.rng()*(i+1)); [S.pOrder[i],S.pOrder[j]]=[S.pOrder[j],S.pOrder[i]];}
   build(S,'house',2,2,true); build(S,'house',17,9,true); build(S,'board',12,4,true);
+  ruin(S);
   return S;
 }
 // 章ごとの冒険者の上限（民家1軒につき冒険者1人）。章が進むと増える
@@ -631,6 +632,47 @@ const advCap=S=>ADV_CAP[Math.min(S.chapter||1,ADV_CAP.length-1)];
 function count(S,type){return S.b.filter(b=>b.type===type).length;}
 function at(S,x,y){return S.b.find(b=>b.x===x&&b.y===y)||null;}
 function first(S,type){return S.b.find(b=>b.type===type)||null;}
+// ================= 荒れた城下町：荒れ地と荒れた道 =================
+// 空き地のほとんどは荒れ地。大工が片づけると建てられるようになり、時のかけらが出る。配置はプレイごとに変わる
+const START_ELEM=150, ELEM_K=.6;   // 最初の手持ちと、冒険で持ち帰る時のかけらの倍率（整地で出るぶん、冒険のぶんを減らした）
+const WASTE={grass:{n:'草むら',work:50,elem:[4,7]},rubble:{n:'がれき',work:120,elem:[14,20]},rock:{n:'大岩',work:240,elem:[32,44]}};
+const OPEN_LOTS=[[8,4],[9,4],[11,4]];   // 城の前の、最初から使える空き地
+const ROUGH=1.5, REPAIR_WORK=30;          // 荒れた道は歩くのに1.5倍かかる。直すのは1マス30
+// 道を、交差点から交差点までの区間に分ける
+const SEGS=(()=>{const L=[], rows=[3,7,10], cols=[5,10,14], cut=[1,5,10,14,W-2];
+  for(const y of rows)for(let i=0;i<cut.length-1;i++){const t=[]; for(let x=cut[i]+(i?1:0);x<cut[i+1];x++)t.push({x,y}); if(t.length)L.push({id:`r${y}_${i}`,tiles:t});}
+  for(const x of cols)for(const [a,b] of [[3,7],[7,10]]){const t=[]; for(let y=a+1;y<b;y++)t.push({x,y}); L.push({id:`c${x}_${a}`,tiles:t});}
+  for(const g of L)g.mid=g.tiles[g.tiles.length>>1]; return L;})();
+const KEEP_ROADS=new Set(['r3_2','c10_3','c10_7']); // 城の前と、城から門への大通りは荒れていない
+const wk=(x,y)=>x+','+y;
+function ruin(S){
+  S.waste={}; S.rough={}; S.cleared=0; S.repaired=0; S.finds=0; S.clearLog=[];
+  for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){
+    if(!isLot(S.g,x,y)||at(S,x,y)||OPEN_LOTS.some(o=>o[0]===x&&o[1]===y))continue;
+    const far=Math.abs(x-10)/9, r=S.rng(); // 町はずれほど、がれきや大岩が多い
+    S.waste[wk(x,y)]=r<.5-far*.2?'grass':r<.86-far*.1?'rubble':'rock';
+  }
+  for(const g of SEGS)if(!KEEP_ROADS.has(g.id)&&S.rng()<.55)S.rough[g.id]=true;
+  syncRough(S);
+}
+function syncRough(S){S.roughT={}; for(const g of SEGS)if(S.rough[g.id])for(const t of g.tiles)S.roughT[wk(t.x,t.y)]=g.id;}
+const wasteAt=(S,x,y)=>S.waste?S.waste[wk(x,y)]||null:null;
+const segAt=(S,x,y)=>S.roughT?SEGS.find(g=>g.id===S.roughT[wk(x,y)])||null:null;
+function orderClear(S,x,y){
+  const k=wasteAt(S,x,y); if(!k)return 'ここは片づいている'; if(siteAt(S,x,y))return 'すでにおふれが出ている';
+  S.sites.push({id:S.nextId++,kind:'clear',type:k,x,y,door:doorOf(S.g,x,y),need:WASTE[k].work,done:0,paid:0}); return null;
+}
+function orderRepair(S,seg){
+  if(!S.rough[seg.id])return 'この道は荒れていない'; if(S.sites.some(s=>s.kind==='repair'&&s.seg===seg.id))return 'すでにおふれが出ている';
+  S.sites.push({id:S.nextId++,kind:'repair',type:'road',seg:seg.id,x:seg.mid.x,y:seg.mid.y,door:{...seg.mid},need:seg.tiles.length*REPAIR_WORK,done:0,paid:0}); return null;
+}
+// 荒れ地を片づけた：時のかけらが出る。がれきと大岩からは、たまに掘り出し物
+function clearLot(S,x,y){
+  const k=wasteAt(S,x,y); if(!k)return; const Wk=WASTE[k]; delete S.waste[wk(x,y)]; S.cleared++; if(k==='rock')S.rockDone=true;
+  let got=Wk.elem[0]+Math.floor(S.rng()*(Wk.elem[1]-Wk.elem[0]+1)), find=0;
+  if(k!=='grass'&&S.rng()<.18){find=20+Math.floor(S.rng()*16); S.finds++;}
+  S.elem+=got+find; S.clearLog.push({k,got,find}); S.dirty=true;
+}
 function canBuild(S,type,x,y){
   if((BUILD[type].ch||1)>(S.chapter||1))return `${BUILD[type].ch}章で目覚める`;
   if(!isLot(S.g,x,y))return 'ここには建てられない';
@@ -667,7 +709,8 @@ function newCarp(i){return {id:1000+i,carp:true,name:'大工',hair:'#e8b828',tun
 function siteAt(S,x,y){return S.sites.find(s=>(s.x===x&&s.y===y)||(s.to&&s.to.x===x&&s.to.y===y))||null;}
 function orderBuild(S,type,x,y){
   const e=canBuild(S,type,x,y); if(e)return e; S.elem-=BUILD[type].cost;
-  S.sites.push({id:S.nextId++,kind:'build',type,x,y,door:doorOf(S.g,x,y),need:WORK[type],done:0,paid:BUILD[type].cost}); return null;
+  const wst=wasteAt(S,x,y); // 荒れ地に建てるときは、片づけもまとめてやる（そのぶん時間がかかる）
+  S.sites.push({id:S.nextId++,kind:'build',type,x,y,door:doorOf(S.g,x,y),need:WORK[type]+(wst?WASTE[wst].work:0),done:0,paid:BUILD[type].cost,clear:wst}); return null;
 }
 function orderDemolish(S,b){
   if(siteAt(S,b.x,b.y))return 'すでにおふれが出ている';
@@ -677,6 +720,7 @@ const moveCost=type=>Math.round(BUILD[type].cost*.2);
 function orderMove(S,b,x,y){
   if(siteAt(S,b.x,b.y))return 'すでにおふれが出ている';
   if(!isLot(S.g,x,y)||at(S,x,y)||siteAt(S,x,y))return 'そこには移せない';
+  if(wasteAt(S,x,y))return '先に片づけが要る';
   const c=moveCost(b.type); if(S.elem<c)return `${RES}が足りない`; S.elem-=c;
   S.sites.push({id:S.nextId++,kind:'move',type:b.type,bid:b.id,x:b.x,y:b.y,door:b.door,to:{x,y,door:doorOf(S.g,x,y)},stage:0,need:Math.round(WORK[b.type]/3),done:0,paid:c}); return null;
 }
@@ -694,7 +738,9 @@ function hireCarp(S){
 const hireCost=S=>200*S.carps.length;
 const siteDoor=s=>s.kind==='move'&&s.stage===1?s.to.door:s.door;
 function finishSite(S,s){
-  if(s.kind==='build'){build(S,s.type,s.x,s.y,true); S.builtToday.push(`${BUILD[s.type].name}が完成`); syncDocs(S);}
+  if(s.kind==='clear'){clearLot(S,s.x,s.y);}
+  else if(s.kind==='repair'){const g=SEGS.find(g=>g.id===s.seg); delete S.rough[s.seg]; syncRough(S); S.repaired++; S.elem+=g.tiles.length; S.builtToday.push(`荒れた道を直した（${RES}+${g.tiles.length}）`);}
+  else if(s.kind==='build'){clearLot(S,s.x,s.y); build(S,s.type,s.x,s.y,true); S.builtToday.push(`${BUILD[s.type].name}が完成`); syncDocs(S);}
   else if(s.kind==='demolish'){const b=S.b.find(b=>b.id===s.bid); if(b){demolish(S,b); S.builtToday.push(`${BUILD[s.type].name}を撤去`);}}
   else if(s.kind==='move'){
     if(s.stage===0){const b=S.b.find(b=>b.id===s.bid); s.b=b; S.b=S.b.filter(x=>x!==b); s.stage=1; s.done=0; s.need=Math.round(WORK[s.type]/2); S.dirty=true; return;} // 解体おわり→新しい場所で建て直す
@@ -791,7 +837,7 @@ function step(S,a){
 }
 function goTo(S,a,dest,goal){a.walk={path:bfs(S.g,a.pos,dest)||[],i:0,prog:0}; a.goal=goal; a.state='walk';}
 function advance(S,a){
-  const w=a.walk; w.prog+=1/stepTicks(a);
+  const w=a.walk, nt=w.path[w.i]; w.prog+=1/(stepTicks(a)*(nt&&S.roughT&&S.roughT[wk(nt.x,nt.y)]?ROUGH:1));
   while(w.prog>=1&&w.i<w.path.length){a.pos={...w.path[w.i]}; w.i++; w.prog-=1; if(a.rep.dep===null&&a.goal!=='home')a.trail.push({...a.pos});}
   if(w.i>=w.path.length){a.walk=null; arrive(S,a);}
 }
@@ -1071,7 +1117,7 @@ function fightRound(S,F){
   if(m.aura&&F.hp>0&&!F.members.some(x=>x.job==='white'&&x.lv>=8))for(const a of F.members)a.hp-=m.aura;
   const names=a=>F.members.filter(x=>x!==a).map(x=>x.name);
   if(F.hp<=0){
-    const pot=m.elem[0]+Math.floor(r()*(m.elem[1]-m.elem[0]+1));
+    const pot=Math.round((m.elem[0]+Math.floor(r()*(m.elem[1]-m.elem[0]+1)))*(m.boss?1:ELEM_K));
     for(const a of F.members.slice()){
       const share=a.out.party?F.members.filter(x=>x.out.party===a.out.party).length:1, got=Math.ceil(pot/share), gg=Math.ceil(m.gold/share); // 経験値は全員が満額、時のかけらとゴールドは山分け
       a.rep.elem+=got; a.gold+=gg; a.rep.gold+=gg; a.rep.wins++; tire(a,3);
@@ -1139,13 +1185,13 @@ function actDone(S,a,k){
   const o=a.out, r=S.rng, W=S.world, id=o.at, N=NODES[id], M=mates(S,a), n=M.length, cut=v=>Math.ceil(v/n); // 組んでいるときは山分け
   if(k==='rest'){for(const x of M){const g=Math.ceil(x.hpMax*(N.rest?.3:.1)); x.hp=Math.min(x.hpMax,x.hp+g); ev(S,x,'r',{n:id,g});}}
   if(k==='search'){
-    const got=cut(Math.round((10+Math.floor(r()*7))*(N.rich||1))); W.searchDay[id]=S.day;
+    const got=cut(Math.round((10+Math.floor(r()*7))*(N.rich||1)*ELEM_K)); W.searchDay[id]=S.day;
     const first=!W.searched[id]; if(first){W.searched[id]=true; unit(S,a);}
     let chest=0; if(N.chest&&!W.chest[id]){W.chest[id]=true; chest=cut(N.chest);}
     let clue=false; if(N.clue&&!W.clue){W.clue=true; clue=true;}
     for(const x of M){x.rep.elem+=got; x.gold+=chest; x.rep.gold+=chest; ev(S,x,'s',{n:id,e:got,first,chest,clue});}
   }
-  if(k==='mine'){const v=W.vein[id]===undefined?1:W.vein[id], got=cut(Math.max(2,Math.round((9+r()*5)*v*(N.rich||1)))); W.vein[id]=Math.max(0,v-.06); for(const x of M){x.rep.elem+=got; ev(S,x,'s',{n:id,e:got,mine:true});}}
+  if(k==='mine'){const v=W.vein[id]===undefined?1:W.vein[id], got=cut(Math.max(2,Math.round((9+r()*5)*v*(N.rich||1)*ELEM_K))); W.vein[id]=Math.max(0,v-.06); for(const x of M){x.rep.elem+=got; ev(S,x,'s',{n:id,e:got,mine:true});}}
   if(k==='treasure'){const v=W.veinG[id]===undefined?1:W.veinG[id], got=cut(Math.max(2,Math.round((9+r()*5)*v*(N.rich||1)))); W.veinG[id]=Math.max(0,v-.06); for(const x of M){x.gold+=got; x.rep.gold+=got; ev(S,x,'s',{n:id,g:got,treasure:true});}}
   if(k==='open'&&!W.cut){W.cut=true; a.rep.opened=true; ev(S,a,'o',{});}
   if(k==='detour'){for(const x of M){x.morale=Math.min(100,x.morale+6); x.hp=Math.min(x.hpMax,x.hp+2);}}
@@ -1230,6 +1276,8 @@ function endDay(S){
   }
   for(const c of S.carps){c.hidden=true; c.walk=null; c.state='idle'; c.site=null; c.pos={...CASTLE_DOOR};}
   for(const d of S.docs){d.hidden=true; d.walk=null; d.state='idle'; d.patient=null;}
+  if(S.clearLog&&S.clearLog.length){const L=S.clearLog, sum=L.reduce((t,c)=>t+c.got,0), fd=L.reduce((t,c)=>t+c.find,0), kinds=Object.keys(WASTE).filter(k=>L.some(c=>c.k===k)).map(k=>`${WASTE[k].n}${L.filter(c=>c.k===k).length}`).join('・');
+    S.builtToday.push(`荒れ地を片づけた：${kinds}（${RES}+${sum}）`); if(fd)S.builtToday.push(`がれきの下から古い宝箱が出てきた（${RES}+${fd}）`); S.clearLog=[];}
   if(S.carpFound)S.builtToday.push(`大工が街で${RES}を${S.carpFound}拾った`);
   const areaNow=S.area, nextArea=S.justWon&&S.area+1<AREAS.length;
   const HL=highlights(S), GN=checkGoals(S), GT=goalsOf(S);
@@ -1269,7 +1317,7 @@ function highlights(S){
     for(const b of r.bought)add(20,`${a.name}が${b.name}を買った`,{id:a.id});
   }
   const seen={}; for(const a of A)for(const e of a.rep.ev){ if(e.k==='s'&&e.first&&!seen[e.n]){seen[e.n]=1; const who=A.filter(x=>x.rep.ev.some(v=>v.k==='s'&&v.first&&v.n===e.n)); add(50,`${names(who.map(x=>x.name))}が${NODES[e.n].n}を初めて調べた`,{id:a.id});} }
-  for(const b of S.builtToday){ if(/が完成$/.test(b))add(60,b,{}); else if(/入荷$/.test(b))add(25,b,{}); }
+  for(const b of S.builtToday){ if(/が完成$/.test(b))add(60,b,{}); else if(/入荷$/.test(b))add(25,b,{}); else if(/古い宝箱/.test(b))add(40,b,{}); else if(/^荒れ地を片づけた|^荒れた道を直した/.test(b))add(30,b,{}); }
   for(const a of S.advs)if(a.joinDay===S.day+1)add(30,`新しい冒険者・${a.name}（${PP(a).name}）が町に来た`,{});
   return H.sort((x,y)=>y.w-x.w);
 }
@@ -1292,13 +1340,17 @@ function goalsOf(S){
   const early=n=>g('early',`${n}人以上が、9時30分までに門を出る`,20,()=>A().filter(a=>a.rep.dep<=570).length>=n);
   const wins=n=>g('wins'+n,`1日に合わせて${n}勝する`,15,()=>A().reduce((t,a)=>t+a.rep.wins,0)>=n);
   const fast=n=>g('fast',`この章を${n}日以内に終える`,30,()=>S.justWon&&S.day-(S.chStart||1)+1<=n);
+  const cl=n=>g('clear'+n,`荒れ地を${n}つ片づける`,10,()=>S.cleared>=n);
+  g('rock','大岩を片づける',10,()=>S.rockDone); g('find','がれきの下から掘り出し物を見つける',10,()=>S.finds>0);
   if(ch===1){
+    cl(3); cl(8); g('road1','荒れた道を1本直す',10,()=>S.repaired>=1);
     built('weapon',10); built('armor',10); built('park',10); built('clinic',10);
     g('advs4','冒険者が4人そろう',15,()=>S.advs.length>=4); stock(4); lv(5);
     g('alllv3','4人全員がLv3以上になる',15,()=>S.advs.length>=4&&S.advs.every(a=>a.lv>=3));
     g('used','だれかがおさがりを買う',10,()=>S.advs.some(a=>a.rep&&a.rep.bought.some(b=>b.used)));
     safe(3); early(3); wins(15); fast(12);
   } else {
+    cl(15); cl(25); g('roadall','荒れた道をすべて直す',20,()=>!Object.keys(S.rough).length);
     built('academy',10); built('tavern',10);
     g('white','白魔道士が生まれる',15,()=>S.advs.some(a=>a.job==='white'));
     g('party','酒場で組んで出かける',10,()=>S.advs.some(a=>a.rep&&a.rep.party));
@@ -1318,7 +1370,7 @@ function checkGoals(S){
 }
 // ================= 2章から始める（平均的な1章のプレイを自動で再現） =================
 function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
-const CH2_SEED=47; // 1章を平均的な日数・レベルで終える種（テストで選ぶ）
+const CH2_SEED=58; // 1章を平均的な日数・レベルで終える種（テストで選ぶ）
 // よくある建て方：武器屋と防具屋を城門への道ぞいに、家と診療所と公園をその近くに。店へは余裕があるときに投資
 function autoCh1(seed){
   const S=newState(mulberry(seed));
@@ -1326,6 +1378,11 @@ function autoCh1(seed){
   for(let d=0;d<40&&S.chapter<2;d++){
     for(const q of plan)if(!q.d&&S.elem>=BUILD[q[0]].cost){if(!orderBuild(S,q[0],q[1],q[2]))q.d=1;}
     for(const t of ['weapon','armor'])while(first(S,t)&&!investLock(S,t)&&S.elem>=investCost(S,t)+(plan.some(q=>!q.d)?160:0))invest(S,t);
+    // 大工の手が空きそうなら、城に近い荒れ地を片づけ、町の中ほどの荒れた道を直す
+    const free=()=>S.sites.reduce((t,x)=>t+(x.need-x.done),0)<660*S.carps.length, dist=(x,y)=>Math.abs(x-10)+Math.abs(y-6);
+    const seg=SEGS.filter(g=>S.rough[g.id]&&!S.sites.some(x=>x.seg===g.id)&&Math.abs(g.mid.x-10)<=5).sort((a,b)=>dist(a.mid.x,a.mid.y)-dist(b.mid.x,b.mid.y))[0];
+    if(free()&&seg)orderRepair(S,seg);
+    for(let n=0;n<6&&free();n++){const L=Object.keys(S.waste).map(k=>k.split(',').map(Number)).filter(([x,y])=>!siteAt(S,x,y)&&!plan.some(q=>q[1]===x&&q[2]===y)).sort((a,b)=>dist(a[0],a[1])-dist(b[0],b[1])); if(!L.length)break; orderClear(S,L[0][0],L[0][1]);}
     S.bossGo=S.explore>=100&&!S.bossDown;
     startDay(S); tick(S,2000);
   }
@@ -1652,14 +1709,50 @@ async function initGfx(){
   // いま建てられる建物が1つでもあるときだけ、空き地に目印を出す
   const canAfford=()=>Object.keys(BUILD).some(k=>{const n=count(S,k)+S.sites.filter(x=>x.kind==='build'&&x.type===k).length; return S.elem>=BUILD[k].cost&&n<BUILD[k].max&&!(k==='house'&&n>=advCap(S));});
   let lotOn=null;
+  // 荒れ地と荒れた道の地面の汚れは、目印とは別の板に描く（目印は半透明、こちらはくっきり）
+  const decCv=canvasOf(W*16,H*16), decTex=texOf(decCv);
+  add(new T.Mesh(new T.PlaneGeometry(W,H).rotateX(-Math.PI/2),new T.MeshBasicMaterial({map:decTex,transparent:true,depthWrite:false})),0,.012,0,scene,false);
   function paintLots(){
-    const g=lotCv.getContext('2d'); g.clearRect(0,0,lotCv.width,lotCv.height); const c='#f6e7a8'; lotOn=canAfford(); if(!lotOn){lotTex.needsUpdate=true; return;}
+    const gm=lotCv.getContext('2d'); gm.clearRect(0,0,lotCv.width,lotCv.height); const g=decCv.getContext('2d'); g.clearRect(0,0,decCv.width,decCv.height); const c='#f6e7a8'; lotOn=canAfford();
     for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){
-      if(!isLot(S.g,x,y)||at(S,x,y)||siteAt(S,x,y))continue; const ox=x*16, oy=y*16;
-      P(g,c,ox+1,oy+1,3,1);P(g,c,ox+1,oy+1,1,3);P(g,c,ox+12,oy+1,3,1);P(g,c,ox+14,oy+1,1,3);
-      P(g,c,ox+1,oy+14,3,1);P(g,c,ox+1,oy+12,1,3);P(g,c,ox+12,oy+14,3,1);P(g,c,ox+14,oy+12,1,3);
+      const ox=x*16, oy=y*16, wst=wasteAt(S,x,y);
+      if(S.roughT&&S.roughT[wk(x,y)]){ // 荒れた道：ひび、穴、はみ出した草
+        g.fillStyle='rgba(58,44,26,.3)'; g.fillRect(ox,oy,16,16);
+        for(let i=0;i<3;i++){const hx=ox+1+(hash(x,y,i+280)*10|0), hy=oy+1+(hash(x,y,i+290)*10|0); P(g,'#3f3222',hx,hy,4,3); P(g,'#2c2318',hx+1,hy+1,2,1);}
+        for(let i=0;i<5;i++){const hx=ox+1+(hash(x,y,i+300)*12|0), hy=oy+1+(hash(x,y,i+310)*12|0); P(g,'#6b5a3a',hx,hy,2+(hash(x,y,i+320)*3|0),1+(hash(x,y,i+330)*2|0)); P(g,'#4a3d28',hx+1,hy,1,1);}
+        for(let i=0;i<4;i++){const hx=ox+(hash(x,y,i+340)*14|0), hy=oy+(hash(x,y,i+350)*14|0); P(g,'#4f8a3a',hx,hy,2,2); P(g,'#6cb052',hx+1,hy,1,1);}
+        for(let i=0;i<6;i++)P(g,'#8f7a4e',ox+(hash(x,y,i+360)*16|0),oy+(hash(x,y,i+370)*16|0),1+(hash(x,y,i+380)*4|0),1);
+      }
+      if(wst){ // 荒れ地の地面：草むらは濃い緑、がれきと大岩は土がむき出し
+        const base=wst==='grass'?'#3d7030':'#7a6a48', dot=wst==='grass'?'#2f5a26':'#63553a';
+        for(let i=0;i<26;i++)P(g,hash(x,y,i+400)<.5?base:dot,ox+1+(hash(x,y,i+430)*13|0),oy+1+(hash(x,y,i+460)*13|0),1+(hash(x,y,i+490)*2|0),1+(hash(x,y,i+520)*2|0));
+        continue;
+      }
+      if(!lotOn||!isLot(S.g,x,y)||at(S,x,y)||siteAt(S,x,y))continue;
+      P(gm,c,ox+1,oy+1,3,1);P(gm,c,ox+1,oy+1,1,3);P(gm,c,ox+12,oy+1,3,1);P(gm,c,ox+14,oy+1,1,3);
+      P(gm,c,ox+1,oy+14,3,1);P(gm,c,ox+1,oy+12,1,3);P(gm,c,ox+12,oy+14,3,1);P(gm,c,ox+14,oy+12,1,3);
     }
-    lotTex.needsUpdate=true;
+    lotTex.needsUpdate=true; decTex.needsUpdate=true; syncWaste();
+  }
+  /* ----- 荒れ地の小物：草むら・がれき・大岩（まとめて描く） ----- */
+  const wObj=new T.Object3D(), wCol=new T.Color(), WMAX=1400;
+  const wMat=()=>new T.MeshLambertMaterial({flatShading:true});
+  const wBlade=new T.InstancedMesh(new T.ConeGeometry(.5,1,4).translate(0,.5,0),wMat(),WMAX), wBox=new T.InstancedMesh(new T.BoxGeometry(1,1,1).translate(0,.5,0),wMat(),WMAX), wRock=new T.InstancedMesh(new T.DodecahedronGeometry(.5,0).translate(0,.35,0),wMat(),300);
+  for(const m of [wBlade,wBox,wRock]){m.frustumCulled=false; m.castShadow=true; m.receiveShadow=true; m.count=0; scene.add(m);}
+  function syncWaste(){
+    const n={b:0,x:0,r:0}, put=(m,k,px,pz,sx,sy,sz,ry,col,rz=0)=>{if(n[k]>=m.instanceMatrix.count)return; wObj.position.set(px,0,pz); wObj.rotation.set(0,ry,rz); wObj.scale.set(sx,sy,sz); wObj.updateMatrix(); m.setMatrixAt(n[k],wObj.matrix); m.setColorAt(n[k],wCol.set(col)); n[k]++;};
+    for(const key in (S.waste||{})){
+      const [x,y]=key.split(',').map(Number), k=S.waste[key], cx=wx(x), cz=wz(y), h=i=>hash(x,y,i+600), at2=i=>[cx+(h(i)-.5)*.74,cz+(h(i+40)-.5)*.7];
+      if(k==='grass'){ for(let i=0;i<9;i++){const [px,pz]=at2(i); put(wBlade,'b',px,pz,.1+h(i+80)*.08,.26+h(i+90)*.3,.1+h(i+80)*.08,h(i+100)*6.28,h(i+110)<.5?'#4e9a3c':h(i+110)<.8?'#3b7d30':'#7fb64e',(h(i+120)-.5)*.3);}
+        for(let i=0;i<2;i++){const [px,pz]=at2(i+20); put(wRock,'r',px,pz,.34,.26,.3,h(i+130)*6.28,'#3f8433');} }
+      else if(k==='rubble'){ for(let i=0;i<6;i++){const [px,pz]=at2(i); put(wBox,'x',px,pz,.12+h(i+80)*.16,.07+h(i+90)*.12,.1+h(i+95)*.14,h(i+100)*6.28,h(i+110)<.45?'#9b968c':h(i+110)<.8?'#b8ad98':'#7d776d',(h(i+120)-.5)*.5);}
+        put(wBox,'x',cx+(h(30)-.5)*.3,cz-.18,.55,.2+h(31)*.18,.1,(h(32)-.5)*.5,'#a89f8f'); put(wBox,'x',cx-.2,cz-.18,.14,.42,.1,(h(32)-.5)*.5,'#958d7f');   // 崩れた壁
+        put(wBox,'x',cx+(h(33)-.5)*.3,cz+.16,.6,.035,.09,h(34)*3.14,'#7a5630',.12); put(wBlade,'b',cx+.26,cz+.2,.1,.24,.1,0,'#4e9a3c'); }
+      else { put(wRock,'r',cx+(h(1)-.5)*.16,cz+(h(2)-.5)*.12,.72,.62+h(3)*.2,.64,h(4)*6.28,'#8b8f96'); put(wRock,'r',cx+.26,cz+.2,.3,.26,.28,h(5)*6.28,'#767a82'); put(wRock,'r',cx-.28,cz+.16,.22,.2,.22,h(6)*6.28,'#9a9ea6');
+        put(wBlade,'b',cx-.3,cz-.2,.1,.3,.1,0,'#3b7d30'); put(wBlade,'b',cx+.3,cz-.24,.09,.22,.09,1,'#4e9a3c'); }
+    }
+    wBlade.count=n.b; wBox.count=n.x; wRock.count=n.r;
+    for(const m of [wBlade,wBox,wRock]){m.instanceMatrix.needsUpdate=true; if(m.instanceColor)m.instanceColor.needsUpdate=true;}
   }
   const selMesh=add(new T.Mesh(new T.PlaneGeometry(1,1).rotateX(-Math.PI/2),new T.MeshBasicMaterial({map:tex(16,16,g=>{P(g,'#f6e7a8',0,0,16,1);P(g,'#f6e7a8',0,15,16,1);P(g,'#f6e7a8',0,0,1,16);P(g,'#f6e7a8',15,0,1,16);P(g,'#c9a84c',1,1,14,1);P(g,'#c9a84c',1,14,14,1);P(g,'#c9a84c',1,1,1,14);P(g,'#c9a84c',14,1,1,14);g.fillStyle='rgba(246,231,168,.22)';g.fillRect(2,2,12,12);}),transparent:true,depthWrite:false,fog:false})),0,.03,0,scene,false);
   selMesh.visible=false;
@@ -1921,7 +2014,7 @@ async function initGfx(){
     {const on=t>=1058||t<372; castleGlow.userData.g=(castleGlow.userData.g||0)+((on?1:0)-(castleGlow.userData.g||0))*Math.min(1,dt*3); castleGlow.opacity=castleGlow.userData.g;}
     // 空き地の目印と選択枠
     lotMesh.material.opacity=(.3+.16*Math.sin(now/400))*(1-.6*night);
-    const s=sel&&(sel.kind==='lot'||sel.kind==='building'||sel.kind==='site'); selMesh.visible=!!s; if(s){selMesh.position.set(wx(sel.x),.03,wz(sel.y)); selMesh.material.opacity=.8+.2*Math.sin(now/180);}
+    const s=sel&&(sel.kind==='lot'||sel.kind==='building'||sel.kind==='site'||sel.kind==='road'); selMesh.visible=!!s; if(s){selMesh.position.set(wx(sel.x),.03,wz(sel.y)); selMesh.material.opacity=.8+.2*Math.sin(now/180);}
     trMesh.visible=showTrails; if(showTrails&&(trTick++%8===0))paintTrails();
     updWalkers(now);
     // 木と旗のゆれ
@@ -2174,8 +2267,17 @@ function renderPanel(){
   if(sel&&sel.kind==='lot'&&siteAt(S,sel.x,sel.y)){const st=siteAt(S,sel.x,sel.y); sel={kind:'site',id:st.id,x:sel.x,y:sel.y};}
   if(sel&&sel.kind==='lot'){
     const opts=Object.keys(BUILD).map(k=>{const e=canBuild(S,k,sel.x,sel.y); return `<button class="opt" data-build="${k}" ${e?'disabled':''}><b>${BUILD[k].name}</b><span>${e&&e!==`${RES}が足りない`?e:BUILD[k].desc}</span><em>${BUILD[k].cost}</em></button>`;}).join('');
-    p.dataset.mode='lot';
-    p.innerHTML=`<h2>建設のおふれを出す <button class="x" id="close">閉じる</button></h2><p class="rc-note">選ぶと城の掲示板におふれが貼られ、大工が歩いて建てに来る。</p><div class="opts">${opts}</div><p class="msg" id="msg"></p>`;
+    p.dataset.mode='lot'; const wk_=wasteAt(S,sel.x,sel.y), Wk=wk_&&WASTE[wk_], hrs=m=>m>=60?`${Math.floor(m/60)}時間${m%60?`${m%60}分`:''}`:`${m}分`;
+    p.innerHTML=wk_?`<h2>荒れ地：${Wk.n} <button class="x" id="close">閉じる</button></h2><p class="rc-note">大工が片づけると、${RES}が${Wk.elem[0]}〜${Wk.elem[1]}出て、建てられる空き地になる（大工1人で${hrs(Wk.work)}）。${wk_==='grass'?'':'たまに掘り出し物も出る。'}</p>
+        <div class="opts"><button class="opt" data-clear="1"><b>片づけるだけ</b><span>空き地にして、${RES}を得る</span><em>+${Wk.elem[0]}〜</em></button></div>
+        <h4 class="sec">片づけてから建てる（そのぶん時間がかかる）</h4><div class="opts">${opts}</div><p class="msg" id="msg"></p>`
+      :`<h2>建設のおふれを出す <button class="x" id="close">閉じる</button></h2><p class="rc-note">選ぶと城の掲示板におふれが貼られ、大工が歩いて建てに来る。</p><div class="opts">${opts}</div><p class="msg" id="msg"></p>`;
+  } else if(sel&&sel.kind==='road'){
+    const g=SEGS.find(g=>g.id===sel.seg); if(!g||!S.rough[g.id]){sel=null; return renderPanel();}
+    const st=S.sites.find(x=>x.kind==='repair'&&x.seg===g.id); if(st){sel={kind:'site',id:st.id,x:st.x,y:st.y}; return renderPanel();}
+    p.dataset.mode='road';
+    p.innerHTML=`<h2>荒れた道 <button class="x" id="close">閉じる</button></h2><p class="rc-note">ひび割れと穴だらけで、冒険者はここを歩くのに${ROUGH}倍の時間がかかる。交差点から交差点までの${g.tiles.length}マスをまとめて直す（大工1人で${g.tiles.length*REPAIR_WORK}分）。</p>
+      <div class="opts"><button class="opt" data-repair="${g.id}"><b>道を直す</b><span>毎朝ここを通る冒険者が、早く門を出られる</span><em>+${g.tiles.length}</em></button></div><p class="msg" id="msg"></p>`;
   } else if(sel&&sel.kind==='castle'){
     p.dataset.mode='castle'; lastLive=castleHTML();
     p.innerHTML=`<h2>城 <button class="x" id="close">閉じる</button></h2><div id="liveBox" class="ad">${lastLive}</div><p class="msg" id="msg"></p>`;
@@ -2230,11 +2332,12 @@ function boardHTML(){
     ${rest.filter(a=>!named.includes(a)).length?`<div class="blk"><h4 class="sec">きょうはお休み</h4><div class="takers">${rest.filter(a=>!named.includes(a)).map(mini).join('')}</div></div>`:''}`;
 }
 // 建設のおふれ1件ぶんの表示
-const SITE_VERB={build:'を建設',demolish:'を撤去',move:'を移設'};
+const SITE_VERB={build:'を建設',demolish:'を撤去',move:'を移設',clear:'を片づけ',repair:'を修復'};
+const siteName=s=>s.kind==='clear'?WASTE[s.type].n:s.kind==='repair'?'荒れた道':BUILD[s.type].name+(s.clear?`（${WASTE[s.clear].n}を片づけてから）`:'');
 function siteRow(s){
   const n=S.carps.filter(c=>c.site===s.id).length, pc=Math.round(s.done/s.need*100), stage=s.kind==='move'?(s.stage?'（建て直し中）':'（解体中）'):'';
   const st=s.done===0&&!s.stage?(n?'大工が向かっている':'大工の手が空くのを待っている'):`作業 ${pc}%${stage}・大工${n}人`;
-  return `<div class="siterow"><b>${BUILD[s.type].name}${SITE_VERB[s.kind]}</b><div class="xpbar"><i style="width:${pc}%"></i></div><small>${st}</small>${s.done===0&&!s.stage?`<button class="linkb" data-cancel="${s.id}">取り下げる</button>`:''}</div>`;
+  return `<div class="siterow"><b>${siteName(s)}${SITE_VERB[s.kind]}</b><div class="xpbar"><i style="width:${pc}%"></i></div><small>${st}</small>${s.done===0&&!s.stage?`<button class="linkb" data-cancel="${s.id}">取り下げる</button>`:''}</div>`;
 }
 function castleHTML(){
   const idle=S.carps.filter(c=>c.state==='idle').length;
@@ -2295,6 +2398,8 @@ $('panel').addEventListener('click',e=>{
   if(t.id==='close'){sel=null; renderPanel(); setDrawer(false); return;}
   if(t.id==='seeBoard'){const b=first(S,'board'); if(b){sel={kind:'building',x:b.x,y:b.y}; renderPanel();} return;}
   if(t.dataset.build){const err=orderBuild(S,t.dataset.build,sel.x,sel.y); if(err){$('msg').textContent=err; return;} baseDirty=true; const st=siteAt(S,sel.x,sel.y); sel={kind:'site',id:st.id,x:sel.x,y:sel.y}; renderPanel(); updateHud(); return;}
+  if(t.dataset.clear){const err=orderClear(S,sel.x,sel.y); if(err){$('msg').textContent=err; return;} baseDirty=true; const st=siteAt(S,sel.x,sel.y); sel={kind:'site',id:st.id,x:sel.x,y:sel.y}; renderPanel(); updateHud(); return;}
+  if(t.dataset.repair){const g=SEGS.find(g=>g.id===t.dataset.repair), err=orderRepair(S,g); if(err){$('msg').textContent=err; return;} baseDirty=true; const st=S.sites.find(x=>x.seg===g.id); sel={kind:'site',id:st.id,x:st.x,y:st.y}; renderPanel(); updateHud(); return;}
   if(t.dataset.cancel){const st=S.sites.find(x=>x.id===+t.dataset.cancel), err=st?cancelOrder(S,st):null; if(err){$('msg').textContent=err; return;} baseDirty=true; if(sel&&sel.kind==='site')sel=null; renderPanel(); updateHud(); return;}
   if(t.id==='invest'){const err=invest(S,t.dataset.type); if(err){$('msg').textContent=err; return;} renderPanel(); updateHud(); return;}
   if(t.id==='hire'){const err=hireCarp(S); if(err){$('msg').textContent=err; return;} renderPanel(); updateHud(); return;}
@@ -2322,6 +2427,7 @@ function tapAt(e){
   else if(st)sel={kind:'site',id:st.id,x:hit.x,y:hit.y};
   else if(hit&&S.g[hit.y]&&S.g[hit.y][hit.x]==='C')sel={kind:'castle'};
   else if(hit&&isLot(S.g,hit.x,hit.y))sel={kind:'lot',x:hit.x,y:hit.y};
+  else if(hit&&segAt(S,hit.x,hit.y)){const g=segAt(S,hit.x,hit.y); sel={kind:'road',seg:g.id,x:g.mid.x,y:g.mid.y};}
   else sel=null;
   renderPanel();
 }
@@ -2406,6 +2512,8 @@ function hintsFor(rep){
   if((S.chapter||1)>=2&&!first(S,'academy')&&!S.sites.some(x=>x.type==='academy'))h.push('湿地の魔物は毒を持ち、吸いついてきます。白魔法の学院を建てると、冒険者を白魔道士に転職させられます。');
   if((S.chapter||1)>=2&&!first(S,'tavern')&&!S.sites.some(x=>x.type==='tavern')&&rep&&rep.advs.some(a=>a.shy))h.push('主や親玉を前に、ひとりでは勝てないと引き下がった子がいます。酒場を建てると、翌朝、強い3人が組んで挑みます。');
   if(first(S,'academy')&&!S.advs.some(a=>a.job==='white'))h.push('白魔法の学院が建ちました。下の「冒険者へのおふれ」から、だれかを白魔道士に転職させられます（Lv3から）。');
+  if(S.day<=3&&!S.cleared&&!S.sites.some(x=>x.kind==='clear'||x.clear))h.push('城下町は荒れ地だらけです。大工へのおふれで荒れ地をタップすると、片づけて空き地にできます。片づけると時のかけらも出ます。');
+  if(S.day>=3&&Object.keys(S.rough||{}).length&&!S.repaired&&!S.sites.some(x=>x.kind==='repair'))h.push('ひび割れた道は、歩くのに1.5倍かかります。冒険者がよく通る道をタップして、大工に直してもらいましょう。');
   if(S.sites.length>=2&&!hireLock(S))h.push(`建設のおふれが${S.sites.length}件たまっています。城で大工を雇うと早く進みます。`);
   if(rep&&rep.advs.some(a=>a.note.includes('やる気'))&&!first(S,'park'))h.push('やる気が切れた冒険者がいます。噴水の公園で回復できます。');
   if(S.explore>=100&&!S.bossDown)h.push('探索100%。全体へのおふれで「親玉に挑め」を出せます。');
@@ -2703,7 +2811,7 @@ function openOrders(){
   for(const id in S.nom){const a=S.advs.find(a=>a.id===+id), v=S.nom[id]; if(!a||a.injured||(v.startsWith('job:')&&jobLock(S,a,v.slice(4))))delete S.nom[id];}
   $('reportSheet').innerHTML=`
     <h2>${S.day}日目の指示</h2>
-    ${rep?'':'<p>城下町には家が2軒と立て札だけ。冒険者が毎朝歩く道を考えて、武器屋や公園を建てていきましょう。建物は、大工へのおふれを出すと建ててもらえます。</p>'}
+    ${rep?'':'<p>荒れはてた城下町に残っているのは、家が2軒と立て札だけ。大工へのおふれで荒れ地を片づけ、冒険者が毎朝歩く道を考えて、武器屋や公園を建てていきましょう。</p>'}
     ${hints.length?`<div class="hints">${hints.map(h=>`<span>${h}</span>`).join('')}</div>`:''}
     ${(()=>{S.goals=S.goals||{}; const G=goalsOf(S), d=G.filter(q=>S.goals[q.id]).length; return `<details class="goals blk"><summary>${S.chapter||1}章の小目標　${d}/${G.length}</summary><ul>${G.map(q=>`<li class="${S.goals[q.id]?'done':''}"><span>${q.name}</span><em>+${q.reward}</em></li>`).join('')}</ul></details>`;})()}
     <div class="blk"><h4 class="sec">全体へのおふれ</h4>
