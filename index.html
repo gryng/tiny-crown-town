@@ -158,6 +158,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .qrow .qn{font-family:var(--f-head);font-weight:800;font-size:18px;width:26px;height:26px;display:grid;place-items:center;border-radius:50%;background:var(--accent);color:var(--paper)}
 .qrow .qn.off{background:transparent;color:var(--muted);border:1.5px dashed #241c1466}
 .qrow b{font-family:var(--f-head);font-weight:800;font-size:15px;line-height:1.35}
+.qline{margin:8px 0 0;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;font-size:14px}.qline .xl{font-size:12px;color:var(--muted);font-weight:700}.qline b{font-family:var(--f-head);font-weight:800}.qline em{font-style:normal;font-weight:800;margin-left:auto}.qline .qng{color:var(--muted)}.qline small{color:var(--muted)}
 .moodrow{margin:6px 0 0;display:flex;gap:8px;align-items:baseline;font-size:14px}.moodrow .xl{font-size:12px;color:var(--muted);font-weight:700}.moodrow small{margin-left:auto;font-size:11px;color:var(--muted)}
 .moodline{margin:0;font-size:15px}
 .hint1{margin:0 0 12px;font-size:13px;line-height:1.55;border-left:4px solid var(--accent);padding:6px 10px;background:#f3ead3}
@@ -528,7 +529,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.19.0 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.19.1 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 広場の立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -1444,7 +1445,7 @@ function endDay(S){
     if(a.state==='away'){S.elem+=a.rep.elem; if(a.out&&a.out.poison>0)a.rep.hurt=true; a.out=null; if(!a.rep.note)a.rep.note='日が暮れても帰ってこなかった';}
     if(a.rep.shyNote&&!a.rep.ko&&!a.rep.boss)a.rep.note=a.rep.shyNote;
     if(a.rep.coN){const best=Object.entries(a.rep.coN).sort((x,y)=>y[1]-x[1])[0]; a.rep.pal=best[0]; a.rep.palN=best[1];}
-    if(a.state==='rest'||a.restDay){a.morale=Math.min(100,a.morale+25); a.restDay=false;}
+    if(a.state==='rest'||a.restDay){a.morale=Math.min(100,Math.max(a.morale+25,a.injured?0:80)); a.restDay=false;} // 休んだ翌朝は絶好調（けがの療養は別）
     // けが：やられたら休み（主や親玉が相手なら大けが）、傷ついて帰っただけなら翌朝の寝坊
     if(a.rep.ko){a.injured={grade:a.rep.bigKo?'big':'mid',left:a.rep.bigKo?2:1}; a.rep.injuredNew=a.injured.grade;}
     else if(a.injured){a.injured.left-=(a.injured.grade==='big'&&a.treated===S.day)?2:1; if(a.injured.left<=0)a.injured=null;}
@@ -2825,7 +2826,8 @@ function cardHTML(r,day,rows){
       <tr><th scope="row">武器</th><td>${WEAPONS[r.wlv]}${r.wTag?`<small class="pr">${r.wTag}のおさがり</small>`:''}${nw('weapon')}</td></tr>
       <tr><th scope="row">防具</th><td>${ARMORS[r.alv]}${r.aTag?`<small class="pr">${r.aTag}のおさがり</small>`:''}${nw('armor')}</td></tr>
       <tr><th scope="row">お守り</th><td class="none">なし</td></tr></tbody></table></div>`;
-  const flow=tl?`<div class="blk"><h4 class="sec">一日の流れ</h4>${tl}${r.quest?`<p class="rc-note">受けた依頼：${r.jobNew?`${r.jobNew}に転職（指名）。そのあと`:''}${r.quest.name}${r.quest.k==='self'?'（合う依頼がなかった）':r.questDone?`　<b class="qok">達成！ 報酬${r.pay||''}G</b>`:`　<span class="hurt">未達成（${r.pay||10}G）</span>`}${r.style&&r.quest.k!=='help'?`。合間に${STYLE[r.style]}${r.styleOdd?'（きょうはめずらしく）':''}`:''}</p>`:''}</div>`:'';
+  const flow=tl?`<div class="blk"><h4 class="sec">一日の流れ</h4>${tl}</div>`:'';
+  const qline=r.quest?`<p class="qline"><span class="xl">依頼</span><b>${r.jobNew?`${r.jobNew}に転職したあと、`:''}${r.quest.name}</b>${r.quest.k==='self'?'<small>合う依頼がなく自主練</small>':r.questDone?`<em class="qok">達成！ ${r.pay||''}G</em>`:`<em class="qng">未達成 ${r.pay||10}G</em>`}</p>`:r.behest==='rest'?'<p class="qline"><span class="xl">依頼</span><b>休ませた</b></p>':'';
   const bits=[]; if(r.ar!=null&&r.dep!=null&&r.ar!==(S.lastReport?S.lastReport.area:S.area))bits.push(`腕前に合った${AREAS[r.ar].name}へ向かった`); if(r.party)bits.push(`酒場で待ち合わせて、${r.party.join('、')}と組んで出かけた`); if(r.leftBehind)bits.push('酒場の待ち合わせに間に合わず、ひとりで出かけた'); if(r.noMate)bits.push('酒場で待ったが仲間が来ず、ひとりで出かけた'); if(r.jobNew)bits.push(`学び舎で手ほどきを受けて、${r.jobNew}になった`); if(r.overslept)bits.push(`きのうの傷がひびいて${r.overslept}分寝坊した`); if(r.healed)bits.push('往診のおかげで昼から動けた');
   if(r.note&&!(r.note==='傷ついて引き返した'&&r.hurt)&&!(r.note==='やられて逃げ帰った'&&r.ko))bits.push(r.note); if(r.missedWage)bits.push('日給をもらいそびれた');
   if(r.wish)bits.push(`${Object.values(r.wish).join('と')}が欲しいが、まだ店に入っていない`);
@@ -2845,6 +2847,7 @@ function cardHTML(r,day,rows){
         <div class="tile"><dt><i class="coin"></i>ゴールド</dt><dd>+<b class="gv-gold">0</b></dd></div>
         <div class="tile"><dt>探索</dt><dd>+<b class="gv-ex">0.0</b><small>%</small></dd></div></dl>
         <div class="xp"><span class="xl">経験値</span><div class="xpbar"><i style="width:${r.expFrom/need0*100}%"></i></div><span class="xn"><b class="xv">${r.expFrom}</b>/<span class="xm">${need0}</span></span></div></div>`:''}
+      ${qline}
       ${r.moraleFrom!=null?`<p class="moodrow"><span class="xl">やる気</span><span class="mt m${moodLv(r.moraleFrom)}">${tierName(r.moraleFrom)}</span>${moodLv(r.moraleFrom)!==moodLv(r.morale)?` → <span class="mt m${moodLv(r.morale)}">${tierName(r.morale)}</span>`:''}<small>あすの朝</small></p>`:''}
       ${note}
       <details class="more"><summary>くわしく見る</summary><div class="more-body">${flow}${stats}${gear}${logHTML(r)}</div></details>
@@ -2968,7 +2971,7 @@ async function playReport(rep,tok,res0,ex0,total){
       // 最後は記録どおりの値にそろえる
       lvn.textContent=r.lv; xm.textContent=r.lv*25; xv.textContent=r.expNow; barI.style.width=`${r.expNow/(r.lv*25)*100}%`;
       if(r.ups.length)el.classList.add('up');
-      if(r.ups.length||r.ko||r.boss)q(el,'.more').open=true;
+
     }
     await wait(160);
   }
