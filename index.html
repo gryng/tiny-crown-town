@@ -508,10 +508,10 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.15.0 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.16.0 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
-      <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
+      <li>冒険者は 家 → 公園 → 広場の立て札 → 店 → 城門 の順に歩いて出発します。</li>
       <li>建物の置き場所が、そのまま出発時刻になります。遅いと洞窟を探索できません。</li>
       <li>洞窟の中は見えません。翌朝の報告書で結果を知ります。探索100%で親玉に挑めます。</li>
     </ol>
@@ -553,10 +553,10 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 
 <script>
 /*SIM-START*/
-const W=20,H=12;
+const W=24,H=15;
 const DAY_START=360, LEAVE=420, RETURN_TIME=1020, DAY_END=1200, TRAVEL=40;
 const WALK=9, SLOW=18, PARK_CAP=5, ENC=40;
-const GATE={x:10,y:11}, CASTLE_DOOR={x:10,y:3};
+const GATE={x:12,y:14}, CASTLE_DOOR={x:12,y:3}, PLAZA={x:12,y:7};
 const BUILD={
   house:{name:'民家',cost:150,max:12,desc:'家族が住む。若者がひとり冒険者になる。建てられる数は章ごとに決まっている'},
   board:{name:'立て札',cost:50,max:1,desc:'おふれを貼る。冒険者は毎朝ここに寄る'},
@@ -595,15 +595,26 @@ const PP=a=>PERSONAS[a.pid];
 const stepTicks=a=>a.carp||a.doc?WALK:a.slow?SLOW:(PP(a).walk||WALK);
 function react(a,k){a.react={k,n:(a.react?a.react.n:0)+1};}
 
-function makeMap(){
-  const g=[];
-  for(let y=0;y<H;y++){const row=[];for(let x=0;x<W;x++)row.push(x===0||x===W-1||y===0||y===H-1?'W':'G');g.push(row);}
-  for(const ry of [3,7,10])for(let x=1;x<W-1;x++)g[ry][x]='R';
-  for(const cx of [5,10,14])for(let y=3;y<=10;y++)g[y][cx]='R';
-  for(let y=1;y<=2;y++)for(let x=8;x<=11;x++)g[y][x]='C';
-  g[GATE.y][GATE.x]='D';
-  return g;
-}
+// 城下町の地図。W:城壁 C:城 R:道 D:城門 .:草地（道に面した草地が空き地）。
+// 城から広場へ大通りが下り、広場のまん中に立て札。そこから門へは東へ一度折れる。西は回り道、東は裏通りと小さな輪
+const TOWN=[
+  "WWWWWWWWWWWWWWWWWWWWWWWW",
+  "W.........CCCC.........W",
+  "W.........CCCC.........W",
+  "W..RRRRRRRRRRRRRRRRR...W",
+  "W..R........R......R...W",
+  "W..R........R......RRR.W",
+  "W.RR.......RRR.......R.W",
+  "W.R........R.R.......R.W",
+  "W.RRRRRRRRRRRRRRRRR.RR.W",
+  "W....R........R..R..R..W",
+  "W....R........R..RRRR..W",
+  "W..RRRRRR.....R....R...W",
+  "W..R....RRRRRRRRRRRR...W",
+  "W...........R..........W",
+  "WWWWWWWWWWWWDWWWWWWWWWWW",
+];
+function makeMap(){return TOWN.map(r=>[...r].map(c=>c==='.'?'G':c));}
 function walkable(g,x,y){return x>=0&&y>=0&&x<W&&y<H&&(g[y][x]==='R'||g[y][x]==='D');}
 function isLot(g,x,y){if(!g[y]||g[y][x]!=='G')return false;return DIRS.some(([dx,dy])=>g[y+dy]&&g[y+dy][x+dx]==='R');}
 function doorOf(g,x,y){for(const [dx,dy] of DIRS)if(g[y+dy]&&g[y+dy][x+dx]==='R')return {x:x+dx,y:y+dy};return null;}
@@ -622,7 +633,7 @@ function newState(rng){
   const S={g:makeMap(),day:1,t:DAY_START,elem:START_ELEM,explore:0,bossDown:false,justWon:false,area:0,bossGo:false,nom:{},chapter:1,b:[],advs:[],sites:[],carps:[newCarp(0)],docs:[],builtToday:[],stock:{weapon:1,armor:1},used:{weapon:[],armor:[]},refund:0,phase:'report',parkUsed:0,demolished:0,rng:rng||Math.random,nextId:1,lastReport:null,fx:[],world:newWorld(),fights:[]};
   // 性格の出てくる順番はプレイごとに変わる
   S.pOrder=PIDS.slice(); for(let i=S.pOrder.length-1;i>0;i--){const j=Math.floor(S.rng()*(i+1)); [S.pOrder[i],S.pOrder[j]]=[S.pOrder[j],S.pOrder[i]];}
-  build(S,'house',2,2,true); build(S,'house',17,9,true); build(S,'board',12,4,true);
+  build(S,'house',2,4,true); build(S,'house',20,11,true); build(S,'board',PLAZA.x,PLAZA.y,true); // 立て札は広場のまん中
   ruin(S);
   return S;
 }
@@ -636,20 +647,26 @@ function first(S,type){return S.b.find(b=>b.type===type)||null;}
 // 空き地のほとんどは荒れ地。大工が片づけると建てられるようになり、時のかけらが出る。配置はプレイごとに変わる
 const START_ELEM=150, ELEM_K=.6;   // 最初の手持ちと、冒険で持ち帰る時のかけらの倍率（整地で出るぶん、冒険のぶんを減らした）
 const WASTE={grass:{n:'草むら',work:50,elem:[4,7]},rubble:{n:'がれき',work:120,elem:[14,20]},rock:{n:'大岩',work:240,elem:[32,44]}};
-const OPEN_LOTS=[[8,4],[9,4],[11,4]];   // 城の前の、最初から使える空き地
+const OPEN_LOTS=[[11,4],[13,4],[10,7],[14,7]];   // 城の前と広場のわきの、最初から使える空き地
 const ROUGH=1.5, REPAIR_WORK=30;          // 荒れた道は歩くのに1.5倍かかる。直すのは1マス30
-// 道を、交差点から交差点までの区間に分ける
-const SEGS=(()=>{const L=[], rows=[3,7,10], cols=[5,10,14], cut=[1,5,10,14,W-2];
-  for(const y of rows)for(let i=0;i<cut.length-1;i++){const t=[]; for(let x=cut[i]+(i?1:0);x<cut[i+1];x++)t.push({x,y}); if(t.length)L.push({id:`r${y}_${i}`,tiles:t});}
-  for(const x of cols)for(const [a,b] of [[3,7],[7,10]]){const t=[]; for(let y=a+1;y<b;y++)t.push({x,y}); L.push({id:`c${x}_${a}`,tiles:t});}
-  for(const g of L)g.mid=g.tiles[g.tiles.length>>1]; return L;})();
-const KEEP_ROADS=new Set(['r3_2','c10_3','c10_7']); // 城の前と、城から門への大通りは荒れていない
+// 道を、交差点から交差点までの区間に分ける（長い道は5マスまでで区切る）。城から広場をへて門までの大通りは荒れない
+const SEGS=(()=>{const g=makeMap(), road=(x,y)=>g[y]&&(g[y][x]==='R'||g[y][x]==='D'), deg=(x,y)=>DIRS.filter(([dx,dy])=>road(x+dx,y+dy)).length;
+  const seen={}, L=[], k=(x,y)=>x+','+y;
+  for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){ if(g[y][x]!=='R'||deg(x,y)!==2||seen[k(x,y)])continue;
+    const chain=[{x,y}]; seen[k(x,y)]=1; // 両方向へたどって、ひと続きの道を並べる
+    for(const fwd of [true,false]){let cur={x,y}; for(;;){const nx=DIRS.map(([dx,dy])=>({x:cur.x+dx,y:cur.y+dy})).find(t=>g[t.y][t.x]==='R'&&deg(t.x,t.y)===2&&!seen[k(t.x,t.y)]); if(!nx)break; seen[k(nx.x,nx.y)]=1; if(fwd)chain.push(nx); else chain.unshift(nx); cur=nx;}}
+    for(let i=0;i<chain.length;i+=5){const n=chain.length-i, t=chain.slice(i,i+(n<=7?n:5)); L.push({id:`s${L.length}`,tiles:t,mid:t[t.length>>1]}); if(n<=7)break;}
+  }
+  return L;})();
+const KEEP_ROADS=(()=>{const g=makeMap(), keep=new Set(), mark=p=>{for(const t of p||[])keep.add(t.x+','+t.y);};
+  const bd=doorOf(g,PLAZA.x,PLAZA.y); mark(bfs(g,CASTLE_DOOR,bd)); mark(bfs(g,bd,GATE)); for(const [dx,dy] of [[-1,-1],[0,-1],[1,-1],[-1,0],[1,0],[-1,1],[0,1],[1,1]])keep.add((PLAZA.x+dx)+','+(PLAZA.y+dy));
+  return new Set(SEGS.filter(s=>s.tiles.some(t=>keep.has(t.x+','+t.y))).map(s=>s.id));})();
 const wk=(x,y)=>x+','+y;
 function ruin(S){
   S.waste={}; S.rough={}; S.cleared=0; S.repaired=0; S.finds=0; S.clearLog=[];
   for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){
     if(!isLot(S.g,x,y)||at(S,x,y)||OPEN_LOTS.some(o=>o[0]===x&&o[1]===y))continue;
-    const far=Math.abs(x-10)/9, r=S.rng(); // 町はずれほど、がれきや大岩が多い
+    const far=Math.min(1,(Math.abs(x-W/2)+Math.abs(y-PLAZA.y)*.6)/(W/2)), r=S.rng(); // 町はずれほど、がれきや大岩が多い
     S.waste[wk(x,y)]=r<.5-far*.2?'grass':r<.86-far*.1?'rubble':'rock';
   }
   for(const g of SEGS)if(!KEEP_ROADS.has(g.id)&&S.rng()<.55)S.rough[g.id]=true;
@@ -1370,17 +1387,17 @@ function checkGoals(S){
 }
 // ================= 2章から始める（平均的な1章のプレイを自動で再現） =================
 function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
-const CH2_SEED=58; // 1章を平均的な日数・レベルで終える種（テストで選ぶ）
+const CH2_SEED=35; // 1章を平均的な日数・レベルで終える種（テストで選ぶ）
 // よくある建て方：武器屋と防具屋を城門への道ぞいに、家と診療所と公園をその近くに。店へは余裕があるときに投資
 function autoCh1(seed){
   const S=newState(mulberry(seed));
-  const plan=[['weapon',9,9],['armor',11,9],['house',9,8],['clinic',8,9],['park',11,8],['house',12,9]];
+  const plan=[['weapon',13,9],['armor',15,9],['house',11,9],['clinic',13,11],['park',10,7],['house',15,11]];
   for(let d=0;d<40&&S.chapter<2;d++){
     for(const q of plan)if(!q.d&&S.elem>=BUILD[q[0]].cost){if(!orderBuild(S,q[0],q[1],q[2]))q.d=1;}
     for(const t of ['weapon','armor'])while(first(S,t)&&!investLock(S,t)&&S.elem>=investCost(S,t)+(plan.some(q=>!q.d)?160:0))invest(S,t);
     // 大工の手が空きそうなら、城に近い荒れ地を片づけ、町の中ほどの荒れた道を直す
-    const free=()=>S.sites.reduce((t,x)=>t+(x.need-x.done),0)<660*S.carps.length, dist=(x,y)=>Math.abs(x-10)+Math.abs(y-6);
-    const seg=SEGS.filter(g=>S.rough[g.id]&&!S.sites.some(x=>x.seg===g.id)&&Math.abs(g.mid.x-10)<=5).sort((a,b)=>dist(a.mid.x,a.mid.y)-dist(b.mid.x,b.mid.y))[0];
+    const free=()=>S.sites.reduce((t,x)=>t+(x.need-x.done),0)<660*S.carps.length, dist=(x,y)=>Math.abs(x-12)+Math.abs(y-8);
+    const seg=SEGS.filter(g=>S.rough[g.id]&&!S.sites.some(x=>x.seg===g.id)&&Math.abs(g.mid.x-12)<=6).sort((a,b)=>dist(a.mid.x,a.mid.y)-dist(b.mid.x,b.mid.y))[0];
     if(free()&&seg)orderRepair(S,seg);
     for(let n=0;n<6&&free();n++){const L=Object.keys(S.waste).map(k=>k.split(',').map(Number)).filter(([x,y])=>!siteAt(S,x,y)&&!plan.some(q=>q[1]===x&&q[2]===y)).sort((a,b)=>dist(a[0],a[1])-dist(b[0],b[1])); if(!L.length)break; orderClear(S,L[0][0],L[0][1]);}
     S.bossGo=S.explore>=100&&!S.bossDown;
@@ -1421,7 +1438,7 @@ async function initGfx(){
   const renderer=new T.WebGLRenderer({canvas:cv,antialias:true,powerPreference:'high-performance'});
   renderer.shadowMap.enabled=true; renderer.shadowMap.type=T.PCFSoftShadowMap;
   const scene=new T.Scene(); scene.background=new T.Color(0xd8e8f0); scene.fog=new T.Fog(0xd8e8f0,50,61);
-  const FOV=19, PITCH=55*Math.PI/180, DIST=41.5;
+  const FOV=19*W/20, PITCH=55*Math.PI/180, DIST=41.5;
   const cam=new T.PerspectiveCamera(FOV,16/10,10,160);
   const tgt=new T.Vector3(0,.3,-.25);
   const still=matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -1457,12 +1474,12 @@ async function initGfx(){
   /* ----- 光 ----- */
   const hemi=new T.HemisphereLight(0xffffff,0x555555,1.2); scene.add(hemi);
   const sun=new T.DirectionalLight(0xffffff,2.6); sun.castShadow=true; sun.shadow.mapSize.set(2048,2048);
-  {const c=sun.shadow.camera; c.left=-13; c.right=13; c.top=11; c.bottom=-11; c.near=1; c.far=95; sun.shadow.bias=-.0008; sun.shadow.normalBias=.035; sun.shadow.radius=2.2;}
+  {const c=sun.shadow.camera; c.left=-W/2-3; c.right=W/2+3; c.top=H/2+5; c.bottom=-H/2-5; c.near=1; c.far=95; sun.shadow.bias=-.0008; sun.shadow.normalBias=.035; sun.shadow.radius=2.2;}
   scene.add(sun,sun.target);
   // 太陽は北寄りから差して影を手前に落とす。正面の壁やスプライトはこの補助光で照らす
   const fill=new T.DirectionalLight(0xffffff,1.5); fill.position.set(.1,.28,1); scene.add(fill);
-  const torchA=new T.PointLight(0xff9a48,0,7,1.6); torchA.position.set(.5,1.25,5.2); scene.add(torchA);
-  const torchB=new T.PointLight(0xffb060,0,6,1.6); torchB.position.set(.25,1.1,-2.6); scene.add(torchB);
+  const torchA=new T.PointLight(0xff9a48,0,7,1.6); torchA.position.set(wx(GATE.x),1.25,H/2-.8); scene.add(torchA);
+  const torchB=new T.PointLight(0xffb060,0,6,1.6); torchB.position.set(wx(CASTLE_DOOR.x)-.25,1.1,-H/2+3.4); scene.add(torchB);
   // かがり火は夜だけ影を落とす（昼は影の計算を止めておく）
   for(const l of [torchA,torchB]){l.castShadow=!lite; l.shadow.mapSize.set(512,512); l.shadow.camera.near=.1; l.shadow.camera.far=8; l.shadow.bias=-.006; l.shadow.normalBias=.04; l.shadow.radius=2; l.shadow.autoUpdate=false;}
 
@@ -1471,7 +1488,11 @@ async function initGfx(){
     const m=S.g, gr=(x,y)=>m[y]&&(m[y][x]==='G'||m[y][x]==='C');
     for(let y=0;y<H;y++)for(let x=0;x<W;x++){
       const ox=x*16, oy=y*16, c=m[y][x];
-      if(c==='G'||c==='C'){
+      if(Math.abs(x-PLAZA.x)<=1&&Math.abs(y-PLAZA.y)<=1){ // 広場：石だたみ
+        P(g,'#b9b2a2',ox,oy,16,16);
+        for(let r=0;r<4;r++)for(let k=0;k<3;k++){const bx=ox+((r%2?3:0)+k*6)%16, by=oy+r*4, w=Math.min(5,ox+16-bx); P(g,hash(x*4+k,y*4+r,7)<.5?'#c9c2b0':'#aaa392',bx,by,w,3); P(g,'#8f8878',bx,by+3,w,1);}
+        if(x===PLAZA.x&&y===PLAZA.y){P(g,'#8f8878',ox+2,oy+2,12,1);P(g,'#8f8878',ox+2,oy+13,12,1);P(g,'#8f8878',ox+2,oy+2,1,12);P(g,'#8f8878',ox+13,oy+2,1,12);}
+      } else if(c==='G'||c==='C'){
         P(g,'#4f8a3a',ox,oy,16,16);
         for(let i=0;i<18;i++)P(g,hash(x,y,i)<.5?'#5c9c46':'#437c33',ox+(hash(x,y,i+20)*16|0),oy+(hash(x,y,i+40)*16|0));
         for(let i=0;i<3;i++){const tx=ox+1+(hash(x,y,i+60)*12|0), ty=oy+2+(hash(x,y,i+70)*11|0); P(g,'#6cb052',tx,ty,1,2); P(g,'#6cb052',tx+2,ty,1,2); P(g,'#3a6f2e',tx+1,ty+1);}
@@ -1501,7 +1522,7 @@ async function initGfx(){
   add(new T.Mesh(new T.PlaneGeometry(90,70).rotateX(-Math.PI/2),lam(outTex)),0,-.02,-4,scene,false).receiveShadow=true;
   const pathTex=tex(16,16,g=>{P(g,'#bda472',0,0,16,16); for(let i=0;i<7;i++){const sx=hash(i,1,9)*13|0, sy=hash(i,2,30)*13|0; P(g,'#cfbb8a',sx,sy,3,2); P(g,'#a58d5e',sx,sy+2,3,1);} for(let i=0;i<16;i++){if(hash(i,4,5)<.6)P(g,'#4a8236',0,i,1+(hash(i,6,7)<.3?1:0),1); if(hash(i,8,9)<.6)P(g,'#4a8236',15-(hash(i,10,11)<.3?1:0),i,2,1);}},{mip:true,repeat:true});
   pathTex.repeat.set(1,12);
-  add(new T.Mesh(new T.PlaneGeometry(1,12).rotateX(-Math.PI/2),lam(pathTex)),.5,-.01,12,scene,false).receiveShadow=true;
+  add(new T.Mesh(new T.PlaneGeometry(1,12).rotateX(-Math.PI/2),lam(pathTex)),wx(GATE.x),-.01,H/2+6,scene,false).receiveShadow=true;
 
   /* ----- 城壁と城門 ----- */
   const brick=(base,dark,light)=>tex(16,16,g=>{P(g,base,0,0,16,16); for(let r=0;r<4;r++){P(g,dark,0,r*4+3,16,1); for(let k=0;k<2;k++){const bx=((r%2?4:0)+k*8)%16; P(g,dark,bx,r*4,1,3); if(hash(r,k,3)<.6)P(g,light,(bx+2)%16,r*4,4,1); if(hash(r,k,8)<.4)P(g,dark,(bx+5)%16,r*4+2,2,1);}}},{mip:true,repeat:true});
@@ -1513,21 +1534,23 @@ async function initGfx(){
   const merlons=[]; // [x,y,z,w,d]
   function wall(x0,x1,z0,z1,h){const w=x1-x0, d=z1-z0; add(new T.Mesh(boxGeo(w,h,d),wallMat),(x0+x1)/2,0,(z0+z1)/2);
     if(w>=d){for(let x=x0+.2;x<x1-.15;x+=.5)merlons.push([x,h,(z0+z1)/2,.26,d]);} else {for(let z=z0+.2;z<z1-.15;z+=.5)merlons.push([(x0+x1)/2,h,z,w,.26]);}}
-  wall(-10,10,-6,-5.2,1.5);              // 北
-  wall(-10,-9.25,-5.2,5.5,1.0);          // 西
-  wall(9.25,10,-5.2,5.5,1.0);            // 東
-  wall(-10,-.25,5.5,5.95,.5);            // 南（手前は低く、通りを隠さない）
-  wall(1.25,10,5.5,5.95,.5);
+  const HX=W/2, HZ=H/2, GX=wx(GATE.x);   // 町の半分の幅と奥行き、城門の位置
+  wall(-HX,HX,-HZ,-HZ+.8,1.5);              // 北
+  wall(-HX,-HX+.75,-HZ+.8,HZ-.5,1.0);       // 西
+  wall(HX-.75,HX,-HZ+.8,HZ-.5,1.0);         // 東
+  wall(-HX,GX-.75,HZ-.5,HZ-.05,.5);         // 南（手前は低く、通りを隠さない）
+  wall(GX+.75,HX,HZ-.5,HZ-.05,.5);
   {const g=new T.BoxGeometry(1,.18,1), im=new T.InstancedMesh(g,wallMat,merlons.length), o=new T.Object3D();
    merlons.forEach((m,i)=>{o.position.set(m[0],m[1]+.09,m[2]); o.scale.set(m[3],1,m[4]); o.updateMatrix(); im.setMatrixAt(i,o.matrix);}); im.castShadow=true; im.receiveShadow=true; scene.add(im);}
   function turret(x,z,r,h){add(new T.Mesh(new T.CylinderGeometry(r,r*1.06,h,8).translate(0,h/2,0),wallMat),x,0,z); add(new T.Mesh(new T.ConeGeometry(r*1.25,r*1.5,8).translate(0,r*.75,0),roofGreen),x,h,z);}
-  turret(-9.6,-5.6,.62,1.9); turret(9.6,-5.6,.62,1.9); turret(-9.6,5.6,.5,.85); turret(9.6,5.6,.5,.85);
+  turret(-HX+.4,-HZ+.4,.62,1.9); turret(HX-.4,-HZ+.4,.62,1.9); turret(-HX+.4,HZ-.4,.5,.85); turret(HX-.4,HZ-.4,.5,.85);
   // 城門：2本の門柱とかがり火
-  for(const gx of [-.12,1.12]){add(new T.Mesh(boxGeo(.4,1.05,.6),wallMat),gx,0,5.72); add(new T.Mesh(new T.BoxGeometry(.5,.08,.7),wallMat),gx,1.09,5.72); add(new T.Mesh(new T.CylinderGeometry(.13,.08,.12,6),darkMat),gx,1.19,5.72);}
-  const torches=[[-.12,1.3,5.72],[1.12,1.3,5.72],[-.42,.95,-3.03],[.92,.95,-3.03]];
+  for(const gx of [GX-.62,GX+.62]){add(new T.Mesh(boxGeo(.4,1.05,.6),wallMat),gx,0,HZ-.28); add(new T.Mesh(new T.BoxGeometry(.5,.08,.7),wallMat),gx,1.09,HZ-.28); add(new T.Mesh(new T.CylinderGeometry(.13,.08,.12,6),darkMat),gx,1.19,HZ-.28);}
+  const CZ=6-HZ, CX=wx(CASTLE_DOOR.x)-.25;   // お城は、正門が大通りの正面に来るように置く
+  const torches=[[GX-.62,1.3,HZ-.28],[GX+.62,1.3,HZ-.28],[CX-.67,.95,-3.03+CZ],[CX+.67,.95,-3.03+CZ]];
 
   /* ----- お城 ----- */
-  const castle=new T.Group(); castle.position.set(.25,0,0); scene.add(castle);
+  const castle=new T.Group(); castle.position.set(CX,0,CZ); scene.add(castle);
   const castleGlow=new T.MeshBasicMaterial({color:new T.Color(3.2,2.2,.8),transparent:true,opacity:0});
   {
     add(new T.Mesh(boxGeo(2.3,1.45,1.25),castleMat),0,0,-4.1,castle);                 // 本館
@@ -1575,7 +1598,7 @@ async function initGfx(){
     if(S.g[y][x]!=='G'||isLot(S.g,x,y))continue; const r=hash(x,y,99); if(r>=.75)continue;
     trees.push({v:r<.34?0:r<.56?1:2,x:wx(x)+(hash(x,y,5)-.5)*.3,z:wz(y)+(hash(x,y,6)-.4)*.25,s:.88+hash(x,y,7)*.18,ry:hash(x,y,9)*6.28,ph:hash(x,y,8)*6.28});
   }
-  for(let i=0;i<520;i++){const x=(hash(i,11,1)-.5)*56, z=-22+hash(i,13,2)*36; if(Math.abs(x)<11&&z>-7.2&&z<6.9)continue; if(x>-.6&&x<1.6&&z>5)continue; outer.push({v:hash(i,17,3)*3|0,x,z,s:1.1+hash(i,19,4)*.8,ry:hash(i,23,5)*6.28,ph:0});}
+  for(let i=0;i<520;i++){const x=(hash(i,11,1)-.5)*56, z=-22+hash(i,13,2)*36; if(Math.abs(x)<W/2+1&&z>-H/2-1.2&&z<H/2+.9)continue; if(x>-.6&&x<1.6&&z>5)continue; outer.push({v:hash(i,17,3)*3|0,x,z,s:1.1+hash(i,19,4)*.8,ry:hash(i,23,5)*6.28,ph:0});}
   const treeObj=new T.Object3D();
   function treeSet(list,shadow){
     return [0,1,2].map(v=>{const arr=list.filter(t=>t.v===v), n=Math.max(1,arr.length);
@@ -1833,7 +1856,7 @@ async function initGfx(){
       if(p.moving){if(p.dx<0)w.flip=-1; else if(p.dx>0)w.flip=1; if(p.dy<0)w.back=true; else if(p.dy>0||p.dx)w.back=false;} else w.back=false;
       const st=moving?1+((Math.floor(now/(a.slow?280:150))+a.id)%2):0;
       w.t.offset.x=((w.back?3:0)+st)/6;
-      w.mesh.position.set(wx(p.x),0,wz(p.y)+.15+a.id*.004); w.mesh.scale.x=w.flip;
+      w.mesh.position.set(wx(p.x),0,wz(p.y)+.15+(a.id%50)*.004); w.mesh.scale.x=w.flip;
       // 灯った窓（正面・裏）のうち、光が届く側にいて近いもの2つを選ぶ
       let b1=null, b2=null; const px=w.mesh.position.x, pz=w.mesh.position.z;
       for(const g of bGroups){const u=g.userData; if(!u.gm||u.glow<.05)continue;
