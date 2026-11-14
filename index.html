@@ -272,6 +272,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .mood{font-size:.9em}
 .goals{margin:0 0 4px} .goals summary{cursor:pointer;font-family:var(--f-head);font-weight:800;padding:6px 0}
 .goals ul{list-style:none;margin:6px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:3px 14px;font-size:13px;line-height:1.5}
+.goals .gch{margin:10px 0 2px;font-family:var(--f-head);font-size:13px;color:var(--accent)}
 .goals li{display:flex;gap:6px;min-width:0} .goals li::before{content:'□';color:var(--muted)} .goals li.done{color:var(--muted)} .goals li.done::before{content:'✓';color:var(--accent);font-weight:800}
 .goals li em{font-style:normal;margin-left:auto;color:var(--muted);font-size:12px}
 #rpWon{transform:scale(.9);opacity:0}
@@ -522,7 +523,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.18.0 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.18.1 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 広場の立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -1022,7 +1023,6 @@ function questsAvail(S){
   if(W.clue&&!W.cut)add('cut');
   if(EDGES.some(e=>inArea(S,e)&&!e.bossWay&&!(e.cut&&!W.cut)&&!W.trips[e.id]&&!masterAlive(S,e.a)&&!masterAlive(S,e.b)&&[e.a,e.b].some(x=>reached(S,x)&&way(x))))add('road');
   if(S.sites.length)add('help');
-  if(Object.keys(NODES).some(id=>inArea(S,NODES[id])&&NODES[id].room&&W.searched[id]))add('gather');
   add('train');
   return L;
 }
@@ -1030,15 +1030,15 @@ const capOf=q=>q.party?3:Infinity, rewardOf=q=>Math.round(QK[q.k].reward*(q.bonu
 // 立て札の中身を、いま出せる依頼に合わせる（出せなくなったものは外れる）。初めての朝は、道・腕・手伝いを貼っておく
 function syncBoard(S){
   const av=questsAvail(S), byId=Object.fromEntries(av.map(q=>[q.id,q]));
-  if(!S.board){S.board=[]; for(const k of ['road','train','gather'])if(av.some(q=>q.k===k))S.board.push({...av.find(q=>q.k===k)});}
+  if(!S.board){S.board=[]; for(const k of ['road','train'])if(av.some(q=>q.k===k))S.board.push({...av.find(q=>q.k===k)});}
   S.board=S.board.filter(q=>byId[q.id]).map(q=>({...byId[q.id],bonus:q.bonus})).slice(0,boardMax(S));
 }
 // 依頼ごとの「やりたさ」。報酬 × 性格の好み × できそうか × 貼ってある順
 const PREF={
   makezu:{master:1.7,boss:1.7,train:1.4,help:.4},
   sekkachi:{help:.6,top:1.8},
-  nonbiri:{gather:1.5,help:1.4,master:.8},
-  okubyo:{help:1.6,gather:1.3,master:.6,boss:.6},
+  nonbiri:{help:1.4,train:1.1,master:.8},
+  okubyo:{help:1.6,train:1.2,master:.6,boss:.6},
   kuishinbo:{money:1.6},
   yumemi:{road:1.7,room:1.6,cut:1.3},
   sewazuki:{help:1.7,team:1.6},
@@ -1075,9 +1075,9 @@ function takeQuest(S,a){
     // 先に酒場で待っている仲間がいたら、この子が来るまで少し待ってくれる（最初のひとりが着いてから最大150分）
     if(P.deadline!==null){P.deadline=Math.min(Math.max(P.first+150,MEET_AT+60),Math.max(P.deadline,S.t+70)); for(const i of P.met){const x=S.advs.find(v=>v.id===i); if(x&&x.state==='stop'&&x.stopWhat==='tavern')x.until=P.deadline;}} }
 }
-// よくある貼り方（自動プレイ用）：親玉 → 主 → 近道 → 部屋 → 道 → 手伝い → 集め → 腕。主と親玉は、酒場があれば組んで
+// よくある貼り方（自動プレイ用）：親玉 → 主 → 近道 → 部屋 → 道 → 手伝い → 腕。主と親玉は、酒場があれば組んで
 function autoBoard(S){
-  const backlog=S.sites.some(x=>x.kind==='build')&&S.sites.reduce((t,x)=>t+x.need-x.done,0)>900*S.carps.length, order=['boss','master','cut','room','road','help','gather','train'];
+  const backlog=S.sites.some(x=>x.kind==='build')&&S.sites.reduce((t,x)=>t+x.need-x.done,0)>900*S.carps.length, order=['boss','master','cut','room','road','help','train'];
   const av=questsAvail(S).filter(q=>q.k!=='help'||backlog);
   let pt=0; S.board=av.slice().sort((x,y)=>order.indexOf(x.k)-order.indexOf(y.k)).filter(q=>!q.party||!pt++).slice(0,boardMax(S)).map(q=>({...q})); // 組む依頼は1枚ずつ
 }
@@ -1446,7 +1446,7 @@ function endDay(S){
   if(S.carpFound)S.builtToday.push(`大工が街で${RES}を${S.carpFound}拾った`);
   const areaNow=S.area, nextArea=S.justWon&&S.area+1<AREAS.length;
   const HL=highlights(S), GN=checkGoals(S), GT=goalsOf(S);
-  S.lastReport={hl:HL,goalsNew:GN,goalsDone:GT.filter(q=>S.goals[q.id]).length,goalsAll:GT.length,day:S.day,area:areaNow,cleared:S.justWon?{name:AREAS[areaNow].name,next:nextArea?AREAS[areaNow+1].name:null,chapter:(S.chapter||1)+(nextArea?1:0)}:null,won:S.justWon,built:S.builtToday.slice(),bossDown:S.bossDown,world:JSON.parse(JSON.stringify(S.world)),worldFrom:S.worldStart||newWorld(),explore:S.explore,exploreFrom:S.exploreStart||0,elemAfter:S.elem,
+  S.lastReport={chapterNow:S.chapter||1,hl:HL,goalsNew:GN,goalsDone:GT.filter(q=>S.goals[q.id]).length,goalsAll:GT.length,day:S.day,area:areaNow,cleared:S.justWon?{name:AREAS[areaNow].name,next:nextArea?AREAS[areaNow+1].name:null,chapter:(S.chapter||1)+(nextArea?1:0)}:null,won:S.justWon,built:S.builtToday.slice(),bossDown:S.bossDown,world:JSON.parse(JSON.stringify(S.world)),worldFrom:S.worldStart||newWorld(),explore:S.explore,exploreFrom:S.exploreStart||0,elemAfter:S.elem,
     advs:S.advs.filter(a=>a.rep).map(a=>({id:a.id,name:a.name,tunic:a.tunic,hair:a.hair,pid:a.pid,k:a.k,lv:a.lv,hp:a.hp,hpMax:a.hpMax,atk:a.atk,def:a.def,morale:a.morale,gold:a.gold,wlv:a.wlv,alv:a.alv,job:a.job||null,mag:a.mag||0,quest:a.rep.quest||null,questDone:!!a.rep.questDone,wTag:a.wTag||null,aTag:a.aTag||null,...a.rep,held:a.gold,expNow:a.exp,ev:a.rep.ev.slice(),ups:a.rep.ups.slice(),bought:a.rep.bought.slice()}))};
   if(nextArea){S.chStart=S.day+1; S.area++; S.chapter=(S.chapter||1)+1; S.explore=0; S.bossDown=false; S.bossGo=false;} // 親玉を倒したら次の章・次のエリアへ
   S.nom={}; // 個別のおふれはその日かぎり
@@ -1489,8 +1489,10 @@ function highlights(S){
   return H.sort((x,y)=>y.w-x.w);
 }
 // 章の小目標。エリアの地図から自動で作るもの（たどり着く・調べる・主を倒す…）と、町や冒険者についてのもの
-function goalsOf(S){
-  const ar=S.area, ch=S.chapter||1, W=S.world, G=[], g=(id,name,reward,test)=>G.push({id:`${ch}:${id}`,name,reward:Math.max(3,Math.round(reward/2)),test}); // ごほうびは控えめに（時のかけらの配分は段階2で見直す）
+// 小目標は、これまでの章のぶんも残る（終わった章でやり残したものは、あとから来た子や育った子が続けて挑める）
+function goalsOf(S){const G=[]; for(let c=1;c<=(S.chapter||1);c++)G.push(...goalsFor(S,c,c-1)); return G;}
+function goalsFor(S,ch,ar){
+  const past=ar<S.area, W=S.world, G=[], g=(id,name,reward,test)=>{if(past&&id==='fast')return; G.push({id:`${ch}:${id}`,ch,name,reward:Math.max(3,Math.round(reward/2)),test});}; // ごほうびは控えめに（時のかけらの配分は段階2で見直す）
   const E=EDGES.filter(e=>e.ar===ar||(ar===0&&e.ar===undefined)), N=Object.keys(NODES).filter(id=>(NODES[id].ar||0)===ar&&id!=='gate');
   const trips=e=>W.trips[e.id]||0, A=()=>S.advs.filter(a=>a.rep&&a.rep.dep!==null), all=n=>A().length>=n&&A().length===S.advs.filter(a=>a.joinDay<=S.day).length;
   for(const id of N){const n=NODES[id]; if(n.boss)continue;
@@ -1500,7 +1502,7 @@ function goalsOf(S){
   g('roads','道をすべて歩く',15,()=>E.filter(e=>!e.bossWay&&!e.cut).every(trips));
   g('smooth','道を1本、ならされた道にする',15,()=>E.some(e=>trips(e)>=60));
   if(E.some(e=>e.cut)){g('clue','近道の手がかりを見つける',10,()=>W.clue); g('cut','近道を開通させる',20,()=>W.cut);}
-  g('ex50','探索を50%まで進める',10,()=>S.explore>=50); g('ex100','探索を100%にする',20,()=>S.explore>=100);
+  g('ex50','探索を50%まで進める',10,()=>past||S.explore>=50); g('ex100','探索を100%にする',20,()=>past||S.explore>=100);
   const built=(t,r)=>g('b:'+t,`${BUILD[t].name}を建てる`,r,()=>first(S,t)), lv=n=>g('lv'+n,`だれかがLv${n}になる`,15,()=>S.advs.some(a=>a.lv>=n));
   const stock=n=>{g('sw'+n,`武器屋に${ITEMS.weapon[n]}を入荷させる`,15,()=>S.stock.weapon>=n); g('sa'+n,`防具屋に${ITEMS.armor[n]}を入荷させる`,15,()=>S.stock.armor>=n);};
   const safe=n=>g('safe',`${n}人以上が出かけて、全員が無傷で帰る`,20,()=>A().length>=n&&A().every(a=>!a.rep.ko&&!a.rep.hurt&&a.rep.back!==null));
@@ -1508,17 +1510,19 @@ function goalsOf(S){
   const wins=n=>g('wins'+n,`1日に合わせて${n}勝する`,15,()=>A().reduce((t,a)=>t+a.rep.wins,0)>=n);
   const fast=n=>g('fast',`この章を${n}日以内に終える`,30,()=>S.justWon&&S.day-(S.chStart||1)+1<=n);
   const cl=n=>g('clear'+n,`荒れ地を${n}つ片づける`,10,()=>S.cleared>=n);
-  g('rock','大岩を片づける',10,()=>S.rockDone); g('find','がれきの下から掘り出し物を見つける',10,()=>S.finds>0);
+  if(ch===1){g('rock','大岩を片づける',10,()=>S.rockDone); g('find','がれきの下から掘り出し物を見つける',10,()=>S.finds>0);}
   const A2=()=>S.advs.filter(a=>a.rep&&a.rep.quest);
+  if(ch===1){ // 章をまたいで続く小目標は、1章にだけ置く（終わった章のぶんも残るので）
   g('q3','1日に依頼を3つ達成する',10,()=>A2().filter(a=>a.rep.questDone).length>=3);
   g('qall','全員が自主練せず依頼を受ける（3人以上）',10,()=>{const L=A2(); return L.length>=3&&L.every(a=>a.rep.quest.k!=='self');});
   g('qbonus','手当をつけた依頼が達成される',10,()=>A2().some(a=>a.rep.quest.bonus&&a.rep.questDone));
   g('qhelp','手伝いの冒険者がいる日に、建物が完成する',10,()=>A2().some(a=>a.rep.helpBuilt&&a.rep.helpBuilt.length));
+  }
   if(ch===1){
     cl(3); cl(8); g('road1','荒れた道を1本直す',10,()=>S.repaired>=1);
     built('weapon',10); built('armor',10); built('park',10); built('clinic',10);
     g('advs4','冒険者が4人そろう',15,()=>S.advs.length>=4); stock(4); lv(5);
-    g('alllv3','4人全員がLv3以上になる',15,()=>S.advs.length>=4&&S.advs.every(a=>a.lv>=3));
+    g('alllv3','冒険者全員がLv3以上になる（4人以上）',15,()=>S.advs.length>=4&&S.advs.every(a=>a.lv>=3));
     g('used','だれかがおさがりを買う',10,()=>S.advs.some(a=>a.rep&&a.rep.bought.some(b=>b.used)));
     safe(3); early(3); wins(15); fast(12);
   } else {
@@ -1537,12 +1541,12 @@ function goalsOf(S){
 }
 function checkGoals(S){
   S.goals=S.goals||{}; const got=[];
-  for(const q of goalsOf(S)){ if(S.goals[q.id])continue; let ok=false; try{ok=!!q.test();}catch(e){} if(ok){S.goals[q.id]=S.day; S.elem+=q.reward; got.push({name:q.name,reward:q.reward});} }
+  for(const q of goalsOf(S)){ if(S.goals[q.id])continue; let ok=false; try{ok=!!q.test();}catch(e){} if(ok){S.goals[q.id]=S.day; S.elem+=q.reward; got.push({name:q.name,reward:q.reward,ch:q.ch});} }
   return got;
 }
 // ================= 2章から始める（平均的な1章のプレイを自動で再現） =================
 function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
-const CH2_SEED=42; // 1章を平均的な日数・レベルで終える種（テストで選ぶ）
+const CH2_SEED=51; // 1章を平均的な日数・レベルで終える種（テストで選ぶ）
 // よくある建て方：武器屋と防具屋を城門への道ぞいに、家と診療所と公園をその近くに。店へは余裕があるときに投資
 function autoCh1(seed){
   const S=newState(mulberry(seed));
@@ -2903,7 +2907,7 @@ function openReport(opts={}){
       <div class="t-ex"><span class="t-lbl">${AREAS[rep.area||0].short}の探索</span><div class="xpbar big"><i id="tExBar" style="width:${ex0}%"></i></div><b id="tEx">${Math.floor(ex0)}%</b></div>
     </div>
     ${rep.built&&rep.built.length?`<p class="rc-note">街のできごと：${rep.built.join(' ／ ')}</p>`:''}
-    ${rep.goalsNew&&rep.goalsNew.length?`<div class="goalgot"><b>小目標を達成 <small>${rep.goalsDone}/${rep.goalsAll}</small></b>${rep.goalsNew.map(q=>`<span>${q.name}<em>+${q.reward}</em></span>`).join('')}</div>`:''}
+    ${rep.goalsNew&&rep.goalsNew.length?`<div class="goalgot"><b>小目標を達成 <small>${rep.goalsDone}/${rep.goalsAll}</small></b>${rep.goalsNew.map(q=>`<span>${q.ch<(rep.chapterNow||q.ch)?`${q.ch}章：`:''}${q.name}<em>+${q.reward}</em></span>`).join('')}</div>`:''}
     <div class="won" id="rpWon" ${rep.won?'':'hidden'}>${rep.cleared?`${rep.cleared.name}の親玉を倒した！ ${rep.cleared.next?`${rep.cleared.chapter}章「${rep.cleared.next}」へ。冒険者の上限・装備の入荷できる段階が上がり、大工を雇えるようになり、酒場と白魔法の学院が目覚めた。`:'ここまでがこの版の目標です。'}`:''}</div>
     ${mapHTML(rep)}
     <div class="cards">${rep.advs.map(r=>cardHTML(r,rep.day,rep.advs)).join('')}</div>`;
@@ -2999,7 +3003,10 @@ function openOrders(){
     <h2>${S.day}日目の指示</h2>
     ${rep?'':'<p>荒れはてた城下町に残っているのは、家が2軒と立て札だけ。大工へのおふれで荒れ地を片づけ、冒険者が毎朝歩く道を考えて、武器屋や公園を建てていきましょう。</p>'}
     ${hints.length?`<div class="hints">${hints.map(h=>`<span>${h}</span>`).join('')}</div>`:''}
-    ${(()=>{S.goals=S.goals||{}; const G=goalsOf(S), d=G.filter(q=>S.goals[q.id]).length; return `<details class="goals blk"><summary>${S.chapter||1}章の小目標　${d}/${G.length}</summary><ul>${G.map(q=>`<li class="${S.goals[q.id]?'done':''}"><span>${q.name}</span><em>+${q.reward}</em></li>`).join('')}</ul></details>`;})()}
+    ${(()=>{S.goals=S.goals||{}; const G=goalsOf(S), cur=S.chapter||1, d=G.filter(q=>S.goals[q.id]).length;
+      const li=q=>`<li class="${S.goals[q.id]?'done':''}"><span>${q.name}</span><em>+${q.reward}</em></li>`;
+      const sec=c=>{const L=G.filter(q=>q.ch===c), left=L.filter(q=>!S.goals[q.id]); if(c<cur&&!left.length)return ''; return `<h5 class="gch">${c}章・${AREAS[c-1].name}${c<cur?`（やり残し ${left.length}）`:`　${L.length-left.length}/${L.length}`}</h5><ul>${(c<cur?left:L).map(li).join('')}</ul>`;};
+      return `<details class="goals blk"><summary>小目標　${d}/${G.length}${cur>1&&G.some(q=>q.ch<cur&&!S.goals[q.id])?'　（前の章のやり残しあり）':''}</summary>${[...Array(cur)].map((_,i)=>i+1).map(sec).join('')}</details>`;})()}
     ${boardEditHTML()}
     <div class="blk"><h4 class="sec">冒険者へのおふれ（その日かぎり）</h4>
     <div class="nomlist">${S.advs.map(a=>`<label class="nomrow"><img class="face" src="${faceURL(a)}" alt=""><span class="nn"><b>${a.name}</b><small>${PP(a).name} · Lv${a.lv}${a.job?` · ${JOBS[a.job].name}`:''}</small><small>合間によく${STYLE[PP(a).style]}</small></span>
