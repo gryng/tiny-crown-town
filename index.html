@@ -366,7 +366,8 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
 @media (min-width:1180px) and (min-height:520px){.drawer{display:contents}.drawer::before{display:none}}
 /* スマホ・タブレット：画面いっぱいの町に、情報を重ねる。下のパネルは引き出し式 */
 @media (max-width:1179.98px),(max-height:519.98px){
-  body.planning:not(.picked) #drawer{display:none} /* 大工へのおふれを出すあいだは、何か選ぶまで下の冒険者タブを出さない */
+  body.planning:not(.picked) #drawer{display:none}
+  body.planning .screen>.seg,body.planning #menuBtn,body.planning #menu{display:none!important} /* 大工のおふれ中は、速さとメニューも出さない */ /* 大工へのおふれを出すあいだは、何か選ぶまで下の冒険者タブを出さない */
   html,body{height:100%;overflow:hidden;overscroll-behavior:none}
   .wrap{position:fixed;inset:0;max-width:none;padding:0;display:block}
   .screen{position:absolute;inset:0;border-radius:0;box-shadow:none}
@@ -388,6 +389,7 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
   .drawer .panel>*{flex-shrink:0} /* 中身を縮めずにスクロールさせる */
   .drawer .panel h2{touch-action:none}
   .planbar{bottom:auto;top:calc(env(safe-area-inset-top,0px) + 108px)}
+  body.planning .planbar{top:calc(env(safe-area-inset-top,0px) + 62px)}
 }
 @media (max-width:620px){.sheet{transform:none}.rc{transform:translateY(14px)}}
 @media (prefers-reduced-motion:reduce){.rc,.stamp,#rpWon{opacity:1;transform:none;animation:none}.stamp{transform:rotate(12deg);opacity:.85}.rc.flash::after,.burst{display:none}}
@@ -531,7 +533,7 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.19.3 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.19.4 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 広場の立て札 → 店 → 城門 の順に歩いて出発します。</li>
