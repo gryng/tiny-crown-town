@@ -522,7 +522,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.17.0 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.18.0 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 広場の立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -885,7 +885,7 @@ function arrive(S,a){
     case 'help': a.state='help'; a.hidden=false; break;
     case 'gate': { const P=a.pt&&S.parties[a.pt]; if(!P){depart(S,a); break;}
       P.atGate++; if(P.atGate<P.ids.length){a.state='gatewait'; break;} // 組んだ仲間がそろうまで門で待つ
-      const M=P.ids.map(id=>S.advs.find(x=>x.id===id)); for(const m of M){depart(S,m); m.out.party=a.pt;}
+      const M=P.ids.map(id=>S.advs.find(x=>x.id===id)); for(const m of M){depart(S,m); m.out.party=a.pt; m.out.ar=m.rep.ar=S.area;}
       for(const m of M)ev(S,m,'pt',{co:M.filter(x=>x!==m).map(x=>x.name)}); break; }
     case 'castle': payQuest(S,a); a.rep.wage=true; a.last={k:'wage'}; a.hidden=true; stopAt(S,a,10,'castle'); break;
     case 'home': a.state='done'; a.hidden=true; break;
@@ -1000,8 +1000,8 @@ const QK={
   road:  {name:q=>'奥へ進め', noun:q=>'探索', desc:'まだだれも歩いていない道や部屋へ向かう', done:'探索を少しでも進める', reward:40, cap:2},
   room:  {name:q=>`${NODES[q.n].n}を調べよ`, noun:q=>`${NODES[q.n].n}の調査`, desc:'その部屋まで行って、中を調べる', done:'部屋を調べる', reward:50, cap:2},
   master:{name:q=>`${NODES[q.n].n}の主を倒せ`+(q.party?'（3人で組んで）':''), noun:q=>`${NODES[q.n].n}の主の討伐`, desc:'部屋の主に挑む', done:'主を倒す', reward:120, cap:1},
-  gather:{name:q=>'時のかけらを集めよ', noun:q=>'時のかけら集め', desc:'調べた部屋で、時のかけらを掘る', done:`${RES}を25以上持ち帰る`, reward:30, cap:2},
-  train: {name:q=>'腕をみがけ', noun:q=>'腕みがき', desc:'手ごたえのある道を見回って戦う。経験値が1.25倍', done:'5勝する', reward:20, cap:2},
+  gather:{name:q=>'時のかけらを集めよ', noun:q=>'時のかけら集め', desc:'腕前に合った場所の、調べた部屋で時のかけらを掘る', done:`${RES}を25以上持ち帰る`, reward:30, cap:2},
+  train: {name:q=>'腕をみがけ', noun:q=>'腕みがき', desc:'腕前に合った場所で、手ごたえのある道を見回って戦う。経験値が1.25倍', done:'5勝する', reward:20, cap:2},
   cut:   {name:q=>'近道を切り開け', noun:q=>'近道の切り開き', desc:'手がかりの場所で、近道を開く', done:'近道を開通させる', reward:80, cap:1},
   boss:  {name:q=>'親玉に挑め'+(q.party?'（3人で組んで）':''), noun:q=>'親玉退治', desc:'いちばん奥の、親玉の間をめざす', done:'親玉を倒す', reward:200, cap:1},
   help:  {name:q=>'大工を手伝え', noun:q=>'大工の手伝い', desc:'町に残って、片づけや建設を手伝う。けがの心配はない', done:'夕方まで働く', reward:30, cap:3},
@@ -1026,7 +1026,7 @@ function questsAvail(S){
   add('train');
   return L;
 }
-const capOf=q=>q.party?3:QK[q.k].cap, rewardOf=q=>Math.round(QK[q.k].reward*(q.bonus?1.5:1));
+const capOf=q=>q.party?3:Infinity, rewardOf=q=>Math.round(QK[q.k].reward*(q.bonus?1.5:1));
 // 立て札の中身を、いま出せる依頼に合わせる（出せなくなったものは外れる）。初めての朝は、道・腕・手伝いを貼っておく
 function syncBoard(S){
   const av=questsAvail(S), byId=Object.fromEntries(av.map(q=>[q.id,q]));
@@ -1047,6 +1047,7 @@ const PREF={
 function canTake(S,a,q){
   const P=PP(a), brave=P.brave?-1:P.safe?.45:.15;
   if(q.party&&P.solo)return false;
+  if(['road','room','cut','master','boss'].includes(q.k)&&a.lv<AREAS[S.area].min)return false; // いま挑んでいるエリアに力が届かない子は、探索・調査・討伐を受けない
   const m=q.k==='master'?MON[NODES[q.n].master]:q.k==='boss'?bossMon(S):null; if(!m)return true;
   if(!q.party)return winnable(a,m,brave);
   return winnable(a,{...m,hp:m.hp/3,atk:m.atk*.62,aura:(m.aura||0)*.5},brave-.1); // 3人で組む前提の見立て（ひとりで挑むより、だいぶ気が楽）
@@ -1058,18 +1059,18 @@ function want(S,a,q,i){
   if(q.bonus)v*=1.3;
   const n=(S.taken[q.id]||[]).length;
   if(q.party){ v*=n?(pf.team??1.5)*(1+.3*n):(pf.team??1)*.8; } // 組む依頼は、もう受けた子がいると加わりたくなる
-  else if(capOf(q)>1&&n)v*=pf.team??1;
+  else if(n)v*=(pf.team??1)/(1+.3*n); // 人数の上限はないが、ほかの子がもう受けた依頼は少しやりたくなくなる
   v*=1+.25*(S.board.length-i)/S.board.length; if(pf.top&&i===0)v*=pf.top;  // 上に貼ってあるほど目に入る
   if(a.morale<40&&q.k!=='help')v*=.8;
   return v*(.9+S.rng()*.2);
 }
 function takeQuest(S,a){
   let best=null, bv=0;
-  S.board.forEach((q,i)=>{ if((S.taken[q.id]||[]).length>=capOf(q)||!canTake(S,a,q))return; const v=want(S,a,q,i); if(v>bv){bv=v; best=q;} });
+  S.board.forEach((q,i)=>{ if(!canTake(S,a,q))return; const v=want(S,a,q,i); if(v>bv){bv=v; best=q;} });
   const q=best?{...best}:{k:'self',id:'self'}; a.quest=q; (S.taken[q.id]=S.taken[q.id]||[]).push(a.id);
   if(q.bonus){const b=S.board.find(x=>x.id===q.id); if(b&&!b.paid){b.paid=true; S.elem=Math.max(0,S.elem-BONUS_COST);}}
   a.behest=a.rep.behest=q.k==='boss'?'boss':'explore'; a.rep.quest={k:q.k,n:q.n||null,name:QK[q.k].name(q),reward:rewardOf(q),bonus:!!q.bonus,party:!!q.party};
-  if(q.party){ let id=S.qparty[q.id]; if(!id||!S.parties[id]||S.parties[id].gone){id=++S.partyN; S.parties[id]={ids:[],leader:a.id,atGate:0,met:[],deadline:null}; S.qparty[q.id]=id;}
+  if(q.party){ let id=S.qparty[q.id]; if(!id||!S.parties[id]||S.parties[id].gone||S.parties[id].ids.length>=3){ /* 3人そろった組は締め切り、次の子から新しい組 */id=++S.partyN; S.parties[id]={ids:[],leader:a.id,atGate:0,met:[],deadline:null}; S.qparty[q.id]=id;}
     const P=S.parties[id]; P.ids.push(a.id); a.pt=id; a.rep.ptWhy=q.k;
     // 先に酒場で待っている仲間がいたら、この子が来るまで少し待ってくれる（最初のひとりが着いてから最大150分）
     if(P.deadline!==null){P.deadline=Math.min(Math.max(P.first+150,MEET_AT+60),Math.max(P.deadline,S.t+70)); for(const i of P.met){const x=S.advs.find(v=>v.id===i); if(x&&x.state==='stop'&&x.stopWhat==='tavern')x.until=P.deadline;}} }
@@ -1146,8 +1147,11 @@ const NODES={
 };
 for(const id of ['fork','spring','mouth','r1','r2','hall','boss'])NODES[id].ar=0;
 // エリア（章ごとに1つずつ進む）。いま挑んでいるのは S.area
-const AREAS=[{name:'西の洞窟',bossNode:'boss',short:'洞窟'},{name:'北の湿地',bossNode:'sboss',short:'湿地'}];
-const inArea=(S,x)=>x.ar===undefined||x.ar===S.area;
+const AREAS=[{name:'西の洞窟',bossNode:'boss',short:'洞窟',min:1},{name:'北の湿地',bossNode:'sboss',short:'湿地',min:5}]; // min：ここで戦える目安のレベル
+// 冒険者が外で動いているあいだは、その子が向かったエリア（S._ar）で考える。ふだんは、いま挑んでいるエリア
+const inArea=(S,x)=>x.ar===undefined||x.ar===(S._ar??S.area);
+// 腕前に合った行き先：いま挑んでいるエリアまでのうち、目安のレベルに届いているいちばん奥
+const fitArea=(S,a)=>{let i=S.area; while(i>0&&a.lv<AREAS[i].min)i--; return i;};
 const bossMon=S=>MON[NODES[AREAS[S.area].bossNode].mon];
 const EDGES=[
   {id:'e1',a:'gate',b:'fork',len:12,risk:.16,zone:'forest',n:'森の道'},
@@ -1195,7 +1199,7 @@ const elen=(S,e)=>Math.max(1,Math.ceil(e.len*[e.mud?1.3:1,.9,.75][safety(S,e)]))
 const erisk=(S,e)=>e.risk*[1,.8,.5][safety(S,e)];
 const other=(e,id)=>e.a===id?e.b:e.a;
 const masterAlive=(S,id)=>NODES[id].master&&!S.world.master[id];
-function unit(S,a){const d=100/units(S); S.explore=Math.min(100,S.explore+d); if(a){const M=mates(S,a); for(const x of M)x.rep.explore+=d/M.length;} if(S.explore>99.99)S.explore=100;}
+function unit(S,a){if(S._ar!==undefined&&S._ar!==S.area)return; const d=100/units(S); S.explore=Math.min(100,S.explore+d); if(a){const M=mates(S,a); for(const x of M)x.rep.explore+=d/M.length;} if(S.explore>99.99)S.explore=100;}
 // 使える道だけで最短の道のりを調べる。block(nodeId)が真の地点は通り抜けない（目的地にはできる）
 function route(S,from,to,opt={}){
   const dist={[from]:0}, prev={}, done={};
@@ -1236,7 +1240,8 @@ function winnable(a,m,slack){
 }
 function depart(S,a){
   a.rep.dep=S.t; a.state='away'; a.hidden=true; a.rep.reach='gate'; a.rep.style=a.quest&&a.quest.k==='gather'?'mine':a.quest&&a.quest.k==='train'?'train':rollStyle(S,a); a.rep.styleOdd=!(a.quest&&(a.quest.k==='gather'||a.quest.k==='train'))&&a.rep.style!==PP(a).style;
-  a.out={at:'gate',edge:null,act:null,fight:null,mode:'go',poison:0,detours:0,rests:0,want:null,casts:castsOf(a)};
+  const q=a.quest||{k:'self'}, ar=['gather','train','self'].includes(q.k)?fitArea(S,a):S.area; // 探索・調査・討伐は、いま挑んでいるエリア。集め・腕・自主練は、腕前に合ったエリア
+  a.out={at:'gate',edge:null,act:null,fight:null,mode:'go',poison:0,detours:0,rests:0,want:null,casts:castsOf(a),ar}; a.rep.ar=ar;
 }
 const turnsLeft=S=>Math.floor((GATE_BY-S.t)/TURN);
 const locKey=o=>o.edge?'e:'+o.edge.e.id:'n:'+o.at;
@@ -1304,9 +1309,10 @@ function fightRound(S,F){
 }
 // 外にいる全員の1ターン
 function outTurnAll(S){
-  for(const F of S.fights.slice())fightRound(S,F);
+  for(const F of S.fights.slice()){S._ar=F.members[0]&&F.members[0].out?F.members[0].out.ar:undefined; fightRound(S,F);}
   S.fights=S.fights.filter(F=>F.members.length);
-  for(const a of S.advs){ if(a.state!=='away'||!a.out)continue; if(a.out.fight||!leads(S,a)){continue;} const M=mates(S,a); outTurn(S,a); for(const f of M)if(f!==a)follow(S,a,f); }
+  for(const a of S.advs){ if(a.state!=='away'||!a.out)continue; if(a.out.fight||!leads(S,a)){continue;} S._ar=a.out.ar; const M=mates(S,a); outTurn(S,a); for(const f of M)if(f!==a)follow(S,a,f); }
+  S._ar=undefined;
 }
 function outTurn(S,a){
   const o=a.out, r=S.rng, P=PP(a);
@@ -1536,7 +1542,7 @@ function checkGoals(S){
 }
 // ================= 2章から始める（平均的な1章のプレイを自動で再現） =================
 function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
-const CH2_SEED=12; // 1章を平均的な日数・レベルで終える種（テストで選ぶ）
+const CH2_SEED=42; // 1章を平均的な日数・レベルで終える種（テストで選ぶ）
 // よくある建て方：武器屋と防具屋を城門への道ぞいに、家と診療所と公園をその近くに。店へは余裕があるときに投資
 function autoCh1(seed){
   const S=newState(mulberry(seed));
@@ -2432,7 +2438,7 @@ function status(a){
     case 'help': return ['大工を手伝っている','prep'];
     case 'walk': return a.goal==='gate'?['城門へ向かう','prep']:a.goal==='help'?['手伝いの現場へ','prep']:a.goal==='school'?['学び舎へ向かう','prep']:a.goal==='castle'?[a.slow?'とぼとぼ帰還':'帰還中',a.slow?'hurt':'away']:a.goal==='home'?['帰宅中','off']:[`${BUILD[a.goal]?BUILD[a.goal].name:''}へ向かう`,'prep'];
     case 'stop': return a.stopWhat==='castle'?['日給を受け取り中','away']:[PLACE[a.stopWhat],'prep'];
-    case 'away': return [`冒険中（${hm(a.rep.dep)}出発）`,'away'];
+    case 'away': return [`${a.out&&a.out.ar!==S.area?AREAS[a.out.ar].short+'で':''}冒険中（${hm(a.rep.dep)}出発）`,'away'];
     case 'back': return ['帰り道','away'];
     case 'done': return [a.rep.dep!==null?`帰宅（${hm(a.rep.dep)}出発）`:'帰宅','off'];
   }
@@ -2499,7 +2505,7 @@ const mini=a=>`<span class="tk"><img src="${faceURL(a)}" alt="">${a.name}</span>
 function boardHTML(){
   const day=S.phase==='day', rest=S.advs.filter(a=>a.rep&&a.rep.rested), yet=S.advs.filter(a=>day&&a.rep&&!a.quest&&!a.rep.rested&&!a.rep.quest);
   const who=id=>(S.taken&&S.taken[id]||[]).map(i=>S.advs.find(a=>a.id===i)).filter(Boolean);
-  const card=q=>{const w=day?who(q.id):[]; return `<div class="notice big"><b>${QK[q.k].name(q)}${q.bonus?'<small class="nm">手当</small>':''}</b><p>${QK[q.k].desc}。達成：${QK[q.k].done}。報酬 ${rewardOf(q)}G・${capOf(q)}人まで</p>${day?`<div class="takers"><span class="tkl">受けた冒険者</span>${w.length?w.map(mini).join(''):'<span class="tn">まだいない</span>'}</div>`:''}</div>`;};
+  const card=q=>{const w=day?who(q.id):[]; return `<div class="notice big"><b>${QK[q.k].name(q)}${q.bonus?'<small class="nm">手当</small>':''}</b><p>${QK[q.k].desc}。達成：${QK[q.k].done}。報酬 ${rewardOf(q)}G${q.party?'・3人ずつ組む':''}</p>${day?`<div class="takers"><span class="tkl">受けた冒険者</span>${w.length?w.map(mini).join(''):'<span class="tn">まだいない</span>'}</div>`:''}</div>`;};
   const self=day?who('self'):[], named=S.advs.filter(a=>S.nom[a.id]==='rest');
   return `<div class="blk"><h4 class="sec">貼ってある依頼 ${S.board.length}/${boardMax(S)}</h4>${S.board.length?S.board.map(card).join(''):'<p class="rc-note">何も貼っていない。冒険者はみな自主練に出る。</p>'}</div>
     ${self.length?`<div class="blk"><h4 class="sec">合う依頼がなく自主練</h4><div class="takers">${self.map(mini).join('')}</div></div>`:''}
@@ -2810,7 +2816,7 @@ function cardHTML(r,day,rows){
       <tr><th scope="row">防具</th><td>${ARMORS[r.alv]}${r.aTag?`<small class="pr">${r.aTag}のおさがり</small>`:''}${nw('armor')}</td></tr>
       <tr><th scope="row">お守り</th><td class="none">なし</td></tr></tbody></table></div>`;
   const flow=tl?`<div class="blk"><h4 class="sec">一日の流れ</h4>${tl}${r.quest?`<p class="rc-note">受けた依頼：${r.jobNew?`${r.jobNew}に転職（指名）。そのあと`:''}${r.quest.name}${r.quest.k==='self'?'（合う依頼がなかった）':r.questDone?`　<b class="qok">達成！ 報酬${r.pay||''}G</b>`:`　<span class="hurt">未達成（${r.pay||10}G）</span>`}${r.style&&r.quest.k!=='help'?`。合間に${STYLE[r.style]}${r.styleOdd?'（きょうはめずらしく）':''}`:''}</p>`:''}</div>`:'';
-  const bits=[]; if(r.party)bits.push(`酒場で待ち合わせて、${r.party.join('、')}と組んで出かけた`); if(r.leftBehind)bits.push('酒場の待ち合わせに間に合わず、ひとりで出かけた'); if(r.noMate)bits.push('酒場で待ったが仲間が来ず、ひとりで出かけた'); if(r.jobNew)bits.push(`学び舎で手ほどきを受けて、${r.jobNew}になった`); if(r.overslept)bits.push(`きのうの傷がひびいて${r.overslept}分寝坊した`); if(r.healed)bits.push('往診のおかげで昼から動けた');
+  const bits=[]; if(r.ar!=null&&r.dep!=null&&r.ar!==(S.lastReport?S.lastReport.area:S.area))bits.push(`腕前に合った${AREAS[r.ar].name}へ向かった`); if(r.party)bits.push(`酒場で待ち合わせて、${r.party.join('、')}と組んで出かけた`); if(r.leftBehind)bits.push('酒場の待ち合わせに間に合わず、ひとりで出かけた'); if(r.noMate)bits.push('酒場で待ったが仲間が来ず、ひとりで出かけた'); if(r.jobNew)bits.push(`学び舎で手ほどきを受けて、${r.jobNew}になった`); if(r.overslept)bits.push(`きのうの傷がひびいて${r.overslept}分寝坊した`); if(r.healed)bits.push('往診のおかげで昼から動けた');
   if(r.note&&!(r.note==='傷ついて引き返した'&&r.hurt)&&!(r.note==='やられて逃げ帰った'&&r.ko))bits.push(r.note); if(r.missedWage)bits.push('日給をもらいそびれた');
   if(r.wish)bits.push(`${Object.values(r.wish).join('と')}が欲しいが、まだ店に入っていない`);
   const hurt=r.injuredNew==='big'?'<span class="hurt">大けが。あすから2日は療養（医者の往診があれば1日）</span>':r.ko?'<span class="hurt">やられた。あすは療養（医者の往診があれば昼から動ける）</span>'
@@ -2865,7 +2871,7 @@ function mapHTML(rep){
     labels+=`<text x="${x}" y="${below?y+19:y-12}" class="lb">${n.n}</text>`;
   }
   // きょう、それぞれがいちばん奥まで行った場所に顔を置く
-  const at={}; for(const r of rep.advs){ if(!r.reach||r.reach==='gate')continue; (at[r.reach]=at[r.reach]||[]).push(r); }
+  const at={}; for(const r of rep.advs){ if(!r.reach||r.reach==='gate'||(NODES[r.reach].ar??0)!==ar)continue; (at[r.reach]=at[r.reach]||[]).push(r); }
   for(const id in at){ const [x,y]=P(id), below=MAP_SIDE.has(id); at[id].forEach((r,i)=>{ const fx=below?x+12+i*15:x-((at[id].length-1)*7)+i*14-7, fy=below?y-7:y-27;
       faces+=`<g><circle cx="${fx+7}" cy="${fy+7}" r="8" class="fc"/><image href="${faceURL(r)}" x="${fx}" y="${fy}" width="14" height="14" clip-path="circle(7px at 7px 7px)" style="image-rendering:pixelated"/><title>${r.name}</title></g>`; }); }
   const newN=EA.filter(e=>trips(e.id)&&!W0.trips[e.id]).length;
@@ -3019,7 +3025,7 @@ function openOrders(){
 function boardEditHTML(){
   if(!first(S,'board'))return '<div class="blk"><h4 class="sec">立て札に貼る依頼</h4><p class="rc-note">立て札がない。</p></div>';
   const av=questsAvail(S), on=S.board, off=av.filter(q=>!on.some(b=>b.id===q.id)), full=on.length>=boardMax(S);
-  const line=q=>`${QK[q.k].desc}。達成：${QK[q.k].done}。<em>報酬 ${rewardOf(q)}G</em>・${capOf(q)}人まで`;
+  const line=q=>`${QK[q.k].desc}。達成：${QK[q.k].done}。<em>報酬 ${rewardOf(q)}G</em>${q.party?'・3人ずつ組む':''}`;
   const row=(q,i)=>`<div class="qrow on"><span class="qn">${i+1}</span><b>${QK[q.k].name(q)}</b><small>${line(q)}</small>
       <span class="qa"><button data-qbon="${q.id}" aria-pressed="${!!q.bonus}" title="特別手当（${RES}${BONUS_COST}。だれかが受けたときだけ払う）">手当</button>${i?`<button data-qup="${q.id}" aria-label="上へ">↑</button>`:''}<button data-qdel="${q.id}" aria-label="はがす">×</button></span></div>`;
   const cand=q=>`<div class="qrow"><span class="qn off">＋</span><b>${QK[q.k].name(q)}</b><small>${line(q)}</small><span class="qa"><button data-qadd="${q.id}" ${full?'disabled':''}>貼る</button></span></div>`;
