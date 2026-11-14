@@ -149,6 +149,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .siterow+.siterow{border-top:1px dashed #241c1433}
 .siterow b{font-family:var(--f-head);font-weight:800;font-size:14px;color:var(--ink)}
 .siterow .xpbar{grid-column:1/-1}
+.autotag{display:inline-block;margin-left:8px;padding:1px 8px;font-family:var(--f-body);font-size:11px;font-weight:700;line-height:1.6;color:var(--ink);background:var(--gold);border:1.5px solid var(--ink);border-radius:10px;vertical-align:2px}
 .siterow small{font-size:11.5px;color:var(--muted)}
 .actrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .qok{color:var(--accent)}
@@ -533,7 +534,7 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.19.5 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.19.6 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 広場の立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -1466,7 +1467,7 @@ function endDay(S){
   const areaNow=S.area, nextArea=S.justWon&&S.area+1<AREAS.length;
   const HL=highlights(S), GN=checkGoals(S), GT=goalsOf(S);
   S.lastReport={chapterNow:S.chapter||1,hl:HL,goalsNew:GN,goalsDone:GT.filter(q=>S.goals[q.id]).length,goalsAll:GT.length,day:S.day,area:areaNow,cleared:S.justWon?{name:AREAS[areaNow].name,next:nextArea?AREAS[areaNow+1].name:null,chapter:(S.chapter||1)+(nextArea?1:0)}:null,won:S.justWon,built:S.builtToday.slice(),bossDown:S.bossDown,world:JSON.parse(JSON.stringify(S.world)),worldFrom:S.worldStart||newWorld(),explore:S.explore,exploreFrom:S.exploreStart||0,elemAfter:S.elem,
-    advs:S.advs.filter(a=>a.rep).map(a=>({id:a.id,name:a.name,tunic:a.tunic,hair:a.hair,pid:a.pid,k:a.k,lv:a.lv,hp:a.hp,hpMax:a.hpMax,atk:a.atk,def:a.def,morale:a.morale,gold:a.gold,wlv:a.wlv,alv:a.alv,job:a.job||null,mag:a.mag||0,quest:a.rep.quest||null,questDone:!!a.rep.questDone,wTag:a.wTag||null,aTag:a.aTag||null,...a.rep,held:a.gold,expNow:a.exp,ev:a.rep.ev.slice(),ups:a.rep.ups.slice(),bought:a.rep.bought.slice()}))};
+    advs:S.advs.filter(a=>a.rep).map(a=>({id:a.id,name:a.name,tunic:a.tunic,hair:a.hair,pid:a.pid,k:a.k,lv:a.lv,hp:a.hp,hpMax:a.hpMax,atk:a.atk,def:a.def,morale:a.morale,gold:a.gold,wlv:a.wlv,alv:a.alv,job:a.job||null,mag:a.mag||0,want:wantOf(S,a),quest:a.rep.quest||null,questDone:!!a.rep.questDone,wTag:a.wTag||null,aTag:a.aTag||null,...a.rep,held:a.gold,expNow:a.exp,ev:a.rep.ev.slice(),ups:a.rep.ups.slice(),bought:a.rep.bought.slice()}))};
   if(nextArea){S.chStart=S.day+1; S.area++; S.chapter=(S.chapter||1)+1; S.explore=0; S.bossDown=false; S.bossGo=false;} // 親玉を倒したら次の章・次のエリアへ
   S.nom={}; // 個別のおふれはその日かぎり
   S.board=[]; // 立て札は毎晩はがす。王様は毎朝、貼る依頼を選び直す
@@ -1476,6 +1477,18 @@ function endDay(S){
 
 // ================= 帰ってきたときの顔・きょうのハイライト・章の小目標 =================
 // 門をくぐるときの顔。star:主や親玉を倒した／近道を開いた happy:成果あり ok:無事 sad:負け越しか傷つき ko:やられた grr:負けず嫌いが負けた
+// 冒険者がほしがる施設（その日の出来事から、いちばん切実なもの）
+function wantOf(S,a){
+  const r=a.rep, has=t=>first(S,t)||S.sites.some(x=>x.kind==='build'&&x.type===t), ch=S.chapter||1;
+  if(!has('weapon')&&a.gold>=price(a.wlv))return BUILD.weapon.name;
+  if(!has('armor')&&(r.hurt||r.ko||r.losses>0))return BUILD.armor.name;
+  if(!has('clinic')&&(r.hurt||r.ko))return BUILD.clinic.name;
+  if(!has('park')&&a.morale<60)return BUILD.park.name;
+  if(ch>=2&&!has('tavern')&&r.shy)return BUILD.tavern.name;
+  if(ch>=2&&!has('academy')&&r.ev.some(e=>e.k==='p'))return BUILD.academy.name;
+  if(!has('weapon'))return BUILD.weapon.name;
+  return null;
+}
 function moodOf(a){
   const r=a.rep;
   if(r.boss||r.master||r.opened)return 'star';
@@ -2254,9 +2267,10 @@ async function initGfx(){
 }
 
 /*VOICE-START*/
-/* ---------- 本人のひと言（性格 × その日の出来事）。{k}=口ぐせ {o}=ほかの冒険者 {w}=勝った数 {i}=買った装備 ---------- */
+/* ---------- 本人のひと言（性格 × その日の出来事）。{k}=口ぐせ {o}=ほかの冒険者 {w}=勝った数 {i}=買った装備 {b}=ほしい施設 ---------- */
 const VOICE={
 nonbiri:{
+ want:['{b}があったら、寄り道が楽しくなるのになあ','このへんに{b}ができたら、ちょっと便利かも','{b}、あったらいいなあ。{k}'],
  boss:['親玉、倒しちゃった。{k}','みんなが騒いでるけど、ほんとにやったのかな。……まあいっか','大物だったなあ。今夜はよく眠れそう'],
  ko:['あいたた……ちょっと寝てれば治るよ。{k}','やられちゃった。明日はゆっくりしよ','転んだと思ったら、もう夕方だった'],
  lvup:['あれ、いつの間にか強くなってた。{k}','レベル上がったって。へえ、そうなんだ','強くなるのも、のんびりでいいよね'],
@@ -2273,6 +2287,7 @@ nonbiri:{
  town:['{k}','いい天気だねえ','ちょっと寄り道してから行くよ','ふぁ……あ、王様。おはよう'],
  hurt:['いてて……ゆっくり帰るよ','今日はもうおしまい']},
 sekkachi:{
+ want:['{b}がないの、不便すぎる！ 早く建ててくれ！','{b}さえあれば、もっと速く動けるのに！','王様、{b}はまだですか！？'],
  boss:['親玉、一番乗りで倒した！ 次はどこ！？','速攻で片づけてきた！ {k}','待ちきれなくて突っ込んだら勝ってた！'],
  ko:['くそっ、急ぎすぎた……','転んだ！ 明日こそ倍の速さで行く！','やられた……でも寝てる時間がもったいない！'],
  lvup:['レベル上がった！ 明日はもっと奥まで行く、いや今から行きたい！','強くなった！ {k}','よし、次のレベルまであと何回！？'],
@@ -2289,6 +2304,7 @@ sekkachi:{
  town:['{k}','急いでるから、またあとで！','寄り道してる場合じゃない！','王様、今日も一番乗りで行くよ！'],
  hurt:['くっ……足が重い……','急げない日もあるのか……']},
 okubyo:{
+ want:['あの……{b}があると、心強いんですけど……','{b}があったら、少し安心できるかも……','{b}……いつかできたら、うれしいです'],
  boss:['ぼ、ぼくが親玉を……？ 夢じゃないよね……','こわかった……でも、勝ったんだ','{k} ……でも、やったよ！'],
  ko:['や、やっぱりだめだった……','こわくて、足がすくんじゃった……','ご、ごめんなさい……明日はもっと気をつけます'],
  lvup:['{k} ……でも、ちょっとだけ自信ついたかも','レベルが上がった……ぼくでも、強くなれるんだ','強くなったけど……まだこわいものはこわいです'],
@@ -2305,6 +2321,7 @@ okubyo:{
  town:['{k}','あ、王様……お、おはようございます','忘れ物、ないよね……','防具屋、まだ開いてるかな……'],
  hurt:['うう……いたい……','こわかった……早く帰りたい……']},
 makezu:{
+ want:['{b}があれば、もっと上を狙える','勝ちたい。だから{b}が要る','{b}を建ててくれ。結果で返す'],
  boss:['親玉なんて、相手にならなかった','{k} ……いや、もう勝ったか','{o}より先に倒してやった。当然だ'],
  ko:['くそっ……{k}','負けたまま寝てられるか……','次は絶対に倒す。絶対だ'],
  lvup:['ふん、これでやっと{o:lvCaught}に並んだ。明日は抜く','レベルアップ。まだ足りない','強くなった。{k}'],
@@ -2320,6 +2337,7 @@ makezu:{
  town:['{k}','{o}はもう出たか？','王様、今日も勝ってくる','訓練が足りない……'],
  hurt:['くっ……こんなはずじゃ……','次は勝つ……次は……']},
 kuishinbo:{
+ want:['{b}があったら、帰りに寄り道できるのになあ','{b}ができたら、ごほうびに通っちゃう','おなかと同じくらい、{b}がほしい！'],
  boss:['親玉を倒したら、おなかぺこぺこ！','勝ったお祝いに、なにか食べたいな','{k} ……でもその前に、勝ってきた！'],
  ko:['おなかが空いて、力が出なかった……','やられた……せめて何か食べたい……','ごはん食べたら、きっと治る'],
  lvup:['おなかすいた……あ、レベルも上がってた','強くなったら、もっと食べられる気がする','{k} ……レベル上がったし、今日は二杯食べよう'],
@@ -2336,6 +2354,7 @@ kuishinbo:{
  town:['{k}','いいにおいがする……','王様、おなかすかない？','公園でちょっと休憩……'],
  hurt:['おなかすいた……力が出ない……','帰ったら、たくさん食べて寝る……']},
 yumemi:{
+ want:['この町に{b}ができたら、物語がひとつ増えるね','{b}がある町って、すてきだと思うの','夢で{b}を見たの。正夢になるといいな'],
  boss:['親玉を倒した……まるで物語の主人公みたい','{k} ……今日のことは、ずっと覚えておく','夢で見た通りの戦いだった'],
  ko:['今日は、悪い夢を見てたことにする','物語にも、つらい章はあるよね','{k} ……明日は続きを書き直そう'],
  lvup:['いつか黒魔道士になる日に、一歩近づいた気がする','{k} ……少しだけ、夢に近づいた','レベルが上がった。物語が動き出す音がした'],
@@ -2352,6 +2371,7 @@ yumemi:{
  town:['{k}','あの建物、いつか私も……','王様、今日はいい予感がするの','空がきれい……'],
  hurt:['今日の章は、ここでおしまい……','夢なら覚めてほしい……']},
 sewazuki:{
+ want:['みんなのために、{b}があるといいね','{b}ができたら、みんな助かると思うよ','王様、{b}を建ててあげて。みんな喜ぶよ'],
  boss:['親玉を倒せた。みんなが待っててくれたおかげだよ','{k} ……わたしも、ほっとした','勝ったよ！ 帰ったらみんなに報告しなきゃ'],
  ko:['ごめんね、心配かけちゃった','{k} ……って言ってたのに、わたしがこれじゃね','みんなは無事？ わたしは大丈夫だから'],
  lvup:['みんなのおかげだよ。今度はわたしが守る番','{k} ……強くなれたのは、みんながいたから','レベルが上がった！ これでもっと助けられる'],
@@ -2368,6 +2388,7 @@ sewazuki:{
  town:['{k}','王様、ちゃんと朝ごはん食べた？','{o}、もう出発したかな','今日も一日、気をつけてね'],
  hurt:['わたしは大丈夫……みんなは？','ちょっと休めば平気だから……']},
 ippiki:{
+ want:['……{b}があれば、助かる','……{b}。あれば使う','……この町には、{b}が足りない'],
  boss:['……親玉は倒した。それだけだ','{k}','ひとりでも、やれる'],
  ko:['……油断した','{k} ……今日は、少しだけ休む','……次は負けない'],
  lvup:['……悪くない','{k}','強くなった。それだけだ'],
@@ -2398,6 +2419,7 @@ const BEHEST_TEXT={get explore(){return `${AREAS[S.area].name}の攻略`;},get b
 // その日の出来事から、ひと言の場面を選ぶ
 function voiceScene(r){
   if(r.boss)return 'boss'; if(r.ko)return 'ko'; if(r.master)return 'master'; if(r.opened)return 'opened'; if(r.ups&&r.ups.length)return 'lvup'; if(r.bought&&r.bought.length)return 'gear';
+  if(r.want&&!r.rested&&(r.wins+r.id)%2===0)return 'want'; // 町にほしい施設があると、ときどき王様にねだる
   if(r.rested)return 'rest'; if(r.dep===null||r.dep>=720)return 'late'; if(r.pal&&r.palN>=3)return 'pal'; if(r.shy&&(r.wins+r.id)%3===0)return 'shy'; if(r.wins>=5&&r.losses===0)return 'streak'; if(r.losses>r.wins)return 'lost'; return 'normal';
 }
 // 決まった材料から同じ結果を返す小さな乱数（報告書を開き直しても台詞が変わらない）
@@ -2413,12 +2435,12 @@ const OCOND={
 };
 // 台詞の中の {o:条件} を満たす相手の一覧。rows がない（街で聞く声など）ときは条件つきの台詞を使わない
 function candidates(cond,me,rows){if(!rows||!me)return []; return rows.filter(o=>o.id!==me.id&&OCOND[cond](me,o));}
-function usable(t,me,rows){const m=t.match(/\{o:(\w+)\}/g); if(m&&!m.every(x=>candidates(x.slice(3,-1),me,rows).length))return false; if(t.includes('{o}')&&S.advs.length<2)return false; if(t.includes('{p}')&&!(me&&me.pal))return false; if(t.includes('{m}')&&!(me&&me.master))return false; return true;}
+function usable(t,me,rows){const m=t.match(/\{o:(\w+)\}/g); if(m&&!m.every(x=>candidates(x.slice(3,-1),me,rows).length))return false; if(t.includes('{o}')&&S.advs.length<2)return false; if(t.includes('{p}')&&!(me&&me.pal))return false; if(t.includes('{m}')&&!(me&&me.master))return false; if(t.includes('{b}')&&!(me&&me.want))return false; return true;}
 function fillLine(t,a,r,seed,rows){
   const others=S.advs.filter(x=>x.id!==a.id), anyO=others.length?others[Math.floor(seeded(seed+7)*others.length)].name:'みんな';
   const item=r&&r.bought&&r.bought.length?r.bought[r.bought.length-1].name:'';
   return t.replace(/\{o:(\w+)\}/g,(_,c)=>{const cs=candidates(c,r,rows); return cs.length?cs[Math.floor(seeded(seed+11)*cs.length)].name:anyO;})
-    .replace(/\{k\}/g,`「${a.k}」`).replace(/\{o\}/g,anyO).replace(/\{w\}/g,r?r.wins:0).replace(/\{i\}/g,item).replace(/\{p\}/g,r&&r.pal||'').replace(/\{m\}/g,r&&r.master||'');
+    .replace(/\{k\}/g,`「${a.k}」`).replace(/\{o\}/g,anyO).replace(/\{w\}/g,r?r.wins:0).replace(/\{i\}/g,item).replace(/\{p\}/g,r&&r.pal||'').replace(/\{m\}/g,r&&r.master||'').replace(/\{b\}/g,r&&r.want||'');
 }
 function pickLine(a,scene,seed,r,rows){
   let pool=(VOICE[a.pid][scene]||[]).filter(t=>usable(t,r,rows));
@@ -2547,7 +2569,7 @@ const siteName=s=>s.kind==='clear'?WASTE[s.type].n:s.kind==='repair'?'荒れた�
 function siteRow(s){
   const n=S.carps.filter(c=>c.site===s.id).length, pc=Math.round(s.done/s.need*100), stage=s.kind==='move'?(s.stage?'（建て直し中）':'（解体中）'):'';
   const st=s.done===0&&!s.stage?(n?'大工が向かっている':'大工の手が空くのを待っている'):`作業 ${pc}%${stage}・大工${n}人`;
-  return `<div class="siterow"><b>${siteName(s)}${SITE_VERB[s.kind]}${s.auto?'<small class="nm">大工が自分で</small>':''}</b><div class="xpbar"><i style="width:${pc}%"></i></div><small>${st}</small>${s.done===0&&!s.stage?`<button class="linkb" data-cancel="${s.id}">取り下げる</button>`:''}</div>`;
+  return `<div class="siterow"><b>${siteName(s)}${SITE_VERB[s.kind]}${s.auto?'<span class="autotag">大工が自分で</span>':''}</b><div class="xpbar"><i style="width:${pc}%"></i></div><small>${st}</small>${s.done===0&&!s.stage?`<button class="linkb" data-cancel="${s.id}">取り下げる</button>`:''}</div>`;
 }
 function castleHTML(){
   const idle=S.carps.filter(c=>c.state==='idle').length;
