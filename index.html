@@ -73,6 +73,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .grab{display:none}
 .daypart{position:absolute;left:10px;top:10px;z-index:2;font-family:var(--f-head);font-weight:800;font-size:13px;line-height:1.4;letter-spacing:.14em;padding:2px 10px;pointer-events:none;transform:rotate(-2deg)}
 .glfail{position:absolute;inset:0;display:grid;place-items:center;padding:16px;text-align:center;line-height:1.7;color:var(--cream-dim);background:#0a1410}
+[hidden]{display:none!important}
 .glfail[hidden]{display:none}
 
 .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
@@ -280,6 +281,9 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 /* 数字のタイル：小さなラベルと大きな数字 */
 .tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:0;background:var(--paper);border:1.5px solid #241c1455;border-radius:3px 7px 4px 6px}
 .tiles.four{grid-template-columns:repeat(4,minmax(0,1fr))}
+.tiles.four:has(.tile:nth-child(5)){grid-template-columns:repeat(5,minmax(0,1fr))}
+.tiles.four:has(.tile:nth-child(5)) .tile dt{font-size:9.5px;gap:2px;letter-spacing:0}
+.tiles.four:has(.tile:nth-child(5)) .tile dd{font-size:15px}
 .tile{display:grid;justify-items:center;gap:1px;padding:7px 4px 6px;min-width:0}
 .tile+.tile{border-left:1px solid #241c1426}
 .tile dt{display:flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;letter-spacing:.04em;color:var(--muted);white-space:nowrap}
@@ -487,7 +491,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.11.1 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.12.0 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -541,6 +545,7 @@ const BUILD={
   park:{name:'噴水の公園',cost:180,max:1,desc:'朝に寄るとやる気が回復。1日5人まで'},
   weapon:{name:'武器屋',cost:220,max:1,desc:'お金があれば武器を買う。攻撃+2'},
   armor:{name:'防具屋',cost:220,max:1,desc:'お金があれば防具を買う。守り+1・体力+6'},
+  academy:{name:'白魔法の学院',cost:260,max:1,ch:2,desc:'冒険者が白魔道士に転職できる。回復の魔法で、自分や仲間の体力を戻す'},
   clinic:{name:'診療所',cost:200,max:1,desc:'医者が1人住む。傷ついた冒険者が帰りに寄ると、翌朝の寝坊が半分になる。休んでいる子の家へ往診もする'},
 };
 const NAMES=['アルト','ベル','コナ','ダイ','エマ','フウ','ギン','ハル','イオ','ジノ','ケイ','ルカ'];
@@ -595,7 +600,7 @@ function bfs(g,a,b){
 }
 
 function newState(rng){
-  const S={g:makeMap(),day:1,t:DAY_START,elem:300,explore:0,bossDown:false,justWon:false,bossGo:false,nom:{},chapter:1,b:[],advs:[],sites:[],carps:[newCarp(0)],docs:[],builtToday:[],stock:{weapon:1,armor:1},used:{weapon:[],armor:[]},refund:0,phase:'report',parkUsed:0,demolished:0,rng:rng||Math.random,nextId:1,lastReport:null,fx:[],world:newWorld(),fights:[]};
+  const S={g:makeMap(),day:1,t:DAY_START,elem:300,explore:0,bossDown:false,justWon:false,area:0,bossGo:false,nom:{},chapter:1,b:[],advs:[],sites:[],carps:[newCarp(0)],docs:[],builtToday:[],stock:{weapon:1,armor:1},used:{weapon:[],armor:[]},refund:0,phase:'report',parkUsed:0,demolished:0,rng:rng||Math.random,nextId:1,lastReport:null,fx:[],world:newWorld(),fights:[]};
   // 性格の出てくる順番はプレイごとに変わる
   S.pOrder=PIDS.slice(); for(let i=S.pOrder.length-1;i>0;i--){const j=Math.floor(S.rng()*(i+1)); [S.pOrder[i],S.pOrder[j]]=[S.pOrder[j],S.pOrder[i]];}
   build(S,'house',2,2,true); build(S,'house',17,9,true); build(S,'board',12,4,true);
@@ -608,6 +613,7 @@ function count(S,type){return S.b.filter(b=>b.type===type).length;}
 function at(S,x,y){return S.b.find(b=>b.x===x&&b.y===y)||null;}
 function first(S,type){return S.b.find(b=>b.type===type)||null;}
 function canBuild(S,type,x,y){
+  if((BUILD[type].ch||1)>(S.chapter||1))return `${BUILD[type].ch}章で目覚める`;
   if(!isLot(S.g,x,y))return 'ここには建てられない';
   if(at(S,x,y))return 'すでに建物がある';
   if(siteAt(S,x,y))return 'すでにおふれが出ている';
@@ -636,7 +642,7 @@ function demolish(S,b){
 }
 // ================= 大工と建設のおふれ =================
 // 建物は王様が直接建てない。おふれを城の掲示板に貼ると、大工が昼のあいだに歩いて現場へ行き、作業する
-const WORK={house:225,board:55,park:260,weapon:300,armor:300,clinic:280}; // 建てるのに必要な作業量（大工1人で1分に1進む）
+const WORK={house:225,board:55,park:260,weapon:300,armor:300,clinic:280,academy:320}; // 建てるのに必要な作業量（大工1人で1分に1進む）
 const CARP_START=420, CARP_END=1080, CARP_MAX=3;
 function newCarp(i){return {id:1000+i,carp:true,name:'大工',hair:'#e8b828',tunic:'#8a5a2a',wlv:0,alv:0,slow:false,hidden:true,pos:{...CASTLE_DOOR},walk:null,state:'idle',site:null};}
 function siteAt(S,x,y){return S.sites.find(s=>(s.x===x&&s.y===y)||(s.to&&s.to.x===x&&s.to.y===y))||null;}
@@ -776,6 +782,7 @@ function arrive(S,a){
     case 'board': stopAt(S,a,10,'board'); break;
     case 'weapon': case 'armor': a.hidden=true; stopAt(S,a,25,a.goal); break;
     case 'clinic': a.hidden=true; stopAt(S,a,15,'clinic'); break;
+    case 'school': a.hidden=true; stopAt(S,a,90,'school'); break;
     case 'gate': depart(S,a); break;
     case 'castle': a.gold+=30; a.rep.gold+=30; a.rep.wage=true; a.last={k:'wage'}; a.hidden=true; stopAt(S,a,10,'castle'); break;
     case 'home': a.state='done'; a.hidden=true; break;
@@ -785,7 +792,9 @@ function finish(S,a){
   const w=a.stopWhat; a.hidden=false;
   if(w==='park'){a.morale=Math.min(100,a.morale+25); a.todo.park=false;}
   if(w==='board'){a.todo.board=false; a.behest=chooseBehest(S,a); a.rep.behest=a.behest; a.rep.named=a.behest==='rest'; react(a,'excl'); a.last={k:'board',b:a.behest};
-    if(a.behest==='rest'){a.rep.rested=true; a.rep.note='おふれに従って、きょうは休んだ'; a.restDay=true; goTo(S,a,homeDoor(S,a),'home'); return;}}
+    if(a.behest==='rest'){a.rep.rested=true; a.rep.note='おふれに従って、きょうは休んだ'; a.restDay=true; goTo(S,a,homeDoor(S,a),'home'); return;}
+    const nj=S.nom[a.id]; if(nj&&nj.startsWith('job:')&&!jobLock(S,a,nj.slice(4))){a.rep.named=true; a.jobTo=nj.slice(4); goTo(S,a,first(S,JOBS[a.jobTo].school).door,'school'); return;}}
+  if(w==='school'){becomeJob(a,a.jobTo); a.rep.jobNew=JOBS[a.jobTo].name; a.last={k:'job',i:JOBS[a.jobTo].name}; react(a,'sparkle'); a.jobTo=null;}
   if(w==='weapon'||w==='armor'){buy(S,a,w); a.todo.shopsVisited++;}
   if(w==='clinic'){a.rep.clinic=true; a.last={k:'clinic'}; goTo(S,a,CASTLE_DOOR,'castle'); return;}
   if(w==='castle'){goTo(S,a,homeDoor(S,a),'home'); return;}
@@ -795,9 +804,9 @@ function finish(S,a){
 // 店は入荷している段階までしか売らない。王様が時のかけらを投資すると、次の段階が入荷する
 const price=lv=>60+lv*30;                 // 段階 lv の装備から、次の段階に買い替える値段
 const ITEMS={weapon:WEAPONS,armor:ARMORS};
-const STOCK_CAP=[4,4,5,6,6];              // 章ごとの、入荷できる段階の上限
+const STOCK_CAP=[4,4,6,6,6];              // 章ごとの、入荷できる段階の上限
 const stockCap=S=>STOCK_CAP[Math.min(S.chapter||1,STOCK_CAP.length-1)];
-const investCost=(S,type)=>40+S.stock[type]*40;
+const investCost=(S,type)=>{const n=S.stock[type]; return n<4?40+n*40:100+n*60;}; // 1章の3回は80・120・160、2章からは340・400
 function investLock(S,type){return !first(S,type)?'店が建ってから':S.stock[type]>=stockCap(S)?'この章で入荷できるのはここまで':null;}
 function invest(S,type){
   const l=investLock(S,type); if(l)return l; const c=investCost(S,type); if(S.elem<c)return `${RES}が足りない`;
@@ -844,6 +853,8 @@ function next(S,a){
 // 冒険者個別のおふれ：その日だけの指示（S.nom[id]。いまは「休みをとれ」）
 // 掘る・宝を探す・修行は指示しない。攻略の一環として、性格（style）に合わせて自分でやる
 const bossLock=S=>S.bossDown?'親玉はもう倒した':S.explore<100?'探索100%で解放':null;
+// 転職できるか（学び舎があり、レベルが足り、まだそのジョブでない）
+function jobLock(S,a,job){const J=JOBS[job]; return !first(S,J.school)?`${BUILD[J.school].name}が要る`:a.lv<J.minLv?`Lv${J.minLv}から`:a.job===job?'もうなっている':null;}
 function chooseBehest(S,a){
   if(S.nom[a.id]==='rest')return 'rest';
   return S.bossGo&&!bossLock(S)?'boss':'explore';
@@ -854,8 +865,17 @@ const TURN=5, GATE_BY=1060;
 const NODES={
   gate:{n:'城門'}, fork:{n:'森の分かれ道'}, spring:{n:'森の泉',rest:true}, mouth:{n:'洞窟の入口'},
   r1:{n:'第一の部屋',room:true,rich:.6,master:'bigrat',chest:30}, r2:{n:'第二の部屋',room:true,rich:1,chest:40,clue:true},
-  hall:{n:'奥の広間',room:true,rich:1.8,master:'king',chest:60}, boss:{n:'親玉の間',boss:true},
+  hall:{n:'奥の広間',room:true,rich:1.8,master:'king',chest:60}, boss:{n:'親玉の間',boss:true,mon:'boss'},
+  // エリア2：北の湿地（ar:1）。ぬかるみ(mud)の道は、誰かが歩くまで1.3倍かかる
+  sfork:{ar:1,n:'湿地の入口'}, hut:{ar:1,n:'渡し守の小屋',rest:true},
+  s1:{ar:1,n:'葦の原',room:true,rich:.7,master:'bigfrog',chest:80}, s2:{ar:1,n:'沈んだ祠',room:true,rich:1,chest:100},
+  s3:{ar:1,n:'ヒルの巣',room:true,rich:1.7,master:'leechq',chest:140}, sboss:{ar:1,n:'沼の主の間',boss:true,mon:'catfish'},
 };
+for(const id of ['fork','spring','mouth','r1','r2','hall','boss'])NODES[id].ar=0;
+// エリア（章ごとに1つずつ進む）。いま挑んでいるのは S.area
+const AREAS=[{name:'西の洞窟',bossNode:'boss',short:'洞窟'},{name:'北の湿地',bossNode:'sboss',short:'湿地'}];
+const inArea=(S,x)=>x.ar===undefined||x.ar===S.area;
+const bossMon=S=>MON[NODES[AREAS[S.area].bossNode].mon];
 const EDGES=[
   {id:'e1',a:'gate',b:'fork',len:12,risk:.16,zone:'forest',n:'森の道'},
   {id:'e2',a:'fork',b:'spring',len:3,risk:.12,zone:'forest',n:'泉への小道'},
@@ -865,7 +885,15 @@ const EDGES=[
   {id:'e6',a:'r2',b:'hall',len:6,risk:.3,zone:'deep',n:'深い通路'},
   {id:'e7',a:'hall',b:'boss',len:3,risk:0,zone:'deep',n:'親玉の間への道',bossWay:true},
   {id:'cut',a:'spring',b:'r2',len:2,risk:.2,zone:'cave',n:'泉の裏の近道',cut:true},
+  {id:'m1',ar:1,a:'gate',b:'sfork',len:12,risk:.16,zone:'marsh',n:'湿地への道'},
+  {id:'m2',ar:1,a:'sfork',b:'hut',len:4,risk:.12,zone:'marsh',n:'小屋への木道'},
+  {id:'m3',ar:1,a:'sfork',b:'s1',len:6,risk:.22,zone:'marsh',mud:true,n:'葦のあいだの道'},
+  {id:'m4',ar:1,a:'s1',b:'s2',len:6,risk:.27,zone:'bog',mud:true,n:'沈みかけた石畳'},
+  {id:'m5',ar:1,a:'hut',b:'s2',len:9,risk:.2,zone:'marsh',mud:true,n:'渡し守の裏道'},
+  {id:'m6',ar:1,a:'s2',b:'s3',len:6,risk:.3,zone:'bog',mud:true,n:'ぬかるむ獣道'},
+  {id:'m7',ar:1,a:'s3',b:'sboss',len:4,risk:0,zone:'bog',n:'沼の主の間への道',bossWay:true},
 ];
+for(const e of EDGES)if(e.ar===undefined)e.ar=0;
 // 魔物。swift:先に動く・逃げにくい poison:毒 （硬さは守りの高さで表す）
 const MON={
   rat:{n:'森ネズミ',hp:6,atk:3,def:0,xp:5,elem:[4,7],gold:5},
@@ -876,17 +904,25 @@ const MON={
   bigrat:{n:'大ネズミ',hp:20,atk:5,def:1,master:true,xp:20,elem:[22,28],gold:25},
   king:{n:'岩トカゲの長',hp:34,atk:7,def:3,hard:true,master:true,xp:30,elem:[30,40],gold:40},
   boss:{n:'洞窟の親玉',hp:84,atk:10,def:4,hard:true,boss:true,xp:40,elem:[120,120],gold:0},
+  // 湿地。leech:吸いつく（与えたダメージの半分だけ回復） aura:戦っている全員が毎ラウンド受ける毒のダメージ
+  frog:{n:'沼ガエル',hp:30,atk:10,def:3,xp:16,elem:[6,10],gold:8},
+  leech:{n:'大ヒル',hp:26,atk:9,def:2,leech:true,xp:16,elem:[6,10],gold:8},
+  snake:{n:'毒ヘビ',hp:22,atk:12,def:2,swift:true,poison:true,xp:18,elem:[7,11],gold:9},
+  mudhand:{n:'泥の手',hp:44,atk:11,def:5,hard:true,xp:24,elem:[10,14],gold:12},
+  bigfrog:{n:'沼の大ガエル',hp:90,atk:13,def:4,master:true,xp:60,elem:[30,36],gold:40},
+  leechq:{n:'ヒルの女王',hp:80,atk:12,def:3,leech:true,master:true,xp:70,elem:[34,40],gold:50},
+  catfish:{n:'沼の主',hp:140,atk:14,def:5,boss:true,aura:2,xp:120,elem:[200,200],gold:0},
 };
-const ZONE={forest:[['rat',1]],cave:[['bat',.45],['shroom',.35],['rat',.2]],deep:[['lizard',.45],['golem',.25],['bat',.15],['shroom',.15]]};
-const DEPTH={gate:0,fork:1,spring:2,mouth:2,r1:3,r2:4,hall:5,boss:6};
-const UNITS=EDGES.filter(e=>!e.bossWay).length+Object.values(NODES).filter(n=>n.room).length+Object.values(NODES).filter(n=>n.master).length;
+const ZONE={forest:[['rat',1]],cave:[['bat',.45],['shroom',.35],['rat',.2]],deep:[['lizard',.45],['golem',.25],['bat',.15],['shroom',.15]],marsh:[['frog',.45],['leech',.3],['snake',.25]],bog:[['leech',.35],['snake',.25],['mudhand',.25],['frog',.15]]};
+const DEPTH={gate:0,fork:1,spring:2,mouth:2,r1:3,r2:4,hall:5,boss:6,sfork:1,hut:2,s1:2,s2:3,s3:4,sboss:5};
+const units=S=>EDGES.filter(e=>inArea(S,e)&&!e.bossWay).length+Object.values(NODES).filter(n=>inArea(S,n)&&n.room).length+Object.values(NODES).filter(n=>inArea(S,n)&&n.master).length;
 function newWorld(){return {trips:{},searched:{},searchDay:{},master:{},chest:{},clue:false,cut:false,vein:{},veinG:{}};}
 const safety=(S,e)=>{const n=S.world.trips[e.id]||0; return n>=60?2:n>=1?1:0;};
-const elen=(S,e)=>Math.max(1,Math.ceil(e.len*[1,.9,.75][safety(S,e)]));
+const elen=(S,e)=>Math.max(1,Math.ceil(e.len*[e.mud?1.3:1,.9,.75][safety(S,e)]));
 const erisk=(S,e)=>e.risk*[1,.8,.5][safety(S,e)];
 const other=(e,id)=>e.a===id?e.b:e.a;
 const masterAlive=(S,id)=>NODES[id].master&&!S.world.master[id];
-function unit(S,a){const d=100/UNITS; S.explore=Math.min(100,S.explore+d); if(a)a.rep.explore+=d; if(S.explore>99.99)S.explore=100;}
+function unit(S,a){const d=100/units(S); S.explore=Math.min(100,S.explore+d); if(a)a.rep.explore+=d; if(S.explore>99.99)S.explore=100;}
 // 使える道だけで最短の道のりを調べる。block(nodeId)が真の地点は通り抜けない（目的地にはできる）
 function route(S,from,to,opt={}){
   const dist={[from]:0}, prev={}, done={};
@@ -895,7 +931,7 @@ function route(S,from,to,opt={}){
     if(u===null)return null; if(u===to)break; done[u]=true;
     if(u!==from&&opt.block&&opt.block(u))continue;
     for(const e of EDGES){
-      if(e.a!==u&&e.b!==u)continue; if(e.cut&&!S.world.cut)continue; if(e.bossWay&&!opt.boss&&from!=='boss')continue;
+      if(e.a!==u&&e.b!==u)continue; if(!inArea(S,e))continue; if(e.cut&&!S.world.cut)continue; if(e.bossWay&&!opt.boss&&!NODES[from].boss)continue;
       const v=other(e,u), c=dist[u]+elen(S,e)+(opt.safe?erisk(S,e)*25:0);
       if(dist[v]===undefined||c<dist[v]){dist[v]=c; prev[v]=e;}
     }
@@ -903,8 +939,17 @@ function route(S,from,to,opt={}){
   const path=[]; let n=to, cost=0; while(n!==from){const e=prev[n]; path.unshift(e); cost+=elen(S,e); n=other(e,n);}
   return {path,cost};
 }
-function gainExp(S,a,n){a.exp+=n; a.rep.exp+=n; while(a.exp>=a.lv*25){a.exp-=a.lv*25; a.lv++; a.hpMax+=3; a.atk+=1; a.rep.ups.push({lv:a.lv,hp:3,atk:1}); a.rep.ev.push({t:S.t,k:'u'});}}
+// ジョブ。レベルが上がったときの伸びと、使える技が変わる（いまは白魔道士だけ）
+const JOBS={white:{name:'白魔道士',school:'academy',minLv:3}};
+const castsOf=a=>a.job==='white'?3+Math.floor((a.mag||0)/3):0;   // 1日に魔法を使える回数
+function becomeJob(a,job){a.job=job; if(job==='white')a.mag=Math.max(a.mag||0,a.lv);} // それまでのレベルぶんの魔力を持って始める
+function gainExp(S,a,n){a.exp+=n; a.rep.exp+=n; while(a.exp>=a.lv*25){a.exp-=a.lv*25; a.lv++;
+    const up=a.job==='white'?{lv:a.lv,hp:3,atk:0,mag:1,def:a.lv%3===0?1:0}:{lv:a.lv,hp:3,atk:1};
+    a.hpMax+=up.hp; a.atk+=up.atk; if(up.mag)a.mag=(a.mag||0)+up.mag; if(up.def)a.def+=up.def;
+    a.rep.ups.push(up); a.rep.ev.push({t:S.t,k:'u'});}}
 const atkOf=a=>a.atk+(PP(a).atk||0);
+// 戦いの疲れでやる気が下がるのは、1日に18まで（たくさん戦える強い子ほど休みがちになるのを防ぐ）
+function tire(a,n){const o=a.out||{}, left=Math.max(0,18-(o.tired||0)), d=Math.min(n,left); o.tired=(o.tired||0)+d; a.morale=Math.max(0,a.morale-d);}
 // 合間にやることは、その日の気分で決まる。性格の得意（style）が7割、ほかの2つが1割5分ずつ
 const STYLES=['mine','treasure','train'], STYLE_MAIN=.7;
 function rollStyle(S,a){const main=PP(a).style, x=S.rng(); if(x<STYLE_MAIN)return main; const rest=STYLES.filter(k=>k!==main); return rest[x<STYLE_MAIN+(1-STYLE_MAIN)/2?0:1];}
@@ -912,12 +957,13 @@ const styleOf=a=>(a.rep&&a.rep.style)||PP(a).style;
 const digStyle=a=>styleOf(a)==='mine'||styleOf(a)==='treasure';
 // 勝てそうかの見立て（部屋の主や親玉に挑むかどうか）
 function winnable(a,m,slack){
-  const rounds=Math.ceil(m.hp/Math.max(1,atkOf(a)-m.def)), hurt=rounds*Math.max(1,m.atk-a.def)*(PP(a).dmg||1);
+  const rounds=Math.ceil(m.hp/Math.max(1,atkOf(a)-m.def)), heal=a.job==='white'?castsOf(a)*a.mag*3*.7:0;
+  const hurt=rounds*(Math.max(1,m.atk-a.def)+(m.aura||0))*(PP(a).dmg||1)-heal;
   return a.hp-hurt>a.hpMax*slack;
 }
 function depart(S,a){
   a.rep.dep=S.t; a.state='away'; a.hidden=true; a.rep.reach='gate'; a.rep.style=rollStyle(S,a); a.rep.styleOdd=a.rep.style!==PP(a).style;
-  a.out={at:'gate',edge:null,act:null,fight:null,mode:'go',poison:0,detours:0,rests:0,want:null};
+  a.out={at:'gate',edge:null,act:null,fight:null,mode:'go',poison:0,detours:0,rests:0,want:null,casts:castsOf(a)};
 }
 const turnsLeft=S=>Math.floor((GATE_BY-S.t)/TURN);
 const locKey=o=>o.edge?'e:'+o.edge.e.id:'n:'+o.at;
@@ -939,19 +985,24 @@ function leaveFight(F,a){F.members=F.members.filter(x=>x!==a); a.out.fight=null;
 function fightRound(S,F){
   const r=S.rng, m=F.m; F.round++;
   const strike=()=>{ for(const a of F.members){ if(F.hp<=0)break;
+      // 白魔道士：体力が半分を切った仲間（自分も）がいたら、攻撃のかわりに「いやしの光」
+      if(a.job==='white'&&a.out.casts>0){const t=F.members.filter(x=>x.hp<x.hpMax*.5).sort((x,y)=>x.hp/x.hpMax-y.hp/y.hpMax)[0];
+        if(t){a.out.casts--; t.hp=Math.min(t.hpMax,t.hp+a.mag*3); F.heal=F.heal||{}; F.heal[a.id]=(F.heal[a.id]||0)+1; F.healed=F.healed||{}; if(t!==a)F.healed[t.id]=a.name; continue;}}
       const crit=r()<(a.morale/1000+(PP(a).roll?.03:0)), base=atkOf(a);
       let d=crit?base*2:Math.max(1,base-m.def+Math.floor(r()*3)-1);
       if(crit)F.crit[a.id]=(F.crit[a.id]||0)+1; F.hp-=d; } };
   const bite=()=>{ if(F.hp<=0||!F.members.length)return; const a=F.members[Math.floor(r()*F.members.length)];
-      const d=Math.max(1,Math.round(Math.max(1,m.atk-a.def+Math.floor(r()*3)-1)*(PP(a).dmg||1))); a.hp-=d; F.hit[a.id]=(F.hit[a.id]||0)+1; };
+      const d=Math.max(1,Math.round(Math.max(1,m.atk-a.def+Math.floor(r()*3)-1)*(PP(a).dmg||1))); a.hp-=d; F.hit[a.id]=(F.hit[a.id]||0)+1; if(m.leech)F.hp=Math.min(m.hp,F.hp+Math.ceil(d/2)); };
   if(m.swift){bite(); strike();} else {strike(); bite();}
+  // 親玉の毒の沼など：戦っている全員が毎ラウンド受ける。毒消しを覚えた白魔道士（Lv8〜）がいれば防げる
+  if(m.aura&&F.hp>0&&!F.members.some(x=>x.job==='white'&&x.lv>=8))for(const a of F.members)a.hp-=m.aura;
   const names=a=>F.members.filter(x=>x!==a).map(x=>x.name);
   if(F.hp<=0){
     for(const a of F.members.slice()){
       const got=m.elem[0]+Math.floor(r()*(m.elem[1]-m.elem[0]+1));
-      a.rep.elem+=got; a.gold+=m.gold; a.rep.gold+=m.gold; a.rep.wins++; a.morale=Math.max(0,a.morale-3);
-      ev(S,a,m.boss?'B':'w',{m:F.mid,r:F.round,c:F.crit[a.id]||0,co:names(a),e:got});
-      if(m.poison&&F.hit[a.id]){a.out.poison=6; ev(S,a,'p',{});}
+      a.rep.elem+=got; a.gold+=m.gold; a.rep.gold+=m.gold; a.rep.wins++; tire(a,3);
+      ev(S,a,m.boss?'B':'w',{m:F.mid,r:F.round,c:F.crit[a.id]||0,co:names(a),e:got,h:(F.heal||{})[a.id]||0,hb:(F.healed||{})[a.id]||null});
+      if(m.poison&&F.hit[a.id]){ if(F.members.some(x=>x.job==='white'&&x.lv>=8))ev(S,a,'pc',{}); else {a.out.poison=6; ev(S,a,'p',{});} }
       gainExp(S,a,styleOf(a)==='train'?Math.round(m.xp*1.25):m.xp);
       if(m.boss){a.rep.boss=true;} if(m.master)a.rep.master=m.n;
       for(const nm of names(a)){a.rep.coN=a.rep.coN||{}; a.rep.coN[nm]=(a.rep.coN[nm]||0)+1;}
@@ -967,7 +1018,7 @@ function fightRound(S,F){
     const late=turnsLeft(S)<=((route(S,a.out.at,'gate')||{cost:0}).cost+2);
     if(a.hp<=a.hpMax*line||late){
       if(m.swift&&r()<.45){ev(S,a,'f',{m:F.mid}); continue;} // すばやい魔物からは逃げそこなうことがある
-      a.rep.losses++; a.morale=Math.max(0,a.morale-(m.boss?8:3)); ev(S,a,m.boss?'b':'l',{m:F.mid,r:F.round,co:names(a),late:late&&a.hp>a.hpMax*line});
+      a.rep.losses++; tire(a,m.boss?8:3); ev(S,a,m.boss?'b':'l',{m:F.mid,r:F.round,co:names(a),late:late&&a.hp>a.hpMax*line});
       if(m.poison&&F.hit[a.id])a.out.poison=6;
       leaveFight(F,a);
       if(a.out.edge&&a.out.mode==='go'){const e=a.out.edge; a.out.edge={e:e.e,to:other(e.e,e.to),left:Math.max(1,elen(S,e.e)-e.left)};} // 来た道を戻る
@@ -1003,7 +1054,7 @@ function arriveNode(S,a){
   const o=a.out;
   if(o.mode==='go'&&DEPTH[o.at]>DEPTH[a.rep.reach||'gate'])a.rep.reach=o.at;
   if(o.at==='gate'&&o.mode!=='go'){comeBack(S,a); return;}
-  if(o.mode==='go'&&NODES[o.at].boss&&!S.bossDown){startFight(S,a,'boss','n:'+o.at,o.at); return;}
+  if(o.mode==='go'&&NODES[o.at].boss&&!S.bossDown){const F=S.fights.find(f=>f.key==='n:'+o.at); if(F&&!PP(a).solo){o.fight=F; F.members.push(a); F.co=true; return;} startFight(S,a,NODES[o.at].mon,'n:'+o.at,o.at); return;}
   if(o.mode==='go'&&masterAlive(S,o.at)){
     const F=S.fights.find(f=>f.key==='n:'+o.at); if(F&&!PP(a).solo){o.fight=F; F.members.push(a); F.co=true; return;}
     startFight(S,a,NODES[o.at].master,'n:'+o.at,o.at); return;
@@ -1036,6 +1087,7 @@ function decide(S,a){
   const slack=left-home.cost-margin;
   // 休憩
   const restLine=P.rest===undefined?.5:P.rest;
+  if(a.job==='white'&&o.casts>0&&a.hp<a.hpMax*restLine){o.casts--; a.hp=Math.min(a.hpMax,a.hp+a.mag*3); ev(S,a,'hs',{}); return;}
   if(a.hp<a.hpMax*(N.rest?Math.max(restLine,.8):restLine)&&slack>4&&o.rests<(N.rest?6:3)){o.rests++; o.act={k:'rest',left:2}; return;}
   o.rests=0;
   // 部屋：調べる、近道を開く
@@ -1050,29 +1102,29 @@ function decide(S,a){
   const block=nid=>masterAlive(S,nid);
   let best=null; const offer=(to,bonus,what,opt)=>{ if(to===id)return; const rt=route(S,id,to,{block,safe:P.safe,...opt}); if(!rt)return; const back=route(S,to,'gate'); if(rt.cost+(back?back.cost:99)+margin+3>left)return; const sc=rt.cost-bonus; if(!best||sc<best.sc)best={sc,rt,what,to}; };
   if(a.behest==='boss'&&S.explore>=100&&!S.bossDown){
-    if(winnable(a,MON.boss,P.brave?-1:P.safe?.3:0))offer('boss',50,'boss',{boss:true});
+    if(winnable(a,bossMon(S),P.brave?-1:P.safe?.3:0))offer(AREAS[S.area].bossNode,50,'boss',{boss:true});
     else if(!a.rep.shy){a.rep.shy=true; a.rep.shyNote='親玉にはまだ勝てそうにないと見て、腕をみがいた';}
   }
   const dig=digStyle(a), vk=styleOf(a)==='mine'?'vein':'veinG';
-  for(const nid in NODES){ const n=NODES[nid]; if(!n.room)continue;
+  for(const nid in NODES){ const n=NODES[nid]; if(!n.room||!inArea(S,n))continue;
     if(dig&&!masterAlive(S,nid)&&W.searchDay[nid]===S.day){ const v=W[vk][nid]===undefined?1:W[vk][nid]; if(((o.digs||{})[nid]||0)<2&&v>.25)offer(nid,-2,'dig'); }
     if(masterAlive(S,nid)){ if(can(nid))offer(nid,P.roll?6:3,'master'); else if(!a.rep.shy){a.rep.shy=true; a.rep.shyNote=`${n.n}の主にはまだ勝てそうにないと見て、手前で腕をみがいた`;} continue; }
     if(W.searchDay[nid]!==S.day)offer(nid,W.searched[nid]?0:(P.roll?6:3),'room');
   }
-  for(const e of EDGES){ if(e.bossWay||(e.cut&&!W.cut)||W.trips[e.id])continue;
+  for(const e of EDGES){ if(!inArea(S,e)||e.bossWay||(e.cut&&!W.cut)||W.trips[e.id])continue;
     for(const end of [e.a,e.b]){ const far=other(e,end); if(block(end)&&end!==id)continue; if(masterAlive(S,far)&&!can(far))continue;
       const rt0=end===id?{path:[],cost:0}:route(S,id,end,{block,safe:P.safe}); if(!rt0)continue;
       const rt={path:[...rt0.path,e],cost:rt0.cost+elen(S,e)}, back=route(S,far,'gate'); if(rt.cost+(back?back.cost:99)+margin+3>left)continue;
       const sc=rt.cost-(P.roll?8:2); if(!best||sc<best.sc)best={sc,rt,what:'new',to:far}; } }
   if(!best){ // 見回り：行ける範囲でいちばん手ごたえのある道を歩いて腕をみがく
-    let pick=null; for(const e of EDGES){ if(e.bossWay||(e.cut&&!W.cut))continue; if(e.a!==id&&e.b!==id)continue; const far=other(e,id); if(masterAlive(S,far))continue; if(far==='gate')continue;
+    let pick=null; for(const e of EDGES){ if(!inArea(S,e)||e.bossWay||(e.cut&&!W.cut))continue; if(e.a!==id&&e.b!==id)continue; const far=other(e,id); if(masterAlive(S,far))continue; if(far==='gate')continue;
       const back=route(S,far,'gate'); if(elen(S,e)+(back?back.cost:99)+margin+2>left)continue; const sc=erisk(S,e)*(P.safe?-1:1)+r()*.05; if(!pick||sc>pick.sc)pick={sc,e}; }
     if(!pick){goHome(S,a,left<home.cost+margin+10?'日が暮れて引き返した':'やることがなくなって早めに帰った'); return decide(S,a);}
     best={rt:{path:[pick.e],cost:elen(S,pick.e)},what:'patrol'};
   }
   // 寄り道
   const dz=P.detour===undefined?.08:P.detour;
-  if(o.detours<2&&slack>10&&r()<dz*.5){o.detours++; const n=1+Math.floor(r()*3); o.act={k:'detour',left:n}; ev(S,a,'d',{n:id,v:Math.floor(r()*6),z:(EDGES.find(e=>e.a===id||e.b===id)||{}).zone}); return;}
+  if(o.detours<2&&slack>10&&r()<dz*.5){o.detours++; const n=1+Math.floor(r()*3); o.act={k:'detour',left:n}; ev(S,a,'d',{n:id,v:Math.floor(r()*6),z:(EDGES.find(e=>inArea(S,e)&&(e.a===id||e.b===id))||{}).zone}); return;}
   moveAlong(S,a,best.rt);
 }
 function endDay(S){
@@ -1096,8 +1148,10 @@ function endDay(S){
   for(const c of S.carps){c.hidden=true; c.walk=null; c.state='idle'; c.site=null; c.pos={...CASTLE_DOOR};}
   for(const d of S.docs){d.hidden=true; d.walk=null; d.state='idle'; d.patient=null;}
   if(S.carpFound)S.builtToday.push(`大工が街で${RES}を${S.carpFound}拾った`);
-  S.lastReport={day:S.day,won:S.justWon,built:S.builtToday.slice(),bossDown:S.bossDown,world:JSON.parse(JSON.stringify(S.world)),worldFrom:S.worldStart||newWorld(),explore:S.explore,exploreFrom:S.exploreStart||0,elemAfter:S.elem,
-    advs:S.advs.filter(a=>a.rep).map(a=>({id:a.id,name:a.name,tunic:a.tunic,hair:a.hair,pid:a.pid,k:a.k,lv:a.lv,hp:a.hp,hpMax:a.hpMax,atk:a.atk,def:a.def,morale:a.morale,gold:a.gold,wlv:a.wlv,alv:a.alv,wTag:a.wTag||null,aTag:a.aTag||null,...a.rep,held:a.gold,expNow:a.exp,ev:a.rep.ev.slice(),ups:a.rep.ups.slice(),bought:a.rep.bought.slice()}))};
+  const areaNow=S.area, nextArea=S.justWon&&S.area+1<AREAS.length;
+  S.lastReport={day:S.day,area:areaNow,cleared:S.justWon?{name:AREAS[areaNow].name,next:nextArea?AREAS[areaNow+1].name:null,chapter:(S.chapter||1)+(nextArea?1:0)}:null,won:S.justWon,built:S.builtToday.slice(),bossDown:S.bossDown,world:JSON.parse(JSON.stringify(S.world)),worldFrom:S.worldStart||newWorld(),explore:S.explore,exploreFrom:S.exploreStart||0,elemAfter:S.elem,
+    advs:S.advs.filter(a=>a.rep).map(a=>({id:a.id,name:a.name,tunic:a.tunic,hair:a.hair,pid:a.pid,k:a.k,lv:a.lv,hp:a.hp,hpMax:a.hpMax,atk:a.atk,def:a.def,morale:a.morale,gold:a.gold,wlv:a.wlv,alv:a.alv,job:a.job||null,mag:a.mag||0,wTag:a.wTag||null,aTag:a.aTag||null,...a.rep,held:a.gold,expNow:a.exp,ev:a.rep.ev.slice(),ups:a.rep.ups.slice(),bought:a.rep.bought.slice()}))};
+  if(nextArea){S.area++; S.chapter=(S.chapter||1)+1; S.explore=0; S.bossDown=false; S.bossGo=false;} // 親玉を倒したら次の章・次のエリアへ
   S.nom={}; // 個別のおふれはその日かぎり
   S.builtToday=[]; // 夜のあいだに決めたこと（投資など）は、次の報告書に載る
   S.day++; S.phase='report';
@@ -1320,7 +1374,8 @@ async function initGfx(){
       P(g,'#7a5230',1,2,5,1); P(g,'#c9a84c',2,3,3,3); P(g,'#e4cf8f',2,3,3,1); P(g,'#9c8a62',1,6,5,1);
       P(g,'#4e3019',6,3,4,1); P(g,'#6b4426',7,4,2,5); P(g,'#55351d',7,4,1,5); P(g,'#c9a84c',8,6);
       P(g,'#2a2420',10,2,3,5);
-      if(type==='clinic'){P(g,'#f4f1e8',10,2,3,5); P(g,'#c0392b',11,2,1,5); P(g,'#c0392b',10,4,3,1);}
+      if(type==='academy'){P(g,'#1d3b44',10,2,3,5); P(g,'#f6e7a8',11,2,1,5); P(g,'#f6e7a8',10,4,3,1); P(g,'#fffbe0',11,4);}
+      else if(type==='clinic'){P(g,'#f4f1e8',10,2,3,5); P(g,'#c0392b',11,2,1,5); P(g,'#c0392b',10,4,3,1);}
       else if(type==='weapon'){P(g,'#d8d8e0',11,2,1,3); P(g,'#c9a84c',10,5,3,1); P(g,'#8a5a2a',11,6);}
       else {P(g,'#b0b4c0',10,3,3,2); P(g,'#b0b4c0',11,5); P(g,'#c9a84c',11,3);}
     }
@@ -1349,8 +1404,8 @@ async function initGfx(){
   function mkBuilding(b){
     const grp=new T.Group(); grp.position.set(wx(b.x),0,wz(b.y)); grp.userData={bid:b.id,type:b.type,born:performance.now(),glow:0,stag:hash(b.x,b.y,7)};
     const t=b.type;
-    if(t==='house'||t==='weapon'||t==='armor'||t==='clinic'){
-      const rc=t==='house'?ROOFS[b.id%ROOFS.length]:t==='weapon'?'#3e6aa8':t==='clinic'?'#d9d2c0':'#6b4f8f';
+    if(t==='house'||t==='weapon'||t==='armor'||t==='clinic'||t==='academy'){
+      const rc=t==='house'?ROOFS[b.id%ROOFS.length]:t==='weapon'?'#3e6aa8':t==='clinic'?'#d9d2c0':t==='academy'?'#2f7f78':'#6b4f8f';
       const front=memo('front'+t,()=>lam(tex(14,9,paintFront(t)))), side=memo('sideM',()=>lam(sideTex()));
       add(new T.Mesh(GEO.body,[side,side,plain,plain,front,memo('backM'+t,()=>lam(backTex(t)))]),0,0,.04,grp);
       add(new T.Mesh(GEO.roof[0],memo('roofM'+rc,()=>lam(roofTex(rc),{side:T.DoubleSide}))),0,0,.04,grp);
@@ -1859,7 +1914,7 @@ yumemi:{board:['{d}のおふれを受けたの。物語が始まる予感','{d}�
 sewazuki:{board:['{d}のおふれを受けたよ。みんなの分もがんばるね','{d}だって。誰か一緒に行かないかな'],park:['公園は気持ちがいいね。みんなも休んでいけばいいのに','ここでひと休み。王様も休んでね'],buy:['{i}を買ったよ。これでみんなを守れるかな','{i}、大事に使うね'],back:['ただいま。みんなはもう帰ってる？','帰ったよ。けが人はいない？'],wage:['日給をもらったよ。ありがとう、王様','お給料、少しはみんなのために使おうかな']},
 ippiki:{board:['……{d}のおふれを受けた','{d}か。……ひとりで十分だ'],park:['……公園は、朝は静かでいい','……少し休んだだけだ'],buy:['……{i}を買った','{i}。……使えればいい'],back:['……戻った','……今日も、いつも通りだ'],wage:['……日給は受け取った','……それだけだ']},
 };
-const BEHEST_TEXT={explore:'西の洞窟の攻略',boss:'西の洞窟の親玉退治',rest:'お休み'};
+const BEHEST_TEXT={get explore(){return `${AREAS[S.area].name}の攻略`;},get boss(){return `${AREAS[S.area].name}の親玉退治`;},rest:'お休み'};
 // その日の出来事から、ひと言の場面を選ぶ
 function voiceScene(r){
   if(r.boss)return 'boss'; if(r.ko)return 'ko'; if(r.master)return 'master'; if(r.opened)return 'opened'; if(r.ups&&r.ups.length)return 'lvup'; if(r.bought&&r.bought.length)return 'gear';
@@ -1921,13 +1976,13 @@ function updateHud(){
   $('elem').textContent=S.elem+(S.refund?` (+${S.refund})`:'');
   $('explore').textContent=`${Math.floor(S.explore)}%`+(S.bossDown?' 制覇':''); $('exbar').style.width=`${S.explore}%`;
 }
-const PLACE={clinic:'診療所で手当て',park:'公園で休憩',board:'立て札でおふれを確認',weapon:'武器屋で買い物',armor:'防具屋で買い物',gate:'城門へ',castle:'城へ報告',home:'家へ帰る'};
+const PLACE={school:'学び舎で転職の手ほどき',clinic:'診療所で手当て',park:'公園で休憩',board:'立て札でおふれを確認',weapon:'武器屋で買い物',armor:'防具屋で買い物',gate:'城門へ',castle:'城へ報告',home:'家へ帰る'};
 function status(a){
   switch(a.state){
     case 'idle': return S.phase==='day'?['明日から','off']:['待機','off'];
     case 'rest': return [a.rep&&a.rep.note.includes('療養')?'療養中':'休み','off'];
     case 'home': return ['家で支度','prep'];
-    case 'walk': return a.goal==='gate'?['城門へ向かう','prep']:a.goal==='castle'?[a.slow?'とぼとぼ帰還':'帰還中',a.slow?'hurt':'away']:a.goal==='home'?['帰宅中','off']:[`${BUILD[a.goal]?BUILD[a.goal].name:''}へ向かう`,'prep'];
+    case 'walk': return a.goal==='gate'?['城門へ向かう','prep']:a.goal==='school'?['学び舎へ向かう','prep']:a.goal==='castle'?[a.slow?'とぼとぼ帰還':'帰還中',a.slow?'hurt':'away']:a.goal==='home'?['帰宅中','off']:[`${BUILD[a.goal]?BUILD[a.goal].name:''}へ向かう`,'prep'];
     case 'stop': return a.stopWhat==='castle'?['日給を受け取り中','away']:[PLACE[a.stopWhat],'prep'];
     case 'away': return [`冒険中（${hm(a.rep.dep)}出発）`,'away'];
     case 'back': return ['帰り道','away'];
@@ -1975,8 +2030,8 @@ function renderPanel(){
 let pickAdv=0;
 // おふれの名前と中身（立て札・冒険者パネルで共通）
 const BH={
-  explore:{name:'西の洞窟を攻略せよ',desc:'道や部屋を調べ、魔物と戦って時のかけらを持ち帰る。合間に掘るか、宝を探すか、腕をみがくかは、それぞれの性格とその日の気分しだい。'},
-  boss:{name:'親玉に挑め',desc:'洞窟のいちばん奥、親玉の間をめざす。勝ち目がないと見た冒険者は、手前で腕をみがく。'},
+  explore:{get name(){return `${AREAS[S.area].name}を攻略せよ`;},desc:'道や部屋を調べ、魔物と戦って時のかけらを持ち帰る。合間に掘るか、宝を探すか、腕をみがくかは、それぞれの性格とその日の気分しだい。'},
+  boss:{name:'親玉に挑め',desc:'いちばん奥の、親玉の間をめざす。勝ち目がないと見た冒険者は、手前で腕をみがく。'},
   rest:{name:'休みをとれ',desc:'その日は家で休んで、やる気を回復する。'},
 };
 const STYLE={mine:'時のかけらを掘る',treasure:'宝を探す',train:'腕をみがく'};
@@ -2039,12 +2094,12 @@ function renderRoster(p){
   const a=S.advs.find(x=>x.id===pickAdv), P=PP(a), [txt,cls]=status(a), r=a.rep, v=shownStats(a);
   const today=S.phase==='day'&&r&&!r.rested?[r.dep!=null?`${hm(r.dep)}に出発`:'', r.bought.length?`${r.bought.map(b=>b.name).join('、')}を買った`:''].filter(Boolean).join(' · '):'';
   $('advDetail').innerHTML=`
-    <div class="ad-band"><div class="who"><b>${a.name}</b><small>${P.name} · Lv${v.lv}</small></div><span class="chip ${cls}">${txt}</span></div>
+    <div class="ad-band"><div class="who"><b>${a.name}</b><small>${P.name}${a.job?` · ${JOBS[a.job].name}`:''} · Lv${v.lv}</small></div><span class="chip ${cls}">${txt}</span></div>
     <div class="blk"><h4 class="sec">受けたおふれ</h4>${r&&r.behest?`<p class="notice">${BH[r.behest].name}${r.named?'<small class="nm">指名</small>':''}</p>`:`<p class="rc-note">${r&&r.rested?'きょうはお休み':S.phase==='day'?'まだ立て札を見ていない':'朝、立て札を見てから出発する'}</p>`}</div>
     <div class="blk"><h4 class="sec">ステータス</h4><dl class="tiles four">
       <div class="tile"><dt>${STAT_IC.hp}体力</dt><dd>${v.hp}<small>/${v.hpMax}</small></dd></div>
       <div class="tile"><dt>${STAT_IC.atk}攻撃</dt><dd>${v.atk}</dd></div>
-      <div class="tile"><dt>${STAT_IC.def}守り</dt><dd>${v.def}</dd></div>
+      <div class="tile"><dt>${STAT_IC.def}守り</dt><dd>${v.def}</dd></div>${a.mag?`<div class="tile"><dt>魔力</dt><dd>${a.mag}</dd></div>`:''}
       <div class="tile"><dt><i class="coin"></i>所持金</dt><dd>${v.gold}</dd></div></dl></div>
     <div class="blk"><h4 class="sec">装備</h4><table class="eq"><tbody>
       <tr><th scope="row">武器</th><td>${WEAPONS[v.wlv]}${a.wTag&&v.wlv===a.wlv?`<small class="pr">${a.wTag}のおさがり</small>`:''}</td></tr>
@@ -2167,6 +2222,8 @@ function hintsFor(rep){
   if(!first(S,'weapon')&&!S.sites.some(x=>x.type==='weapon')&&S.day>=2)h.push('武器屋を建てると、冒険者が出発前に寄って強くなります。');
   if(rep){const w=rep.advs.filter(a=>a.wish); if(w.length){const a=w[0], t=Object.keys(a.wish)[0]; h.push(`${a.name}が${a.wish[t]}を欲しがっています。${BUILD[t].name}をタップして投資すると入荷します。`);}}
   if(rep&&!first(S,'clinic')&&!S.sites.some(x=>x.type==='clinic')&&rep.advs.some(a=>a.overslept||a.injuredNew))h.push('けがが翌日にひびいています。診療所があると、寝坊が軽くなり、休んでいる子に医者が往診します。');
+  if((S.chapter||1)>=2&&!first(S,'academy')&&!S.sites.some(x=>x.type==='academy'))h.push('湿地の魔物は毒を持ち、吸いついてきます。白魔法の学院を建てると、冒険者を白魔道士に転職させられます。');
+  if(first(S,'academy')&&!S.advs.some(a=>a.job==='white'))h.push('白魔法の学院が建ちました。下の「冒険者へのおふれ」から、だれかを白魔道士に転職させられます（Lv3から）。');
   if(S.sites.length>=2&&!hireLock(S))h.push(`建設のおふれが${S.sites.length}件たまっています。城で大工を雇うと早く進みます。`);
   if(rep&&rep.advs.some(a=>a.note.includes('やる気'))&&!first(S,'park'))h.push('やる気が切れた冒険者がいます。噴水の公園で回復できます。');
   if(S.explore>=100&&!S.bossDown)h.push('探索100%。全体へのおふれで「親玉に挑め」を出せます。');
@@ -2222,7 +2279,8 @@ function logHTML(r){
       case 'n': txt=`${EDGES.find(x=>x.id===e.e).n}を初めて歩いた`; break;
       case 'w': {
         const crit=e.c?'会心の一撃が決まり、':'';
-        if(m.master)txt=`${withCo(e)}${crit}部屋の主・${m.n}を${e.r}ラウンドで倒した！`;
+        const heal=e.h?`いやしの光で支えながら、`:e.hb?`${e.hb}のいやしの光に助けられ、`:'';
+        if(m.master)txt=`${withCo(e)}${heal}${crit}部屋の主・${m.n}を${e.r}ラウンドで倒した！`;
         else if(e.r<=2){ // 楽に勝った戦いが続いたら1行にまとめる（同じ仲間との共闘どうしもまとめる）
           const key=(e.co||[]).join('と'), last=L[L.length-1];
           if(last&&last.q&&last.qk===key){last.q[m.n]=(last.q[m.n]||0)+1; last.c=last.c||e.c;} else {add(e.t,''); Object.assign(L[L.length-1],{q:{[m.n]:1},qk:key,c:e.c});}
@@ -2230,15 +2288,17 @@ function logHTML(r){
           cur.txt=n===1?`${withCo(e)}${cur.c?'会心の一撃が決まり、':''}${names[0]}をあっさり倒した`:`${withCo(e)}${names.join('、')}を次つぎに倒した`;
           continue; }
         else if(m.hard&&e.r>=5)txt=`${withCo(e)}${m.n}の硬さに手こずったが、${crit}${e.r}ラウンドかけて倒した`;
-        else txt=`${withCo(e)}${crit}${m.n}を${e.r}ラウンドで倒した`;
+        else txt=`${withCo(e)}${heal}${crit}${m.n}を${e.r}ラウンドで倒した`;
         break; }
       case 'l': txt=e.late?`${m.n}と戦っているうちに日が傾き、切り上げた`:m.hard&&e.r>=5?`${m.n}に${e.r}ラウンドねばったが刃が立たず、逃げ出した`:`${m.n}に押されて、逃げ出した`; break;
       case 'f': txt=`${m.n}がすばやくて、逃げそこなった`; break;
-      case 'B': txt=`${withCo(e)}${e.c?'会心の一撃も決まり、':''}${e.r}ラウンドの死闘の末、${m.n}を倒した！`; break;
+      case 'B': txt=`${withCo(e)}${e.h?'いやしの光で支えながら、':e.hb?`${e.hb}のいやしの光に助けられ、`:''}${e.c?'会心の一撃も決まり、':''}${e.r}ラウンドの死闘の末、${m.n}を倒した！`; break;
       case 'b': txt=`${withCo(e)}${m.n}に挑んだが、${e.r}ラウンドで押し返された`; break;
       case 'x': txt='力尽きて、逃げ帰ることにした'; break;
       case 'u': txt='レベルが上がった'; break;
       case 'p': txt='毒を受けてしまった'; break;
+      case 'pc': txt='毒を受けたが、白魔道士の毒消しで事なきを得た'; break;
+      case 'hs': if(L.length&&L[L.length-1].hs){L[L.length-1].txt='いやしの光で、何度か自分の傷をふさいだ'; continue;} add(e.t,'いやしの光で、自分の傷をふさいだ'); L[L.length-1].hs=true; continue;
       case 'r': if(prevRest===e.n){L[L.length-1].txt=`${node.n}でしばらく休んだ`; continue;} prevRest=e.n; txt=`${node.n}でひと休みした`; break;
       case 's': if(e.mine||e.treasure){ // 同じ部屋で続けて掘ったら1行にまとめる
           const last=L[L.length-1], key=(e.mine?'m':'t')+e.n, v=e.mine?e.e:e.g;
@@ -2270,14 +2330,14 @@ function cardHTML(r,day,rows){
   const stats=`<div class="blk"><h4 class="sec">ステータス</h4><dl class="tiles four">
       <div class="tile"><dt>${IC.hp}体力</dt><dd>${r.hp}<small>/${r.hpMax}</small></dd></div>
       <div class="tile"><dt>${IC.atk}攻撃</dt><dd>${r.atk}</dd></div>
-      <div class="tile"><dt>${IC.def}守り</dt><dd>${r.def}</dd></div>
+      <div class="tile"><dt>${IC.def}守り</dt><dd>${r.def}</dd></div>${r.mag?`<div class="tile"><dt>魔力</dt><dd>${r.mag}</dd></div>`:''}
       <div class="tile"><dt><i class="coin"></i>所持金</dt><dd>${r.held}</dd></div></dl></div>`;
   const gear=`<div class="blk"><h4 class="sec">装備</h4><table class="eq"><tbody>
       <tr><th scope="row">武器</th><td>${WEAPONS[r.wlv]}${r.wTag?`<small class="pr">${r.wTag}のおさがり</small>`:''}${nw('weapon')}</td></tr>
       <tr><th scope="row">防具</th><td>${ARMORS[r.alv]}${r.aTag?`<small class="pr">${r.aTag}のおさがり</small>`:''}${nw('armor')}</td></tr>
       <tr><th scope="row">お守り</th><td class="none">なし</td></tr></tbody></table></div>`;
-  const flow=tl?`<div class="blk"><h4 class="sec">一日の流れ</h4>${tl}${r.behest?`<p class="rc-note">受けたおふれ：${BH[r.behest].name}${r.named?'（指名）':''}${r.style?`。合間に${STYLE[r.style]}${r.styleOdd?'（きょうはめずらしく）':''}`:''}</p>`:''}</div>`:'';
-  const bits=[]; if(r.overslept)bits.push(`きのうの傷がひびいて${r.overslept}分寝坊した`); if(r.healed)bits.push('往診のおかげで昼から動けた');
+  const flow=tl?`<div class="blk"><h4 class="sec">一日の流れ</h4>${tl}${r.behest?`<p class="rc-note">受けたおふれ：${r.jobNew?`${r.jobNew}に転職（指名）。そのあと${BH[r.behest].name}`:BH[r.behest].name+(r.named?'（指名）':'')}${r.style?`。合間に${STYLE[r.style]}${r.styleOdd?'（きょうはめずらしく）':''}`:''}</p>`:''}</div>`:'';
+  const bits=[]; if(r.jobNew)bits.push(`学び舎で手ほどきを受けて、${r.jobNew}になった`); if(r.overslept)bits.push(`きのうの傷がひびいて${r.overslept}分寝坊した`); if(r.healed)bits.push('往診のおかげで昼から動けた');
   if(r.note&&!(r.note==='傷ついて引き返した'&&r.hurt)&&!(r.note==='やられて逃げ帰った'&&r.ko))bits.push(r.note); if(r.missedWage)bits.push('日給をもらいそびれた');
   if(r.wish)bits.push(`${Object.values(r.wish).join('と')}が欲しいが、まだ店に入っていない`);
   const hurt=r.injuredNew==='big'?'<span class="hurt">大けが。あすから2日は療養（医者の往診があれば1日）</span>':r.ko?'<span class="hurt">やられた。あすは療養（医者の往診があれば昼から動ける）</span>'
@@ -2287,10 +2347,10 @@ function cardHTML(r,day,rows){
   const need0=r.lvFrom*25;
   return `<article class="rc" data-id="${r.id}">
     <div class="rc-top"><div class="rc-face"><img class="face" src="${faceURL(r)}" alt=""><span class="lvb">Lv<b class="lvn">${r.lvFrom}</b></span><i class="burst"></i></div>
-      <div class="who"><b>${r.name}</b><small>${P.name}</small></div>${chip}</div>
+      <div class="who"><b>${r.name}</b><small>${P.name}${r.job?` · ${JOBS[r.job].name}`:''}</small></div>${chip}</div>
     <div class="rc-body">
       <p class="bub">${line}</p>
-      <div class="lvbanner"><strong>レベルアップ！</strong><span>Lv${r.lvFrom} → Lv${r.lv}</span><span>体力 +${r.ups.reduce((m,u)=>m+u.hp,0)}　攻撃 +${r.ups.reduce((m,u)=>m+u.atk,0)}</span></div>
+      <div class="lvbanner"><strong>レベルアップ！</strong><span>Lv${r.lvFrom} → Lv${r.lv}</span><span>体力 +${r.ups.reduce((m,u)=>m+u.hp,0)}${r.ups.some(u=>u.atk)?`　攻撃 +${r.ups.reduce((m,u)=>m+u.atk,0)}`:''}${r.ups.some(u=>u.mag)?`　魔力 +${r.ups.reduce((m,u)=>m+(u.mag||0),0)}`:''}${r.ups.some(u=>u.def)?`　守り +${r.ups.reduce((m,u)=>m+(u.def||0),0)}`:''}</span></div>
       ${went?`<div class="blk"><h4 class="sec">きょうの成果</h4><dl class="tiles">
         <div class="tile"><dt><i class="shard"></i>${RES}</dt><dd>+<b class="gv-res">0</b></dd></div>
         <div class="tile"><dt><i class="coin"></i>ゴールド</dt><dd>+<b class="gv-gold">0</b></dd></div>
@@ -2303,41 +2363,43 @@ function cardHTML(r,day,rows){
 }
 // ---------- 報告書：探索の地図 ----------
 // 行ったことのある場所だけを描く。道は安全度で線が変わり、きょう初めて歩いた道は金色で目立たせる
-const MAPXY={gate:[30,158],fork:[92,128],spring:[84,58],mouth:[150,146],r1:[200,116],r2:[236,66],hall:[288,104],boss:[306,40]};
+const MAPXY={gate:[30,158],fork:[92,128],spring:[84,58],mouth:[150,146],r1:[200,116],r2:[236,66],hall:[288,104],boss:[306,40], sfork:[88,132],hut:[66,62],s1:[152,152],s2:[214,98],s3:[276,130],sboss:[306,50]};
+const MAP_ABOVE=new Set(['spring','boss','r2','hut','sboss','s2']), MAP_SIDE=new Set(['spring','boss','r2','hall','hut','sboss','s2','s3']);
 function mapHTML(rep){
   const W=rep.world, W0=rep.worldFrom; if(!W)return '';
+  const ar=rep.area||0, EA=EDGES.filter(e=>e.ar===ar), NA={}; for(const id in NODES)if(NODES[id].ar===undefined||NODES[id].ar===ar)NA[id]=NODES[id];
   const trips=id=>W.trips[id]||0, saf=id=>trips(id)>=60?2:trips(id)>=1?1:0;
-  const known={gate:true}; for(const e of EDGES)if(trips(e.id)){known[e.a]=true; known[e.b]=true;}
+  const known={gate:true}; for(const e of EA)if(trips(e.id)){known[e.a]=true; known[e.b]=true;}
   const P=id=>MAPXY[id], mid=(e)=>{const a=P(e.a),b=P(e.b); return e.cut?`M${a[0]} ${a[1]} Q ${(a[0]+b[0])/2} ${Math.min(a[1],b[1])-34} ${b[0]} ${b[1]}`:`M${a[0]} ${a[1]} L${b[0]} ${b[1]}`;};
   let roads='', glow='', marks='', labels='', faces='';
-  for(const e of EDGES){
+  for(const e of EA){
     if(e.cut&&!W.cut){ if(W.clue&&known[e.b])roads+=`<path d="${mid(e)}" class="rd q"/>`; continue; }
     if(e.bossWay&&!trips(e.id)){ if(known[e.a]&&rep.explore>=100)roads+=`<path d="${mid(e)}" class="rd q"/>`; continue; }
     if(!trips(e.id)){ if(known[e.a]||known[e.b])roads+=`<path d="${mid(e)}" class="rd q"/>`; continue; }
     if(!(W0.trips[e.id]))glow+=`<path d="${mid(e)}" class="rd new"/>`;
     roads+=`<path d="${mid(e)}" class="rd s${saf(e.id)}"/>`;
   }
-  for(const id in NODES){
+  for(const id in NA){
     const n=NODES[id], [x,y]=P(id);
-    const near=EDGES.some(e=>(e.a===id||e.b===id)&&(known[e.a]||known[e.b])&&!(e.cut&&!W.cut)&&!(e.bossWay&&rep.explore<100));
+    const near=EA.some(e=>(e.a===id||e.b===id)&&(known[e.a]||known[e.b])&&!(e.cut&&!W.cut)&&!(e.bossWay&&rep.explore<100));
     if(!known[id]){ if(near)marks+=`<circle cx="${x}" cy="${y}" r="5" class="nd unk"/><text x="${x}" y="${y+3}" class="qm">?</text>`; continue; }
     const alive=n.master&&!W.master[id], bossAlive=n.boss&&!rep.bossDown;
     if(n.room||n.boss)marks+=`<rect x="${x-7}" y="${y-7}" width="14" height="14" rx="2" class="nd ${alive||bossAlive?'foe':W.searched[id]||n.boss?'done':''}"/>`;
     else marks+=`<circle cx="${x}" cy="${y}" r="${id==='gate'?7:5}" class="nd ${n.rest?'rest':''}"/>`;
     if(alive||bossAlive)marks+=`<text x="${x}" y="${y+3.5}" class="foe-t">${n.boss?'親':'主'}</text>`;
     else if((n.master&&W.master[id])||(n.boss&&rep.bossDown))marks+=`<path d="M${x-3.5} ${y} l2.5 3 l4.5 -6" class="chk"/>`;
-    const below=!(id==='spring'||id==='boss'||id==='r2');
+    const below=!MAP_ABOVE.has(id);
     labels+=`<text x="${x}" y="${below?y+19:y-12}" class="lb">${n.n}</text>`;
   }
   // きょう、それぞれがいちばん奥まで行った場所に顔を置く
   const at={}; for(const r of rep.advs){ if(!r.reach||r.reach==='gate')continue; (at[r.reach]=at[r.reach]||[]).push(r); }
-  for(const id in at){ const [x,y]=P(id), below=(id==='spring'||id==='boss'||id==='r2'||id==='hall'); at[id].forEach((r,i)=>{ const fx=below?x+12+i*15:x-((at[id].length-1)*7)+i*14-7, fy=below?y-7:y-27;
+  for(const id in at){ const [x,y]=P(id), below=MAP_SIDE.has(id); at[id].forEach((r,i)=>{ const fx=below?x+12+i*15:x-((at[id].length-1)*7)+i*14-7, fy=below?y-7:y-27;
       faces+=`<g><circle cx="${fx+7}" cy="${fy+7}" r="8" class="fc"/><image href="${faceURL(r)}" x="${fx}" y="${fy}" width="14" height="14" clip-path="circle(7px at 7px 7px)" style="image-rendering:pixelated"/><title>${r.name}</title></g>`; }); }
-  const newN=EDGES.filter(e=>trips(e.id)&&!W0.trips[e.id]).length;
+  const newN=EA.filter(e=>trips(e.id)&&!W0.trips[e.id]).length;
   const news=[]; if(newN)news.push(`新しい道 ${newN}本`);
-  for(const id in NODES){ if(W.master[id]&&!W0.master[id])news.push(`${NODES[id].n}の主を倒した`); }
+  for(const id in NA){ if(W.master[id]&&!W0.master[id])news.push(`${NODES[id].n}の主を倒した`); }
   if(W.clue&&!W0.clue&&!W.cut)news.push('近道の手がかりを発見'); if(W.cut&&!W0.cut)news.push('近道が開通');
-  return `<section class="rmap" id="rpMap"><h4 class="sec">探索の地図</h4>
+  return `<section class="rmap" id="rpMap"><h4 class="sec">探索の地図：${AREAS[ar].name}</h4>
     <div class="mapbox"><svg viewBox="0 0 336 188" role="img" aria-label="これまでに歩いた道と、きょうの到達点">${glow}${roads}${marks}${labels}${faces}</svg></div>
     <div class="maplg"><span><i class="l q"></i>未踏</span><span><i class="l s1"></i>踏みあと</span><span><i class="l s2"></i>ならされた道</span><span><i class="l new"></i>きょう初めて</span></div>
     ${news.length?`<p class="rc-note">${news.join(' ／ ')}</p>`:''}</section>`;
@@ -2352,10 +2414,10 @@ function openReport(opts={}){
     <div class="rp-head"><h2>${rep.day}日目の報告書</h2><div class="stamp" id="rpStamp"><span>第${rep.day}日</span></div></div>
     <div class="tally">
       <div class="t-res"><span class="t-lbl"><i class="shard"></i>${RES}</span><b id="tRes">${res0}</b><em id="tAdd">+0</em></div>
-      <div class="t-ex"><span class="t-lbl">洞窟の探索</span><div class="xpbar big"><i id="tExBar" style="width:${ex0}%"></i></div><b id="tEx">${Math.floor(ex0)}%</b></div>
+      <div class="t-ex"><span class="t-lbl">${AREAS[rep.area||0].short}の探索</span><div class="xpbar big"><i id="tExBar" style="width:${ex0}%"></i></div><b id="tEx">${Math.floor(ex0)}%</b></div>
     </div>
     ${rep.built&&rep.built.length?`<p class="rc-note">街のできごと：${rep.built.join(' ／ ')}</p>`:''}
-    <div class="won" id="rpWon" ${rep.won?'':'hidden'}>西の洞窟の親玉を倒した！ ここまでがこの版の目標です。</div>
+    <div class="won" id="rpWon" ${rep.won?'':'hidden'}>${rep.cleared?`${rep.cleared.name}の親玉を倒した！ ${rep.cleared.next?`${rep.cleared.chapter}章「${rep.cleared.next}」へ。冒険者の上限・装備の入荷できる段階が上がり、大工を雇えるようになり、白魔法の学院が目覚めた。`:'ここまでがこの版の目標です。'}`:''}</div>
     ${mapHTML(rep)}
     <div class="cards">${rep.advs.map(r=>cardHTML(r,rep.day,rep.advs)).join('')}</div>`;
   $('reportActions').innerHTML='<button class="toggle" id="skipRep">スキップ</button>';
@@ -2444,7 +2506,7 @@ function openOrders(){
   const rep=S.lastReport;
   const hints=hintsFor(rep);
   const bl=bossLock(S); if(bl)S.bossGo=false;
-  for(const id in S.nom){const a=S.advs.find(a=>a.id===+id); if(!a||a.injured)delete S.nom[id];}
+  for(const id in S.nom){const a=S.advs.find(a=>a.id===+id), v=S.nom[id]; if(!a||a.injured||(v.startsWith('job:')&&jobLock(S,a,v.slice(4))))delete S.nom[id];}
   $('reportSheet').innerHTML=`
     <h2>${S.day}日目の指示</h2>
     ${rep?'':'<p>城下町には家が2軒と立て札だけ。冒険者が毎朝歩く道を考えて、武器屋や公園を建てていきましょう。建物は、大工へのおふれを出すと建ててもらえます。</p>'}
@@ -2453,8 +2515,8 @@ function openOrders(){
       <div class="notice big"><b>${BH.explore.name}</b><p>${BH.explore.desc}</p></div>
       <label class="bhopt ${bl?'lock':''}"><input type="checkbox" id="bossGo" ${S.bossGo?'checked':''} ${bl?'disabled':''}><b>${BH.boss.name}</b><small>${bl||BH.boss.desc}</small></label></div>
     <div class="blk"><h4 class="sec">冒険者へのおふれ（その日かぎり）</h4>
-    <div class="nomlist">${S.advs.map(a=>`<label class="nomrow"><img class="face" src="${faceURL(a)}" alt=""><span class="nn"><b>${a.name}</b><small>${PP(a).name} · Lv${a.lv}</small><small>合間によく${STYLE[PP(a).style]}</small></span>
-      ${a.injured?'<span class="chip off">療養中</span>':`<select data-nom="${a.id}" aria-label="${a.name}へのおふれ"><option value="">攻略に出る</option><option value="rest" ${S.nom[a.id]==='rest'?'selected':''}>${BH.rest.name}</option></select>`}</label>`).join('')}</div></div>
+    <div class="nomlist">${S.advs.map(a=>`<label class="nomrow"><img class="face" src="${faceURL(a)}" alt=""><span class="nn"><b>${a.name}</b><small>${PP(a).name} · Lv${a.lv}${a.job?` · ${JOBS[a.job].name}`:''}</small><small>合間によく${STYLE[PP(a).style]}</small></span>
+      ${a.injured?'<span class="chip off">療養中</span>':`<select data-nom="${a.id}" aria-label="${a.name}へのおふれ"><option value="">攻略に出る</option><option value="rest" ${S.nom[a.id]==='rest'?'selected':''}>${BH.rest.name}</option>${Object.keys(JOBS).map(j=>{const l=jobLock(S,a,j); return first(S,JOBS[j].school)&&a.job!==j?`<option value="job:${j}" ${S.nom[a.id]==='job:'+j?'selected':''} ${l?'disabled':''}>${JOBS[j].name}に転職${l?`（${l}）`:''}</option>`:'';}).join('')}</select>`}</label>`).join('')}</div></div>
     <div class="blk"><h4 class="sec">大工へのおふれ</h4>
       ${S.sites.length?S.sites.map(siteRow).join(''):'<p class="rc-note">いま出ているおふれはない。</p>'}
       <button class="toggle" id="planBtn">町を見て、建設のおふれを出す</button></div>
@@ -2489,6 +2551,7 @@ $('resLbl').textContent=RES;
 $('startBtn').addEventListener('click',()=>{$('titleModal').hidden=true; openReport();});
 // 開発用：コンソールやテストから日を早送りする  __tct.skip(3) で3日進めて報告書を開く
 if(DEV)window.__sel=v=>{sel=v; renderPanel();};
+if(DEV)window.__orders=()=>openOrders();
 if(DEV)window.__tct={get S(){return S;},skip(n=1){for(let i=0;i<n;i++){if(S.phase!=='day')startDay(S); tick(S,2000);} wasPhase=S.phase; $('titleModal').hidden=true; $('dayCard').hidden=true; $('duskCard').hidden=true; openReport({instant:true});}};
 updateHud(); renderPanel(); requestAnimationFrame(loop);
 initGfx().then(g=>{GFX=g;}).catch(e=>{console.error(e); $('glfail').hidden=false;});
