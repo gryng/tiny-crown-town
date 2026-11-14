@@ -158,8 +158,9 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .qrow .qn{font-family:var(--f-head);font-weight:800;font-size:18px;width:26px;height:26px;display:grid;place-items:center;border-radius:50%;background:var(--accent);color:var(--paper)}
 .qrow .qn.off{background:transparent;color:var(--muted);border:1.5px dashed #241c1466}
 .qrow b{font-family:var(--f-head);font-weight:800;font-size:15px;line-height:1.35}
-.qline{margin:8px 0 0;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;font-size:14px}.qline .xl{font-size:12px;color:var(--muted);font-weight:700}.qline b{font-family:var(--f-head);font-weight:800}.qline em{font-style:normal;font-weight:800;margin-left:auto}.qline .qng{color:var(--muted)}.qline small{color:var(--muted)}
-.moodrow{margin:6px 0 0;display:flex;gap:8px;align-items:baseline;font-size:14px}.moodrow .xl{font-size:12px;color:var(--muted);font-weight:700}.moodrow small{margin-left:auto;font-size:11px;color:var(--muted)}
+.qline{margin:10px 0 0;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;font-size:14px}.qline .xl{font-size:12px;color:var(--muted);font-weight:700}.qline b{font-family:var(--f-head);font-weight:800}.qline em{font-style:normal;font-weight:800;margin-left:auto}.qline .qng{color:var(--muted)}.qline small{color:var(--muted)}
+.moodrow{margin:6px 0 0;display:flex;gap:8px;align-items:baseline;font-size:14px}.moodrow .xl{font-size:12px;color:var(--muted);font-weight:700}.moodrow i{font-style:normal;font-weight:800}.moodrow .up{color:#2f7f3a}.moodrow .dn{color:var(--bad)}
+.moodrow small{margin-left:auto;font-size:11px;color:var(--muted)}
 .moodline{margin:0;font-size:15px}
 .hint1{margin:0 0 12px;font-size:13px;line-height:1.55;border-left:4px solid var(--accent);padding:6px 10px;background:#f3ead3}
 .mt{font-weight:800}.mt.m0{color:#2f7f3a}.mt.m1{color:var(--accent)}.mt.m2{color:var(--muted)}.mt.m3{color:#b0702a}.mt.m4{color:var(--bad)}
@@ -530,7 +531,7 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.19.2 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.19.3 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 広場の立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -2839,17 +2840,17 @@ function cardHTML(r,day,rows){
   const need0=r.lvFrom*25;
   return `<article class="rc" data-id="${r.id}">
     <div class="rc-top"><div class="rc-face"><img class="face" src="${faceURL(r)}" alt=""><span class="lvb">Lv<b class="lvn">${r.lvFrom}</b></span><i class="burst"></i></div>
-      <div class="who"><b>${r.name}${r.mood?` <span class="mood">${MOOD[r.mood]}</span>`:''}</b><small>${P.name}${r.job?` · ${JOBS[r.job].name}`:''}</small></div>${chip}</div>
+      <div class="who"><b>${r.name}</b><small>${P.name}${r.job?` · ${JOBS[r.job].name}`:''}</small></div>${chip}</div>
     <div class="rc-body">
       <p class="bub">${line}</p>
+      ${qline}
       <div class="lvbanner"><strong>レベルアップ！</strong><span>Lv${r.lvFrom} → Lv${r.lv}</span><span>体力 +${r.ups.reduce((m,u)=>m+u.hp,0)}${r.ups.some(u=>u.atk)?`　攻撃 +${r.ups.reduce((m,u)=>m+u.atk,0)}`:''}${r.ups.some(u=>u.mag)?`　魔力 +${r.ups.reduce((m,u)=>m+(u.mag||0),0)}`:''}${r.ups.some(u=>u.def)?`　守り +${r.ups.reduce((m,u)=>m+(u.def||0),0)}`:''}</span></div>
       ${went?`<div class="blk"><h4 class="sec">きょうの成果</h4><dl class="tiles">
         <div class="tile"><dt><i class="shard"></i>${RES}</dt><dd>+<b class="gv-res">0</b></dd></div>
         <div class="tile"><dt><i class="coin"></i>ゴールド</dt><dd>+<b class="gv-gold">0</b></dd></div>
         <div class="tile"><dt>探索</dt><dd>+<b class="gv-ex">0.0</b><small>%</small></dd></div></dl>
         <div class="xp"><span class="xl">経験値</span><div class="xpbar"><i style="width:${r.expFrom/need0*100}%"></i></div><span class="xn"><b class="xv">${r.expFrom}</b>/<span class="xm">${need0}</span></span></div></div>`:''}
-      ${qline}
-      ${r.moraleFrom!=null?`<p class="moodrow"><span class="xl">やる気</span><span class="mt m${moodLv(r.moraleFrom)}">${tierName(r.moraleFrom)}</span>${moodLv(r.moraleFrom)!==moodLv(r.morale)?` → <span class="mt m${moodLv(r.morale)}">${tierName(r.morale)}</span>`:''}<small>あすの朝</small></p>`:''}
+      ${r.moraleFrom!=null?`<p class="moodrow"><span class="xl">あすのやる気</span><span class="mt m${moodLv(r.morale)}">${tierName(r.morale)}</span>${moodLv(r.morale)<moodLv(r.moraleFrom)?'<i class="up">↑</i>':moodLv(r.morale)>moodLv(r.moraleFrom)?'<i class="dn">↓</i>':''}<small>けさは ${tierName(r.moraleFrom)}</small></p>`:''}
       ${note}
       <details class="more"><summary>くわしく見る</summary><div class="more-body">${flow}${stats}${gear}${logHTML(r)}</div></details>
     </div>
