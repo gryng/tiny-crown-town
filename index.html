@@ -487,7 +487,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.11.0 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.11.1 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -905,14 +905,18 @@ function route(S,from,to,opt={}){
 }
 function gainExp(S,a,n){a.exp+=n; a.rep.exp+=n; while(a.exp>=a.lv*25){a.exp-=a.lv*25; a.lv++; a.hpMax+=3; a.atk+=1; a.rep.ups.push({lv:a.lv,hp:3,atk:1}); a.rep.ev.push({t:S.t,k:'u'});}}
 const atkOf=a=>a.atk+(PP(a).atk||0);
-const digStyle=a=>PP(a).style==='mine'||PP(a).style==='treasure';
+// 合間にやることは、その日の気分で決まる。性格の得意（style）が7割、ほかの2つが1割5分ずつ
+const STYLES=['mine','treasure','train'], STYLE_MAIN=.7;
+function rollStyle(S,a){const main=PP(a).style, x=S.rng(); if(x<STYLE_MAIN)return main; const rest=STYLES.filter(k=>k!==main); return rest[x<STYLE_MAIN+(1-STYLE_MAIN)/2?0:1];}
+const styleOf=a=>(a.rep&&a.rep.style)||PP(a).style;
+const digStyle=a=>styleOf(a)==='mine'||styleOf(a)==='treasure';
 // 勝てそうかの見立て（部屋の主や親玉に挑むかどうか）
 function winnable(a,m,slack){
   const rounds=Math.ceil(m.hp/Math.max(1,atkOf(a)-m.def)), hurt=rounds*Math.max(1,m.atk-a.def)*(PP(a).dmg||1);
   return a.hp-hurt>a.hpMax*slack;
 }
 function depart(S,a){
-  a.rep.dep=S.t; a.state='away'; a.hidden=true; a.rep.reach='gate';
+  a.rep.dep=S.t; a.state='away'; a.hidden=true; a.rep.reach='gate'; a.rep.style=rollStyle(S,a); a.rep.styleOdd=a.rep.style!==PP(a).style;
   a.out={at:'gate',edge:null,act:null,fight:null,mode:'go',poison:0,detours:0,rests:0,want:null};
 }
 const turnsLeft=S=>Math.floor((GATE_BY-S.t)/TURN);
@@ -948,7 +952,7 @@ function fightRound(S,F){
       a.rep.elem+=got; a.gold+=m.gold; a.rep.gold+=m.gold; a.rep.wins++; a.morale=Math.max(0,a.morale-3);
       ev(S,a,m.boss?'B':'w',{m:F.mid,r:F.round,c:F.crit[a.id]||0,co:names(a),e:got});
       if(m.poison&&F.hit[a.id]){a.out.poison=6; ev(S,a,'p',{});}
-      gainExp(S,a,PP(a).style==='train'?Math.round(m.xp*1.25):m.xp);
+      gainExp(S,a,styleOf(a)==='train'?Math.round(m.xp*1.25):m.xp);
       if(m.boss){a.rep.boss=true;} if(m.master)a.rep.master=m.n;
       for(const nm of names(a)){a.rep.coN=a.rep.coN||{}; a.rep.coN[nm]=(a.rep.coN[nm]||0)+1;}
       a.out.fight=null;
@@ -1037,7 +1041,7 @@ function decide(S,a){
   // 部屋：調べる、近道を開く
   if(N.room&&!masterAlive(S,id)){
     if(W.searchDay[id]!==S.day&&slack>3){o.act={k:'search',left:3}; return;}
-    if(digStyle(a)){o.digs=o.digs||{}; const vk=P.style==='mine'?'vein':'veinG', v=W[vk][id]===undefined?1:W[vk][id]; if((o.digs[id]||0)<2&&v>.25&&slack>6){o.digs[id]=(o.digs[id]||0)+1; o.act={k:P.style,left:3}; return;}}
+    if(digStyle(a)){o.digs=o.digs||{}; const vk=styleOf(a)==='mine'?'vein':'veinG', v=W[vk][id]===undefined?1:W[vk][id]; if((o.digs[id]||0)<2&&v>.25&&slack>6){o.digs[id]=(o.digs[id]||0)+1; o.act={k:styleOf(a),left:3}; return;}}
     if(N.clue&&W.clue&&!W.cut&&W.opening!==S.day&&slack>8){W.opening=S.day; o.act={k:'open',left:6}; return;}
   }
   // 行き先を決める
@@ -1049,7 +1053,7 @@ function decide(S,a){
     if(winnable(a,MON.boss,P.brave?-1:P.safe?.3:0))offer('boss',50,'boss',{boss:true});
     else if(!a.rep.shy){a.rep.shy=true; a.rep.shyNote='親玉にはまだ勝てそうにないと見て、腕をみがいた';}
   }
-  const dig=digStyle(a), vk=P.style==='mine'?'vein':'veinG';
+  const dig=digStyle(a), vk=styleOf(a)==='mine'?'vein':'veinG';
   for(const nid in NODES){ const n=NODES[nid]; if(!n.room)continue;
     if(dig&&!masterAlive(S,nid)&&W.searchDay[nid]===S.day){ const v=W[vk][nid]===undefined?1:W[vk][nid]; if(((o.digs||{})[nid]||0)<2&&v>.25)offer(nid,-2,'dig'); }
     if(masterAlive(S,nid)){ if(can(nid))offer(nid,P.roll?6:3,'master'); else if(!a.rep.shy){a.rep.shy=true; a.rep.shyNote=`${n.n}の主にはまだ勝てそうにないと見て、手前で腕をみがいた`;} continue; }
@@ -1971,7 +1975,7 @@ function renderPanel(){
 let pickAdv=0;
 // おふれの名前と中身（立て札・冒険者パネルで共通）
 const BH={
-  explore:{name:'西の洞窟を攻略せよ',desc:'道や部屋を調べ、魔物と戦って時のかけらを持ち帰る。合間に掘るか、宝を探すか、腕をみがくかは、それぞれの性格しだい。'},
+  explore:{name:'西の洞窟を攻略せよ',desc:'道や部屋を調べ、魔物と戦って時のかけらを持ち帰る。合間に掘るか、宝を探すか、腕をみがくかは、それぞれの性格とその日の気分しだい。'},
   boss:{name:'親玉に挑め',desc:'洞窟のいちばん奥、親玉の間をめざす。勝ち目がないと見た冒険者は、手前で腕をみがく。'},
   rest:{name:'休みをとれ',desc:'その日は家で休んで、やる気を回復する。'},
 };
@@ -2272,7 +2276,7 @@ function cardHTML(r,day,rows){
       <tr><th scope="row">武器</th><td>${WEAPONS[r.wlv]}${r.wTag?`<small class="pr">${r.wTag}のおさがり</small>`:''}${nw('weapon')}</td></tr>
       <tr><th scope="row">防具</th><td>${ARMORS[r.alv]}${r.aTag?`<small class="pr">${r.aTag}のおさがり</small>`:''}${nw('armor')}</td></tr>
       <tr><th scope="row">お守り</th><td class="none">なし</td></tr></tbody></table></div>`;
-  const flow=tl?`<div class="blk"><h4 class="sec">一日の流れ</h4>${tl}${r.behest?`<p class="rc-note">受けたおふれ：${BH[r.behest].name}${r.named?'（指名）':''}</p>`:''}</div>`:'';
+  const flow=tl?`<div class="blk"><h4 class="sec">一日の流れ</h4>${tl}${r.behest?`<p class="rc-note">受けたおふれ：${BH[r.behest].name}${r.named?'（指名）':''}${r.style?`。合間に${STYLE[r.style]}${r.styleOdd?'（きょうはめずらしく）':''}`:''}</p>`:''}</div>`:'';
   const bits=[]; if(r.overslept)bits.push(`きのうの傷がひびいて${r.overslept}分寝坊した`); if(r.healed)bits.push('往診のおかげで昼から動けた');
   if(r.note&&!(r.note==='傷ついて引き返した'&&r.hurt)&&!(r.note==='やられて逃げ帰った'&&r.ko))bits.push(r.note); if(r.missedWage)bits.push('日給をもらいそびれた');
   if(r.wish)bits.push(`${Object.values(r.wish).join('と')}が欲しいが、まだ店に入っていない`);
@@ -2449,7 +2453,7 @@ function openOrders(){
       <div class="notice big"><b>${BH.explore.name}</b><p>${BH.explore.desc}</p></div>
       <label class="bhopt ${bl?'lock':''}"><input type="checkbox" id="bossGo" ${S.bossGo?'checked':''} ${bl?'disabled':''}><b>${BH.boss.name}</b><small>${bl||BH.boss.desc}</small></label></div>
     <div class="blk"><h4 class="sec">冒険者へのおふれ（その日かぎり）</h4>
-    <div class="nomlist">${S.advs.map(a=>`<label class="nomrow"><img class="face" src="${faceURL(a)}" alt=""><span class="nn"><b>${a.name}</b><small>${PP(a).name} · Lv${a.lv}</small><small>合間に${STYLE[PP(a).style]}</small></span>
+    <div class="nomlist">${S.advs.map(a=>`<label class="nomrow"><img class="face" src="${faceURL(a)}" alt=""><span class="nn"><b>${a.name}</b><small>${PP(a).name} · Lv${a.lv}</small><small>合間によく${STYLE[PP(a).style]}</small></span>
       ${a.injured?'<span class="chip off">療養中</span>':`<select data-nom="${a.id}" aria-label="${a.name}へのおふれ"><option value="">攻略に出る</option><option value="rest" ${S.nom[a.id]==='rest'?'selected':''}>${BH.rest.name}</option></select>`}</label>`).join('')}</div></div>
     <div class="blk"><h4 class="sec">大工へのおふれ</h4>
       ${S.sites.length?S.sites.map(siteRow).join(''):'<p class="rc-note">いま出ているおふれはない。</p>'}
