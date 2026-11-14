@@ -533,7 +533,7 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.19.4 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.19.5 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 広場の立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -2756,6 +2756,7 @@ const easeOut=k=>1-Math.pow(1-k,3);
 function logHTML(r){
   // 時刻つきの旅の記録（いまある出来事の記録から組み立てる）
   const L=[]; const add=(t,txt)=>L.push({t,txt});
+  if(r.moraleFrom!=null)add(r.leftHome??360,`けさのやる気は「${tierName(r.moraleFrom)}」`);
   if(r.leftHome!=null)add(r.leftHome,'家を出た');
   r.bought.forEach(b=>add(r.leftHome+1,`${b.name}を買った`));
   if(r.dep!=null)add(r.dep,'城門から出発した');
@@ -2831,9 +2832,9 @@ function cardHTML(r,day,rows){
       <tr><th scope="row">防具</th><td>${ARMORS[r.alv]}${r.aTag?`<small class="pr">${r.aTag}のおさがり</small>`:''}${nw('armor')}</td></tr>
       <tr><th scope="row">お守り</th><td class="none">なし</td></tr></tbody></table></div>`;
   const flow=tl?`<div class="blk"><h4 class="sec">一日の流れ</h4>${tl}</div>`:'';
-  const qline=r.quest?`<p class="qline"><span class="xl">依頼</span><b>${r.jobNew?`${r.jobNew}に転職したあと、`:''}${r.quest.name}</b>${r.quest.k==='self'?'<small>合う依頼がなく自主練</small>':r.questDone?`<em class="qok">達成！ ${r.pay||''}G</em>`:`<em class="qng">未達成 ${r.pay||10}G</em>`}</p>`:r.behest==='rest'?'<p class="qline"><span class="xl">依頼</span><b>休ませた</b></p>':'';
+  const qline=r.quest?`<p class="qline"><span class="xl">依頼</span><b>${r.jobNew?`${r.jobNew}に転職したあと、`:''}${r.quest.name}</b>${r.quest.k==='self'?'<small>合う依頼がなく自主練</small>':r.questDone?`<em class="qok">達成！ ${r.pay?r.pay+'G':'（受け取りそびれ）'}</em>`:`<em class="qng">未達成${r.pay?' '+r.pay+'G':''}</em>`}</p>`:r.behest==='rest'?'<p class="qline"><span class="xl">依頼</span><b>休ませた</b></p>':'';
   const bits=[]; if(r.ar!=null&&r.dep!=null&&r.ar!==(S.lastReport?S.lastReport.area:S.area))bits.push(`腕前に合った${AREAS[r.ar].name}へ向かった`); if(r.party)bits.push(`酒場で待ち合わせて、${r.party.join('、')}と組んで出かけた`); if(r.leftBehind)bits.push('酒場の待ち合わせに間に合わず、ひとりで出かけた'); if(r.noMate)bits.push('酒場で待ったが仲間が来ず、ひとりで出かけた'); if(r.jobNew)bits.push(`学び舎で手ほどきを受けて、${r.jobNew}になった`); if(r.overslept)bits.push(`きのうの傷がひびいて${r.overslept}分寝坊した`); if(r.healed)bits.push('往診のおかげで昼から動けた');
-  if(r.note&&!(r.note==='傷ついて引き返した'&&r.hurt)&&!(r.note==='やられて逃げ帰った'&&r.ko))bits.push(r.note); if(r.missedWage)bits.push('日給をもらいそびれた');
+  if(r.note&&!(r.note==='傷ついて引き返した'&&r.hurt)&&!(r.note==='やられて逃げ帰った'&&r.ko))bits.push(r.note); if(r.missedWage&&r.quest&&r.quest.k!=='self')bits.push('城に寄れず、報酬を受け取りそびれた');
   if(r.wish)bits.push(`${Object.values(r.wish).join('と')}が欲しいが、まだ店に入っていない`);
   const hurt=r.injuredNew==='big'?'<span class="hurt">大けが。あすから2日は療養（医者の往診があれば1日）</span>':r.ko?'<span class="hurt">やられた。あすは療養（医者の往診があれば昼から動ける）</span>'
     :r.hurt?`<span class="hurt">傷ついて帰ってきた。あすは寝坊しそう${r.clinic?'（診療所に寄ったので軽くすむ）':''}</span>`:'';
@@ -2852,7 +2853,7 @@ function cardHTML(r,day,rows){
         <div class="tile"><dt><i class="coin"></i>ゴールド</dt><dd>+<b class="gv-gold">0</b></dd></div>
         <div class="tile"><dt>探索</dt><dd>+<b class="gv-ex">0.0</b><small>%</small></dd></div></dl>
         <div class="xp"><span class="xl">経験値</span><div class="xpbar"><i style="width:${r.expFrom/need0*100}%"></i></div><span class="xn"><b class="xv">${r.expFrom}</b>/<span class="xm">${need0}</span></span></div></div>`:''}
-      ${r.moraleFrom!=null?`<p class="moodrow"><span class="xl">あすのやる気</span><span class="mt m${moodLv(r.morale)}">${tierName(r.morale)}</span>${moodLv(r.morale)<moodLv(r.moraleFrom)?'<i class="up">↑</i>':moodLv(r.morale)>moodLv(r.moraleFrom)?'<i class="dn">↓</i>':''}<small>けさは ${tierName(r.moraleFrom)}</small></p>`:''}
+      ${r.moraleFrom!=null?`<p class="moodrow"><span class="xl">あすのやる気</span><span class="mt m${moodLv(r.morale)}">${tierName(r.morale)}</span>${moodLv(r.morale)<moodLv(r.moraleFrom)?'<i class="up">↑</i>':moodLv(r.morale)>moodLv(r.moraleFrom)?'<i class="dn">↓</i>':''}</p>`:''}
       ${note}
       <details class="more"><summary>くわしく見る</summary><div class="more-body">${flow}${stats}${gear}${logHTML(r)}</div></details>
     </div>
