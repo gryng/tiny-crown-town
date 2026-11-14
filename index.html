@@ -133,6 +133,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .tabf img{width:100%;height:100%;border-radius:50%;image-rendering:pixelated;display:block}
 .tabf[aria-pressed="true"]{border:3px solid var(--accent);box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--accent);transform:translateY(-2px)}
 .tabf .st{position:absolute;right:-2px;bottom:-2px;width:14px;height:14px;border-radius:50%;box-shadow:0 0 0 2px var(--paper),0 0 0 3.5px var(--ink);background:var(--muted)}
+.tabf .md{position:absolute;left:-6px;top:-8px;font-style:normal;font-size:19px;line-height:1;filter:drop-shadow(0 1px 0 #0006)}
 .tabf .st.prep{background:var(--gold)} .tabf .st.away{background:var(--accent-2)} .tabf .st.hurt{background:var(--bad)} .tabf .st.off{background:#a89a7c}
 .ad{display:grid;gap:10px}
 .ad-band{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;background:var(--grain),#2a2018;color:var(--paper);padding:8px 12px 8px 14px;border-radius:3px 8px 4px 7px;box-shadow:0 0 0 1.5px var(--ink),2px 3px 0 #241c1426}
@@ -245,6 +246,20 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .xpbar i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(180deg,#5fae9f,var(--accent));box-shadow:inset 0 2px 0 #ffffff55}
 .xpbar.big{height:12px;background:#4a3c2c;box-shadow:0 0 0 1.5px #0008}
 .xpbar.big i{background:linear-gradient(180deg,#f0d98a,var(--gold))}
+.hl{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:6px}
+.hl li{padding:8px 12px;font-family:var(--f-head);font-weight:800;font-size:15px;line-height:1.45;background:var(--paper-3);border-left:5px solid var(--accent);box-shadow:2px 2px 0 #241c1422}
+.hl li[data-go]{cursor:pointer}
+.hl li.big{background:var(--grain),var(--accent);color:var(--paper);border-left-color:var(--gold);font-size:17px;box-shadow:0 0 0 2px var(--ink),3px 4px 0 #0005}
+.hl li.bad{border-left-color:var(--bad);color:var(--bad)}
+.hl li.quiet{font-weight:500;color:var(--muted);border-left-color:#241c1433}
+.goalgot{margin:0 0 12px;padding:9px 12px;border:2px dashed var(--gold);display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px;line-height:1.5}
+.goalgot b{flex:1 0 100%;font-family:var(--f-head)} .goalgot b small{font-weight:500;color:var(--muted)}
+.goalgot span::before{content:'✓ ';color:var(--accent);font-weight:800} .goalgot em{font-style:normal;color:var(--muted);margin-left:4px}
+.mood{font-size:.9em}
+.goals{margin:0 0 4px} .goals summary{cursor:pointer;font-family:var(--f-head);font-weight:800;padding:6px 0}
+.goals ul{list-style:none;margin:6px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:3px 14px;font-size:13px;line-height:1.5}
+.goals li{display:flex;gap:6px;min-width:0} .goals li::before{content:'□';color:var(--muted)} .goals li.done{color:var(--muted)} .goals li.done::before{content:'✓';color:var(--accent);font-weight:800}
+.goals li em{font-style:normal;margin-left:auto;color:var(--muted);font-size:12px}
 #rpWon{transform:scale(.9);opacity:0}
 #rpWon.in{animation:slam .4s cubic-bezier(.2,1.5,.4,1) forwards}
 @keyframes slam{from{transform:scale(1.5) rotate(-3deg);opacity:0}to{transform:scale(1) rotate(-.6deg);opacity:1}}
@@ -493,7 +508,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.13.1 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.14.0 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -1030,7 +1045,7 @@ function goHome(S,a,why,flag){const o=a.out; if(o.mode==='go'){o.mode='home'; a.
 function comeBack(S,a){
   const o=a.out; if(o.poison>0)a.rep.hurt=true;
   a.out=null; a.pos={...GATE}; a.hidden=false; S.elem+=a.rep.elem; a.rep.back=S.t; a.slow=a.ko;
-  if(a.ko||a.rep.losses>a.rep.wins)react(a,'sad'); a.last={k:'back'};
+  a.rep.mood=moodOf(a); react(a,'m_'+a.rep.mood); a.last={k:'back'};
   const cl=first(S,'clinic'); if(cl&&a.rep.hurt&&!a.ko)goTo(S,a,cl.door,'clinic'); else goTo(S,a,CASTLE_DOOR,'castle'); // 傷ついていたら、城の前に診療所へ寄る
 }
 function startFight(S,a,mid,key,atNode){
@@ -1063,6 +1078,7 @@ function fightRound(S,F){
       ev(S,a,m.boss?'B':'w',{m:F.mid,r:F.round,c:F.crit[a.id]||0,co:names(a),e:got,h:(F.heal||{})[a.id]||0,hb:(F.healed||{})[a.id]||null});
       if(m.poison&&F.hit[a.id]){ if(F.members.some(x=>x.job==='white'&&x.lv>=8))ev(S,a,'pc',{}); else {a.out.poison=6; ev(S,a,'p',{});} }
       gainExp(S,a,styleOf(a)==='train'?Math.round(m.xp*1.25):m.xp);
+      if(m.master)a.rep.masterAt=F.atNode;
       if(m.boss){a.rep.boss=true;} if(m.master)a.rep.master=m.n;
       for(const nm of names(a)){a.rep.coN=a.rep.coN||{}; a.rep.coN[nm]=(a.rep.coN[nm]||0)+1;}
       a.out.fight=null;
@@ -1216,14 +1232,90 @@ function endDay(S){
   for(const d of S.docs){d.hidden=true; d.walk=null; d.state='idle'; d.patient=null;}
   if(S.carpFound)S.builtToday.push(`大工が街で${RES}を${S.carpFound}拾った`);
   const areaNow=S.area, nextArea=S.justWon&&S.area+1<AREAS.length;
-  S.lastReport={day:S.day,area:areaNow,cleared:S.justWon?{name:AREAS[areaNow].name,next:nextArea?AREAS[areaNow+1].name:null,chapter:(S.chapter||1)+(nextArea?1:0)}:null,won:S.justWon,built:S.builtToday.slice(),bossDown:S.bossDown,world:JSON.parse(JSON.stringify(S.world)),worldFrom:S.worldStart||newWorld(),explore:S.explore,exploreFrom:S.exploreStart||0,elemAfter:S.elem,
+  const HL=highlights(S), GN=checkGoals(S), GT=goalsOf(S);
+  S.lastReport={hl:HL,goalsNew:GN,goalsDone:GT.filter(q=>S.goals[q.id]).length,goalsAll:GT.length,day:S.day,area:areaNow,cleared:S.justWon?{name:AREAS[areaNow].name,next:nextArea?AREAS[areaNow+1].name:null,chapter:(S.chapter||1)+(nextArea?1:0)}:null,won:S.justWon,built:S.builtToday.slice(),bossDown:S.bossDown,world:JSON.parse(JSON.stringify(S.world)),worldFrom:S.worldStart||newWorld(),explore:S.explore,exploreFrom:S.exploreStart||0,elemAfter:S.elem,
     advs:S.advs.filter(a=>a.rep).map(a=>({id:a.id,name:a.name,tunic:a.tunic,hair:a.hair,pid:a.pid,k:a.k,lv:a.lv,hp:a.hp,hpMax:a.hpMax,atk:a.atk,def:a.def,morale:a.morale,gold:a.gold,wlv:a.wlv,alv:a.alv,job:a.job||null,mag:a.mag||0,wTag:a.wTag||null,aTag:a.aTag||null,...a.rep,held:a.gold,expNow:a.exp,ev:a.rep.ev.slice(),ups:a.rep.ups.slice(),bought:a.rep.bought.slice()}))};
-  if(nextArea){S.area++; S.chapter=(S.chapter||1)+1; S.explore=0; S.bossDown=false; S.bossGo=false;} // 親玉を倒したら次の章・次のエリアへ
+  if(nextArea){S.chStart=S.day+1; S.area++; S.chapter=(S.chapter||1)+1; S.explore=0; S.bossDown=false; S.bossGo=false;} // 親玉を倒したら次の章・次のエリアへ
   S.nom={}; // 個別のおふれはその日かぎり
   S.builtToday=[]; // 夜のあいだに決めたこと（投資など）は、次の報告書に載る
   S.day++; S.phase='report';
 }
 
+// ================= 帰ってきたときの顔・きょうのハイライト・章の小目標 =================
+// 門をくぐるときの顔。star:主や親玉を倒した／近道を開いた happy:成果あり ok:無事 sad:負け越しか傷つき ko:やられた grr:負けず嫌いが負けた
+function moodOf(a){
+  const r=a.rep;
+  if(r.boss||r.master||r.opened)return 'star';
+  if(a.ko)return 'ko';
+  if(r.losses>r.wins)return a.pid==='makezu'?'grr':'sad';
+  if(r.hurt)return 'sad';
+  if(r.explore>0||r.ups.length||(r.wins>=4&&r.losses<=1))return 'happy';
+  return 'ok';
+}
+const MOOD={star:'🤩',happy:'😄',ok:'🙂',sad:'😞',ko:'😵',grr:'😤'};
+const names=L=>L.length>2?`${L.slice(0,-1).join('、')}と${L[L.length-1]}`:L.join('と');
+// その日の出来事を重みの大きい順に並べる（報告書のいちばん上に3つまで出す）
+function highlights(S){
+  const H=[], A=S.advs.filter(a=>a.rep), add=(w,txt,o)=>H.push({w,txt,...o});
+  const boss=A.filter(a=>a.rep.boss); if(boss.length)add(100,`${names(boss.map(a=>a.name))}が${AREAS[S.area].name}の親玉を討伐！`,{id:boss[0].id,big:true});
+  const byNode={}; for(const a of A)if(a.rep.masterAt)(byNode[a.rep.masterAt]=byNode[a.rep.masterAt]||[]).push(a);
+  for(const id in byNode)add(80,`${names(byNode[id].map(a=>a.name))}が${NODES[id].n}の主を討伐！`,{id:byNode[id][0].id,big:true});
+  for(const a of A){ const r=a.rep;
+    if(r.opened)add(70,`${a.name}が近道を切り開いた`,{id:a.id});
+    if(r.jobNew)add(55,`${a.name}が${r.jobNew}になった`,{id:a.id});
+    if(r.injuredNew==='big')add(45,`${a.name}が大けが。2日は動けない`,{id:a.id,bad:true});
+    else if(r.injuredNew)add(35,`${a.name}がやられた。あすは療養`,{id:a.id,bad:true});
+    if(r.ups.length>=2)add(40,`${a.name}が一気にLv${r.lvFrom}からLv${a.lv}へ`,{id:a.id});
+    for(const b of r.bought)add(20,`${a.name}が${b.name}を買った`,{id:a.id});
+  }
+  const seen={}; for(const a of A)for(const e of a.rep.ev){ if(e.k==='s'&&e.first&&!seen[e.n]){seen[e.n]=1; const who=A.filter(x=>x.rep.ev.some(v=>v.k==='s'&&v.first&&v.n===e.n)); add(50,`${names(who.map(x=>x.name))}が${NODES[e.n].n}を初めて調べた`,{id:a.id});} }
+  for(const b of S.builtToday){ if(/が完成$/.test(b))add(60,b,{}); else if(/入荷$/.test(b))add(25,b,{}); }
+  for(const a of S.advs)if(a.joinDay===S.day+1)add(30,`新しい冒険者・${a.name}（${PP(a).name}）が町に来た`,{});
+  return H.sort((x,y)=>y.w-x.w);
+}
+// 章の小目標。エリアの地図から自動で作るもの（たどり着く・調べる・主を倒す…）と、町や冒険者についてのもの
+function goalsOf(S){
+  const ar=S.area, ch=S.chapter||1, W=S.world, G=[], g=(id,name,reward,test)=>G.push({id:`${ch}:${id}`,name,reward:Math.max(3,Math.round(reward/2)),test}); // ごほうびは控えめに（時のかけらの配分は段階2で見直す）
+  const E=EDGES.filter(e=>e.ar===ar||(ar===0&&e.ar===undefined)), N=Object.keys(NODES).filter(id=>(NODES[id].ar||0)===ar&&id!=='gate');
+  const trips=e=>W.trips[e.id]||0, A=()=>S.advs.filter(a=>a.rep&&a.rep.dep!==null), all=n=>A().length>=n&&A().length===S.advs.filter(a=>a.joinDay<=S.day).length;
+  for(const id of N){const n=NODES[id]; if(n.boss)continue;
+    g('at:'+id,`${n.n}にたどり着く`,5,()=>E.some(e=>(e.a===id||e.b===id)&&trips(e)));
+    if(n.room)g('room:'+id,`${n.n}を調べる`,10,()=>W.searched[id]);
+    if(n.master)g('master:'+id,`${n.n}の主を倒す`,20,()=>W.master[id]);}
+  g('roads','道をすべて歩く',15,()=>E.filter(e=>!e.bossWay&&!e.cut).every(trips));
+  g('smooth','道を1本、ならされた道にする',15,()=>E.some(e=>trips(e)>=60));
+  if(E.some(e=>e.cut)){g('clue','近道の手がかりを見つける',10,()=>W.clue); g('cut','近道を開通させる',20,()=>W.cut);}
+  g('ex50','探索を50%まで進める',10,()=>S.explore>=50); g('ex100','探索を100%にする',20,()=>S.explore>=100);
+  const built=(t,r)=>g('b:'+t,`${BUILD[t].name}を建てる`,r,()=>first(S,t)), lv=n=>g('lv'+n,`だれかがLv${n}になる`,15,()=>S.advs.some(a=>a.lv>=n));
+  const stock=n=>{g('sw'+n,`武器屋に${ITEMS.weapon[n]}を入荷させる`,15,()=>S.stock.weapon>=n); g('sa'+n,`防具屋に${ITEMS.armor[n]}を入荷させる`,15,()=>S.stock.armor>=n);};
+  const safe=n=>g('safe',`${n}人以上が出かけて、全員が無傷で帰る`,20,()=>A().length>=n&&A().every(a=>!a.rep.ko&&!a.rep.hurt&&a.rep.back!==null));
+  const early=n=>g('early',`${n}人以上が、9時30分までに門を出る`,20,()=>A().filter(a=>a.rep.dep<=570).length>=n);
+  const wins=n=>g('wins'+n,`1日に合わせて${n}勝する`,15,()=>A().reduce((t,a)=>t+a.rep.wins,0)>=n);
+  const fast=n=>g('fast',`この章を${n}日以内に終える`,30,()=>S.justWon&&S.day-(S.chStart||1)+1<=n);
+  if(ch===1){
+    built('weapon',10); built('armor',10); built('park',10); built('clinic',10);
+    g('advs4','冒険者が4人そろう',15,()=>S.advs.length>=4); stock(4); lv(5);
+    g('alllv3','4人全員がLv3以上になる',15,()=>S.advs.length>=4&&S.advs.every(a=>a.lv>=3));
+    g('used','だれかがおさがりを買う',10,()=>S.advs.some(a=>a.rep&&a.rep.bought.some(b=>b.used)));
+    safe(3); early(3); wins(15); fast(12);
+  } else {
+    built('academy',10); built('tavern',10);
+    g('white','白魔道士が生まれる',15,()=>S.advs.some(a=>a.job==='white'));
+    g('party','酒場で組んで出かける',10,()=>S.advs.some(a=>a.rep&&a.rep.party));
+    g('pmaster','組んで主を倒す',20,()=>S.advs.some(a=>a.rep&&a.rep.party&&a.rep.masterAt));
+    g('heal','いやしの光で仲間の傷をふさぐ',10,()=>S.advs.some(a=>a.rep&&a.rep.ev.some(e=>e.k==='ho'||(e.k==='w'&&e.h))));
+    g('cure','毒消しで毒を防ぐ',10,()=>S.advs.some(a=>a.rep&&a.rep.ev.some(e=>e.k==='pc')));
+    g('white8','白魔道士がLv8になる',15,()=>S.advs.some(a=>a.job==='white'&&a.lv>=8));
+    g('advs6','冒険者が6人そろう',15,()=>S.advs.length>=6); g('carp2','大工を2人にする',10,()=>S.carps.length>=2);
+    stock(6); lv(10); safe(5); early(4); wins(30); fast(10);
+  }
+  return G;
+}
+function checkGoals(S){
+  S.goals=S.goals||{}; const got=[];
+  for(const q of goalsOf(S)){ if(S.goals[q.id])continue; let ok=false; try{ok=!!q.test();}catch(e){} if(ok){S.goals[q.id]=S.day; S.elem+=q.reward; got.push({name:q.name,reward:q.reward});} }
+  return got;
+}
 // ================= 2章から始める（平均的な1章のプレイを自動で再現） =================
 function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
 const CH2_SEED=47; // 1章を平均的な日数・レベルで終える種（テストで選ぶ）
@@ -1623,6 +1715,8 @@ async function initGfx(){
     talk:g=>{const c='#8a9a8a'; P(g,c,2,3,1,1);P(g,c,5,3,1,1);P(g,c,8,3,1,1);},
   };
   for(const k in ICONS)bubTex[k]=tex(11,10,(g,w,h)=>{P(g,'#f6efdc',1,0,9,7); P(g,'#f6efdc',0,1,11,5); P(g,'#f6efdc',4,7,3,1); P(g,'#f6efdc',5,8,1,1); ICONS[k](g); outline(g,w,h,'#231a14');});
+  for(const k in MOOD)bubTex['m_'+k]=tex(44,40,g=>{g.fillStyle='#231a14'; g.beginPath(); g.roundRect(0,0,44,32,10); g.fill(); g.beginPath(); g.moveTo(15,30); g.lineTo(22,40); g.lineTo(29,30); g.fill(); g.fillStyle='#f6efdc'; g.beginPath(); g.roundRect(3,3,38,26,8); g.fill(); g.beginPath(); g.moveTo(18,28); g.lineTo(22,35); g.lineTo(26,28); g.fill();
+    g.font='22px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif'; g.textAlign='center'; g.textBaseline='middle'; g.fillText(MOOD[k],22,17);},{soft:true});
   // 窓あかりの影：冒険者のシルエットを、近くの灯った窓それぞれと反対の向きへ地面に伸ばす（1人につき近い窓2つまで）
   const winGeo=new T.PlaneGeometry(1,1).rotateX(-Math.PI/2).translate(0,0,.5);
   {const uv=winGeo.attributes.uv, pos=winGeo.attributes.position; for(let i=0;i<uv.count;i++)uv.setXY(i,pos.getX(i)+.5,pos.getZ(i));}
@@ -1656,9 +1750,9 @@ async function initGfx(){
       [b1,b2].forEach((e,i)=>{if(!e)return; const m=w.fs[i]; m.visible=true; m.position.set(px,.036+i*.002,pz); m.rotation.y=Math.atan2(e.dx,e.dz); m.scale.set(FW*U,1,.8+e.d*.75);
         m.material.uniforms.fr.value.set(w.t.offset.x,w.flip); m.material.uniforms.op.value=e.k*.55;});
       // 計算側の反応（公園でハート、店できらきら…）を短い吹き出しにする
-      if(a.react&&a.react.n!==w.rn){w.rn=a.react.n; a.bubble={kind:a.react.k,from:now,until:now+1600};}
-      const b=a.bubble, on=b&&now<b.until; w.bub.visible=!!on;
-      if(on){if(w.bub.material.map!==(bubTex[b.kind]||bubTex.talk)){w.bub.material.map=bubTex[b.kind]||bubTex.talk; w.bub.material.needsUpdate=true;} const k=Math.min(1,(now-b.from)/160); w.bub.scale.set(w.flip*k,k,1); w.bub.position.y=FH*U+.3+Math.sin(now/200)*.03;}
+      if(a.react&&a.react.n!==w.rn){w.rn=a.react.n; a.bubble={kind:a.react.k,from:now,until:now+1600,mood:a.react.k.startsWith('m_')};}
+      const b=a.bubble, on=b&&(now<b.until||(b.mood&&a.state==='walk'&&(a.goal==='castle'||a.goal==='clinic'))); w.bub.visible=!!on; // 帰りの顔は、城（か診療所）に着くまで出したまま
+      if(on){if(w.bub.material.map!==(bubTex[b.kind]||bubTex.talk)){w.bub.material.map=bubTex[b.kind]||bubTex.talk; w.bub.material.needsUpdate=true;} const k=Math.min(1,(now-b.from)/160)*(b.mood?1.7:1); w.bub.scale.set(w.flip*k,k*(b.mood?1.25:1),1); w.bub.position.y=FH*U+.3+Math.sin(now/200)*.03;}
     }
   }
 
@@ -2173,11 +2267,11 @@ function renderRoster(p){
   if(!S.advs.length){p.innerHTML='<h2>冒険者</h2><p class="lead">まだ冒険者がいない</p>'; p.dataset.mode=''; return;}
   if(!S.advs.some(a=>a.id===pickAdv))pickAdv=S.advs[0].id;
   if(p.dataset.mode!=='roster'||p.dataset.n!==String(S.advs.length)){
-    p.innerHTML=`<h2><span>冒険者 <small id="advCount"></small></span><span class="hlinks"><button class="linkb" id="seeCastle">工事</button><button class="linkb" id="seeBoard">おふれ</button></span></h2><div class="tabs" role="tablist">${S.advs.map(a=>`<button class="tabf" role="tab" data-adv="${a.id}" aria-label="${a.name}"><img src="${faceURL(a)}" alt=""><i class="st"></i></button>`).join('')}</div><div class="ad" id="advDetail" role="tabpanel"></div>`;
+    p.innerHTML=`<h2><span>冒険者 <small id="advCount"></small></span><span class="hlinks"><button class="linkb" id="seeCastle">工事</button><button class="linkb" id="seeBoard">おふれ</button></span></h2><div class="tabs" role="tablist">${S.advs.map(a=>`<button class="tabf" role="tab" data-adv="${a.id}" aria-label="${a.name}"><img src="${faceURL(a)}" alt=""><i class="st"></i><em class="md"></em></button>`).join('')}</div><div class="ad" id="advDetail" role="tabpanel"></div>`;
     p.dataset.mode='roster'; p.dataset.n=String(S.advs.length);
   }
   $('seeBoard').hidden=!first(S,'board'); $('seeCastle').textContent=S.sites.length?`工事 ${S.sites.length}件`:'工事'; $('advCount').textContent=`${S.advs.length}/${advCap(S)}人`;
-  p.querySelectorAll('.tabf').forEach(b=>{const a=S.advs.find(x=>x.id===+b.dataset.adv), [txt,cls]=status(a); b.setAttribute('aria-pressed',String(a.id===pickAdv)); b.querySelector('.st').className=`st ${cls}`; b.title=`${a.name}：${txt}`;});
+  p.querySelectorAll('.tabf').forEach(b=>{const a=S.advs.find(x=>x.id===+b.dataset.adv), [txt,cls]=status(a); b.setAttribute('aria-pressed',String(a.id===pickAdv)); b.querySelector('.st').className=`st ${cls}`; b.querySelector('.md').textContent=S.phase==='day'&&a.rep&&a.rep.mood&&a.rep.back!=null?MOOD[a.rep.mood]:''; b.title=`${a.name}：${txt}`;});
   const a=S.advs.find(x=>x.id===pickAdv), P=PP(a), [txt,cls]=status(a), r=a.rep, v=shownStats(a);
   const today=S.phase==='day'&&r&&!r.rested?[r.dep!=null?`${hm(r.dep)}に出発`:'', r.bought.length?`${r.bought.map(b=>b.name).join('、')}を買った`:''].filter(Boolean).join(' · '):'';
   $('advDetail').innerHTML=`
@@ -2438,7 +2532,7 @@ function cardHTML(r,day,rows){
   const need0=r.lvFrom*25;
   return `<article class="rc" data-id="${r.id}">
     <div class="rc-top"><div class="rc-face"><img class="face" src="${faceURL(r)}" alt=""><span class="lvb">Lv<b class="lvn">${r.lvFrom}</b></span><i class="burst"></i></div>
-      <div class="who"><b>${r.name}</b><small>${P.name}${r.job?` · ${JOBS[r.job].name}`:''}</small></div>${chip}</div>
+      <div class="who"><b>${r.name}${r.mood?` <span class="mood">${MOOD[r.mood]}</span>`:''}</b><small>${P.name}${r.job?` · ${JOBS[r.job].name}`:''}</small></div>${chip}</div>
     <div class="rc-body">
       <p class="bub">${line}</p>
       <div class="lvbanner"><strong>レベルアップ！</strong><span>Lv${r.lvFrom} → Lv${r.lv}</span><span>体力 +${r.ups.reduce((m,u)=>m+u.hp,0)}${r.ups.some(u=>u.atk)?`　攻撃 +${r.ups.reduce((m,u)=>m+u.atk,0)}`:''}${r.ups.some(u=>u.mag)?`　魔力 +${r.ups.reduce((m,u)=>m+(u.mag||0),0)}`:''}${r.ups.some(u=>u.def)?`　守り +${r.ups.reduce((m,u)=>m+(u.def||0),0)}`:''}</span></div>
@@ -2496,6 +2590,12 @@ function mapHTML(rep){
     ${news.length?`<p class="rc-note">${news.join(' ／ ')}</p>`:''}</section>`;
 }
 // opts.instant: 演出なしで結果だけ見せる（指示の画面から見返すとき）
+// きょうのハイライト：重みの大きい順に3つ。主や親玉を倒した行は帯にする
+function hlHTML(rep){
+  if(!rep.hl)return ''; const L=rep.hl.slice(0,3);
+  if(!L.length)return '<ul class="hl"><li class="quiet">静かな一日でした</li></ul>';
+  return `<ul class="hl">${L.map(h=>`<li class="${h.big?'big':''} ${h.bad?'bad':''}" ${h.id!==undefined?`data-go="${h.id}"`:''}>${h.txt}</li>`).join('')}</ul>`;
+}
 function openReport(opts={}){
   const rep=S.lastReport;
   if(!rep){showDayCard(); return;}
@@ -2503,11 +2603,13 @@ function openReport(opts={}){
   const total=rep.advs.reduce((m,a)=>m+(a.elem||0),0), res0=(rep.elemAfter??S.elem)-total, ex0=rep.exploreFrom??rep.explore;
   $('reportSheet').innerHTML=`
     <div class="rp-head"><h2>${rep.day}日目の報告書</h2><div class="stamp" id="rpStamp"><span>第${rep.day}日</span></div></div>
+    ${hlHTML(rep)}
     <div class="tally">
       <div class="t-res"><span class="t-lbl"><i class="shard"></i>${RES}</span><b id="tRes">${res0}</b><em id="tAdd">+0</em></div>
       <div class="t-ex"><span class="t-lbl">${AREAS[rep.area||0].short}の探索</span><div class="xpbar big"><i id="tExBar" style="width:${ex0}%"></i></div><b id="tEx">${Math.floor(ex0)}%</b></div>
     </div>
     ${rep.built&&rep.built.length?`<p class="rc-note">街のできごと：${rep.built.join(' ／ ')}</p>`:''}
+    ${rep.goalsNew&&rep.goalsNew.length?`<div class="goalgot"><b>小目標を達成 <small>${rep.goalsDone}/${rep.goalsAll}</small></b>${rep.goalsNew.map(q=>`<span>${q.name}<em>+${q.reward}</em></span>`).join('')}</div>`:''}
     <div class="won" id="rpWon" ${rep.won?'':'hidden'}>${rep.cleared?`${rep.cleared.name}の親玉を倒した！ ${rep.cleared.next?`${rep.cleared.chapter}章「${rep.cleared.next}」へ。冒険者の上限・装備の入荷できる段階が上がり、大工を雇えるようになり、酒場と白魔法の学院が目覚めた。`:'ここまでがこの版の目標です。'}`:''}</div>
     ${mapHTML(rep)}
     <div class="cards">${rep.advs.map(r=>cardHTML(r,rep.day,rep.advs)).join('')}</div>`;
@@ -2516,6 +2618,7 @@ function openReport(opts={}){
   const sheet=$('reportSheet');
   const skip=e=>{if(e&&e.target.closest('summary,button,a'))return; repFast=true;};
   sheet.onclick=skip; $('skipRep').onclick=()=>{repFast=true;};
+  sheet.querySelectorAll('.hl [data-go]').forEach(li=>li.addEventListener('click',e=>{e.stopPropagation(); repFast=true; const c=sheet.querySelector(`.rc[data-id="${li.dataset.go}"]`); if(c)c.scrollIntoView({block:'start',behavior:RM?'auto':'smooth'});}));
   playReport(rep,tok,res0,ex0,total).then(()=>{
     if(tok!==repTok)return; sheet.onclick=null;
     $('reportActions').innerHTML=`<button class="primary" id="next1">${opts.back?'指示にもどる':'報告書を閉じる'}</button>`;
@@ -2602,6 +2705,7 @@ function openOrders(){
     <h2>${S.day}日目の指示</h2>
     ${rep?'':'<p>城下町には家が2軒と立て札だけ。冒険者が毎朝歩く道を考えて、武器屋や公園を建てていきましょう。建物は、大工へのおふれを出すと建ててもらえます。</p>'}
     ${hints.length?`<div class="hints">${hints.map(h=>`<span>${h}</span>`).join('')}</div>`:''}
+    ${(()=>{S.goals=S.goals||{}; const G=goalsOf(S), d=G.filter(q=>S.goals[q.id]).length; return `<details class="goals blk"><summary>${S.chapter||1}章の小目標　${d}/${G.length}</summary><ul>${G.map(q=>`<li class="${S.goals[q.id]?'done':''}"><span>${q.name}</span><em>+${q.reward}</em></li>`).join('')}</ul></details>`;})()}
     <div class="blk"><h4 class="sec">全体へのおふれ</h4>
       <div class="notice big"><b>${BH.explore.name}</b><p>${BH.explore.desc}</p></div>
       <label class="bhopt ${bl?'lock':''}"><input type="checkbox" id="bossGo" ${S.bossGo?'checked':''} ${bl?'disabled':''}><b>${BH.boss.name}</b><small>${bl||BH.boss.desc}</small></label></div>
