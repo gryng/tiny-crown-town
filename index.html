@@ -516,7 +516,7 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
 .sec-bub{pointer-events:auto;position:relative;max-width:min(270px,64vw);text-align:left;font:600 13.5px/1.55 var(--f-hand);color:var(--ink);background:#fffaf0;border:1.5px solid var(--ink);border-radius:12px 14px 13px 4px;padding:8px 12px;margin-bottom:18px;box-shadow:2px 3px 0 #0005;animation:bubIn .25s ease-out}
 .sec-bub small{display:block;margin-top:2px;font:700 10.5px var(--f-body);color:var(--muted)}
 @keyframes bubIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.daycard .secline{display:flex;align-items:center;gap:10px;max-width:min(520px,88vw);font-family:var(--f-hand);font-weight:600;font-size:15px;line-height:1.5;color:var(--ink);background:#fffaf0;border:1.5px solid var(--ink);border-radius:14px;padding:8px 14px 8px 8px;text-shadow:none;animation-delay:1.1s}
+.daycard .secline{display:flex;align-items:center;gap:10px;width:min(520px,88vw);min-height:58px;font-family:var(--f-hand);font-weight:600;font-size:15px;line-height:1.5;color:var(--ink);background:#fffaf0;border:1.5px solid var(--ink);border-radius:14px;padding:8px 14px 8px 8px;text-shadow:none;animation-delay:.4s}
 .sec-face{flex:0 0 auto;width:38px;height:42px}
 .sec-say{display:flex;gap:10px;align-items:flex-start;margin:0 0 12px}
 .sec-say .sec-face{width:42px;height:46px}
@@ -570,7 +570,7 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.24.0 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.24.1 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 広場の立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -3296,27 +3296,39 @@ async function playReport(rep,tok,res0,ex0,total){
 }
 // 全画面カード：タップ・キー・時間経過のどれかで次へ
 let cardTimer=null;
-function playCard(c,ms,next){
+function playCard(c,ms,next,say){
   c.querySelectorAll('.sky,.sun,.ln,.letter').forEach(el=>{el.style.animation='none'; void el.offsetWidth; el.style.animation='';});
   c.hidden=false;
-  let done=false; const go=()=>{if(done)return; done=true; clearTimeout(cardTimer); c.hidden=true; c.removeEventListener('click',go); document.removeEventListener('keydown',key); next();};
+  const el=say&&c.querySelector(say[0]); let pending=false;
+  if(el){el.textContent=''; el._done=false; pending=true; clearTimeout(c._st); c._st=setTimeout(()=>{pending=false; typeInto(el,say[1]);},RM?0:700);}
+  let done=false; const go=()=>{if(done)return;
+    if(el&&pending){clearTimeout(c._st); pending=false; el.textContent=say[1]; el._full=say[1]; el._done=true; return;} // まだ話し始める前：全文を出すだけ
+    if(el&&typeFinish(el))return; // 話している途中：全文を出すだけ
+    done=true; clearTimeout(cardTimer); clearTimeout(c._st); c.hidden=true; c.removeEventListener('click',go); document.removeEventListener('keydown',key); next();};
   const key=e=>{if(e.key==='Enter'||e.key===' '||e.key==='Escape'){e.preventDefault(); go();}};
   c.addEventListener('click',go); document.addEventListener('keydown',key);
-  cardTimer=setTimeout(go,ms);
+  if(ms)cardTimer=setTimeout(go,ms);
 }
+// 秘書のせりふを1文字ずつ
+function typeInto(el,text,speed=40){
+  if(el._typ)clearInterval(el._typ); const ch=[...text]; el._full=text; el._done=false; el.textContent='';
+  if(RM||!ch.length){el.textContent=text; el._done=true; return 0;}
+  let i=0; el._typ=setInterval(()=>{i++; el.textContent=ch.slice(0,i).join(''); if(i>=ch.length){clearInterval(el._typ); el._typ=null; el._done=true;}},speed);
+  return ch.length*speed;
+}
+function typeFinish(el){ if(el&&el._typ){clearInterval(el._typ); el._typ=null; el.textContent=el._full; el._done=true; return true;} return false; }
 // 0. 一日の終わり「今日の活動終了。報告書を受け取った」
 function showDuskCard(){
   const rep=S.lastReport; $('ddSmall').textContent=`${rep?rep.day:S.day}日目 · 日が暮れた`;
-  $('ddSay').textContent=rep&&rep.cleared?`王様、${rep.cleared.name}の親玉を討ち取りました！ 報告書をどうぞ`:rep&&rep.hl&&rep.hl[0]&&rep.hl[0].big?`王様、きょうは良い知らせがございます。報告書をどうぞ`:(rep&&rep.day===1)?'王様、はじめての報告書です。冒険者ひとりずつの一日が書いてあります':'王様、本日の報告書をお持ちしました';
-  playCard($('duskCard'),3000,()=>openReport());
+  const say=rep&&rep.cleared?`王様、${rep.cleared.name}の親玉を討ち取りました！ 報告書をどうぞ`:rep&&rep.hl&&rep.hl[0]&&rep.hl[0].big?`王様、きょうは良い知らせがございます。報告書をどうぞ`:(rep&&rep.day===1)?'王様、はじめての報告書です。冒険者ひとりずつの一日が書いてあります':'王様、本日の報告書をお持ちしました';
+  playCard($('duskCard'),null,()=>openReport(),['#ddSay',say]); // タップで進む
 }
 function showDayCard(){
   const c=$('dayCard');
   $('dcSmall').textContent=S.day===1?'はじまりの朝':'夜が明けた';
   $('dcBig').textContent=`${S.day}日目`;
   $('dcSub').textContent=S.day===1?'小さな王国の最初の一日':`冒険者 ${S.advs.length}人 · ${RES} ${S.elem+S.refund}`;
-  $('dcSay').textContent=S.day===1?'王様、おはようございます。時報係の鳩、秘書でございます。百年ぶりの朝ですよ':`夜が明けました。${S.day}日目です`;
-  playCard(c,4200,()=>openOrders(true));
+  playCard(c,null,()=>openOrders(true),['#dcSay',S.day===1?'王様、おはようございます。時報係の鳩、秘書でございます。百年ぶりの朝ですよ':`夜が明けました。${S.day}日目です`]);
 }
 // 朝の指示の途中で、町を見ながら大工へのおふれを出す（時間は止まったまま）
 let planning=false;
@@ -3344,7 +3356,7 @@ function openOrders(dawn){
     <details class="goals blk"><summary>小目標　${gd}/${G.length}${cur>1&&G.some(q=>q.ch<cur&&!S.goals[q.id])?'（やり残しあり）':''}</summary>${[...Array(cur)].map((_,i)=>i+1).map(gsec).join('')}</details>
 `;
   $('reportActions').innerHTML=`${rep?'<button class="toggle" id="back3">報告書をもう一度見る</button>':''}<button class="primary" id="go" ${first(S,'board')&&!S.board.length?'disabled':''}>${first(S,'board')&&!S.board.length?'依頼を1枚以上貼ってください':`${S.day}日目をはじめる`}</button>`;
-  $('reportModal').hidden=false;
+  $('reportModal').hidden=false; secTypeOrders();
   const reopen=()=>{const y=$('reportModal').scrollTop; openOrders(); $('reportModal').scrollTop=y;};
   $('reportSheet').querySelectorAll('[data-qadd]').forEach(el=>el.addEventListener('click',()=>{const q=questsAvail(S).find(q=>q.id===el.dataset.qadd); if(q&&S.board.length<boardMax(S))S.board.push({...q}); reopen();}));
   $('reportSheet').querySelectorAll('[data-qdel]').forEach(el=>el.addEventListener('click',()=>{S.board=S.board.filter(q=>q.id!==el.dataset.qdel); reopen();}));
@@ -3415,6 +3427,14 @@ function secSayHTML(hints){
   S.tips._shown=S.day;
   return L.length?`<div class="sec-say"><span class="sec-face">${BIRD_HTML}</span><div class="lines">${L.map(t=>`<p>${t}</p>`).join('')}</div></div>`:'';
 }
+let secLastSay='';
+function secTypeOrders(){
+  const box=document.querySelector('#reportSheet .sec-say'); if(!box)return; const ps=[...box.querySelectorAll('p')], key=ps.map(p=>p.textContent).join('|');
+  if(key===secLastSay)return; const was=secLastSay.split('|'); secLastSay=key;
+  const timers=[]; let delay=0;
+  for(const p of ps){ const t=p.textContent; if(was.includes(t))continue; p.textContent=''; p._full=t; p.style.minHeight='1.6em'; timers.push(setTimeout(()=>typeInto(p,t),delay)); delay+=[...t].length*40+250; }
+  box.onclick=()=>{timers.forEach(clearTimeout); for(const p of ps){ if(!typeFinish(p)&&p._full!==undefined)p.textContent=p._full; }}; // 押すと全文
+}
 // 昼の知らせ
 const secQ=[]; let secShow=null, secNext=0, secSeen=null;
 function secSay(text,o={}){ if(secQ.length>=4){const i=secQ.findIndex(x=>(x.pri||0)<(o.pri||0)); if(i<0)return; secQ.splice(i,1);} secQ.push({text,...o}); }
@@ -3443,10 +3463,10 @@ function secWatch(now){
   }
   if(secShow&&now>secShow.until)hideSecBub();
   if(!secShow&&secQ.length&&now>secNext){ secQ.sort((x,y)=>(y.pri||0)-(x.pri||0)); const m=secQ.shift(), b=$('secBub');
-    b.innerHTML=`${m.text}${m.sub?`<small>${m.sub}</small>`:''}`; b.hidden=false; const d=$('secDock'); d.classList.remove('talk'); void d.offsetWidth; d.classList.add('talk');
-    secShow={...m,until:now+Math.max(4200,m.text.length*120)}; secNext=secShow.until+900; }
+    b.innerHTML=`<span class="t"></span>${m.sub?`<small>${m.sub}</small>`:''}`; b.hidden=false; const d=$('secDock'); d.classList.remove('talk'); void d.offsetWidth; d.classList.add('talk');
+    const ty=typeInto(b.querySelector('.t'),m.text); secShow={...m,until:now+ty+Math.max(3200,m.text.length*70)}; secNext=secShow.until+900; }
 }
-$('secBub').addEventListener('click',()=>{ const m=secShow; hideSecBub(); if(m&&m.adv!=null){sel=null; pickAdv=m.adv; renderPanel(); setDrawer(true);} });
+$('secBub').addEventListener('click',()=>{ const t=$('secBub').querySelector('.t'); if(typeFinish(t)){if(secShow)secShow.until=performance.now()+3500; return;} const m=secShow; hideSecBub(); if(m&&m.adv!=null){sel=null; pickAdv=m.adv; renderPanel(); setDrawer(true);} });
 $('secBtn').addEventListener('click',()=>{ // 押すと、いまのようすをひとこと
   if(S.phase!=='day'){secQ.length=0; return;}
   const out=S.advs.filter(a=>a.state==='away'), home=S.advs.filter(a=>a.rep&&a.rep.back!=null);
