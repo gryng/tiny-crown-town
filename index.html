@@ -199,6 +199,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .bk-tr i{font-style:normal;font-size:12px;font-weight:700;padding:0 8px;border-radius:9px;background:var(--accent);color:var(--paper)}
 .bk-tr i.q{background:transparent;color:var(--muted);border:1px dashed #241c1466}
 .eq .spare{display:block;font-size:11px;font-weight:500;color:var(--muted)}
+.lkey{margin-left:auto;font-size:11px;letter-spacing:0;font-weight:700;color:var(--gold-ink)}
 .lnum{margin-left:6px;font-size:11px;letter-spacing:0;font-weight:700;color:var(--ink)}
 .linebk .opt{margin-top:2px}
 .eq .pr{font-size:11px;font-weight:700;color:var(--muted);margin-left:8px;white-space:nowrap}
@@ -418,6 +419,7 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
 .nd{fill:#fffaf0;stroke:var(--ink);stroke-width:1.5}
 .nd.done{fill:#cfe3d6}.nd.rest{fill:#bfe0e6}.nd.foe{fill:#f1c9bd;stroke:var(--bad)}.nd.unk{fill:#f3ead3;stroke:#241c1499;stroke-dasharray:2 2}
 .qm{font:800 8px var(--f-head);fill:#241c14cc;text-anchor:middle}
+.key-t{font:800 8px var(--f-head);fill:var(--gold-ink);text-anchor:middle}
 .foe-t{font:800 8px var(--f-head);fill:var(--bad);text-anchor:middle}
 .chk{fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .lb{font:700 8.5px var(--f-body);fill:var(--ink);text-anchor:middle;paint-order:stroke;stroke:#f3ead3;stroke-width:3px}
@@ -548,7 +550,7 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.20.0 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.21.0 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 広場の立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -701,7 +703,7 @@ function bfs(g,a,b){
 }
 
 function newState(rng){
-  const S={g:makeMap(),day:1,t:DAY_START,elem:START_ELEM,explore:0,bossDown:false,justWon:false,area:0,bossGo:false,nom:{},board:null,parkUse:{},chapter:1,b:[],advs:[],sites:[],carps:[newCarp(0)],docs:[],builtToday:[],stock:{sword:1,axe:0,dagger:0,mail:1,cloth:0},know:{},used:{weapon:[],armor:[]},refund:0,phase:'report',parkUsed:0,demolished:0,rng:rng||Math.random,nextId:1,lastReport:null,fx:[],world:newWorld(),fights:[]};
+  const S={g:makeMap(),day:1,t:DAY_START,elem:START_ELEM,explore:0,bossDown:false,justWon:false,area:0,bossGo:false,nom:{},board:null,parkUse:{},chapter:1,b:[],advs:[],sites:[],carps:[newCarp(0)],docs:[],builtToday:[],stock:{sword:1,axe:0,dagger:0,mail:1,cloth:0},keys:{sword:0,axe:0,dagger:0,mail:0,cloth:0},know:{},used:{weapon:[],armor:[]},refund:0,phase:'report',parkUsed:0,demolished:0,rng:rng||Math.random,nextId:1,lastReport:null,fx:[],world:newWorld(),fights:[]};
   // 性格の出てくる順番はプレイごとに変わる
   S.pOrder=PIDS.slice(); for(let i=S.pOrder.length-1;i>0;i--){const j=Math.floor(S.rng()*(i+1)); [S.pOrder[i],S.pOrder[j]]=[S.pOrder[j],S.pOrder[i]];}
   build(S,'house',2,4,true); build(S,'house',20,11,true); build(S,'board',PLAZA.x,PLAZA.y,true); // 立て札は広場のまん中
@@ -975,7 +977,15 @@ const ITEMS={weapon:WEAPONS,armor:ARMORS};
 const STOCK_CAP=[4,4,6,6,6];              // 章ごとの、入荷できる段階の上限（系統ごと）
 const stockCap=S=>STOCK_CAP[Math.min(S.chapter||1,STOCK_CAP.length-1)];
 const investCost=(S,l)=>{const n=S.stock[l]; return n<4?40+n*40:100+n*60;}; // 系統ごとに 40・80・120・160、2章からは340・400
-function investLock(S,l){return !first(S,LINES[l].shop)?'店が建ってから':(S.stockNext||{})[l]?'あすの朝に入荷する（1日に1段階まで）':S.stock[l]>=stockCap(S)?'この章で入荷できるのはここまで':null;}
+const FREE_TIER=2; // 2段階までは時のかけらだけで入荷できる。そこから先は、1段階ごとにその系統の鍵の品がひとつ要る
+const keyTier=(S,l)=>FREE_TIER+((S.keys||{})[l]||0);
+function keyWhere(S,l){ // その系統の鍵の品がありそうな、見つけてある部屋
+  const W=S.world; for(const id in NODES){const n=NODES[id]; if(!n.keys||!inArea(S,n))continue; const left=n.keys.slice(W.keysTaken[id]||0); if(left.some(k=>k[0]===l)&&reached(S,id))return id;} return null;}
+function investLock(S,l){
+  if(!first(S,LINES[l].shop))return '店が建ってから'; if((S.stockNext||{})[l])return 'あすの朝に入荷する（1日に1段階まで）'; if(S.stock[l]>=stockCap(S))return 'この章で入荷できるのはここまで';
+  if(S.stock[l]>=keyTier(S,l)){const w=keyWhere(S,l); return `${LINES[l].n}の鍵の品が要る（${w?`${NODES[w].n}を詳しく調べると見つかりそう`:'どこかの脇道にあるらしい'}）`;}
+  return null;
+}
 function invest(S,l){
   const k=investLock(S,l); if(k)return k; const c=investCost(S,l); if(S.elem<c)return `${RES}が足りない`;
   S.elem-=c; S.stockNext=S.stockNext||{}; S.stockNext[l]=true; return null; // 品物が届くのは翌朝
@@ -1133,6 +1143,7 @@ const boardMax=S=>2+(S.chapter||1);
 const BONUS_COST=20;   // 特別手当：時のかけらを払うと報酬が1.5倍になり、受けてもらいやすくなる
 const QK={
   road:  {name:q=>'奥へ進め', noun:q=>'探索', desc:'まだだれも歩いていない道や部屋へ向かう', done:'探索を少しでも進める', reward:40, cap:2},
+  study: {name:q=>`${NODES[q.n].n}を詳しく調べる`, noun:q=>`${NODES[q.n].n}のくわしい調査`, desc:'時間をかけて部屋を調べ、鍵の品や手がかりを持ち帰る。人数が多いほど早い', done:'品をひとつ見つける', reward:60, cap:3},
   room:  {name:q=>`${NODES[q.n].n}を調べよ`, noun:q=>`${NODES[q.n].n}の調査`, desc:'その部屋まで行って、中を調べる', done:'部屋を調べる', reward:50, cap:2},
   master:{name:q=>`${NODES[q.n].n}の主を倒せ`+(q.party?'（3人で組んで）':''), noun:q=>`${NODES[q.n].n}の主の討伐`, desc:'部屋の主に挑む', done:'主を倒す', reward:120, cap:1},
   gather:{name:q=>'時のかけらを集めよ', noun:q=>'時のかけら集め', desc:'腕前に合った場所の、調べた部屋で時のかけらを掘る', done:`${RES}を25以上持ち帰る`, reward:30, cap:2},
@@ -1153,13 +1164,15 @@ function questsAvail(S){
   const blk=t=>x=>x!==t&&masterAlive(S,x), way=t=>!!route(S,'gate',t,{block:blk(t)}); // ほかの主にふさがれずに行けるか
   for(const id in NODES){const n=NODES[id]; if(!inArea(S,n)||!known(S,id)||!way(id))continue;
     if(n.master&&masterAlive(S,id))add('master',{n:id,party});
-    else if(n.room&&!W.searched[id])add('room',{n:id});}
+    else if(n.room&&!W.searched[id])add('room',{n:id});
+    if(keysLeft(S,id)&&reached(S,id)&&!masterAlive(S,id))add('study',{n:id});}
   if(W.clue&&!W.cut)add('cut');
   if(EDGES.some(e=>inArea(S,e)&&!e.bossWay&&!(e.cut&&!W.cut)&&!W.trips[e.id]&&!masterAlive(S,e.a)&&!masterAlive(S,e.b)&&[e.a,e.b].some(x=>reached(S,x)&&way(x))))add('road');
   if(S.sites.length)add('help');
   add('train');
   return L;
 }
+const keysLeft=(S,id)=>{const n=NODES[id]; return n&&n.keys?n.keys.length-(S.world.keysTaken[id]||0):0;};
 const capOf=q=>q.party?3:Infinity, rewardOf=q=>Math.round(QK[q.k].reward*(q.bonus?1.5:1));
 // 立て札の中身を、いま出せる依頼に合わせる（出せなくなったものは外れる）
 function syncBoard(S){
@@ -1172,9 +1185,9 @@ const PREF={
   makezu:{master:1.7,boss:1.7,train:1.4,help:.4},
   sekkachi:{help:.6,top:1.8},
   nonbiri:{help:1.4,train:1.1,master:.8},
-  okubyo:{help:1.6,train:1.2,master:.6,boss:.6},
+  okubyo:{help:1.6,train:1.2,master:.6,boss:.6,study:1.2},
   kuishinbo:{money:1.6},
-  yumemi:{road:1.7,room:1.6,cut:1.3},
+  yumemi:{road:1.7,room:1.6,cut:1.3,study:1.6},
   sewazuki:{help:1.7,team:1.6},
   ippiki:{team:0,master:1.3,train:1.2},
 };
@@ -1211,7 +1224,7 @@ function takeQuest(S,a){
 }
 // よくある貼り方（自動プレイ用）：親玉 → 主 → 近道 → 部屋 → 道 → 手伝い → 腕。主と親玉は、酒場があれば組んで
 function autoBoard(S){
-  const backlog=S.sites.some(x=>x.kind==='build')&&S.sites.reduce((t,x)=>t+x.need-x.done,0)>900*S.carps.length, order=['boss','master','cut','room','road','help','train'];
+  const backlog=S.sites.some(x=>x.kind==='build')&&S.sites.reduce((t,x)=>t+x.need-x.done,0)>900*S.carps.length, order=['boss','master','study','cut','room','road','help','train'];
   const av=questsAvail(S).filter(q=>q.k!=='help'||backlog);
   let pt=0; S.board=av.slice().sort((x,y)=>order.indexOf(x.k)-order.indexOf(y.k)).filter(q=>!q.party||!pt++).slice(0,boardMax(S)).map(q=>({...q})); // 組む依頼は1枚ずつ
 }
@@ -1219,8 +1232,9 @@ function autoBoard(S){
 function questDone(S,a){
   const q=a.quest, r=a.rep; if(!q)return false;
   switch(q.k){
-    case 'road': return r.explore>0;
+    case 'road': return r.explore>0||!!r.newRoad;
     case 'room': return r.ev.some(e=>e.k==='s'&&e.n===q.n&&!e.mine&&!e.treasure);
+    case 'study': return (r.keyGot||[]).some(k=>k.n===q.n);
     case 'master': return r.masterAt===q.n;
     case 'gather': return r.elem>=25;
     case 'train': return r.wins>=5;
@@ -1278,7 +1292,19 @@ const NODES={
   sfork:{ar:1,n:'湿地の入口'}, hut:{ar:1,n:'渡し守の小屋',rest:true},
   s1:{ar:1,n:'葦の原',room:true,rich:.7,master:'bigfrog',chest:80}, s2:{ar:1,n:'沈んだ祠',room:true,rich:1,chest:100},
   s3:{ar:1,n:'ヒルの巣',room:true,rich:1.7,master:'leechq',chest:140}, sboss:{ar:1,n:'沼の主の間',boss:true,mon:'catfish'},
+  // 脇道の部屋（side）。探索の割合には数えない。keys：詳しく調べると見つかる鍵の品（系統と名前） info：わかる魔物の特徴
+  lodge:{ar:0,side:true,n:'きこりの小屋跡',room:true,rich:.5,chest:20,keys:[['axe','古い斧の刃'],['cloth','丈夫な麻布']],info:[['golem','hard']]},
+  drip:{ar:0,side:true,n:'水の滴る横穴',room:true,rich:.8,chest:25,keys:[['dagger','鋭いコウモリの牙']],info:[['bat','swift']]},
+  forge:{ar:0,side:true,n:'崩れた鍛冶場',room:true,rich:1,chest:40,keys:[['sword','古い金床'],['mail','鉄の鋲']],info:[['boss','hard']]},
+  nest:{ar:0,side:true,n:'岩トカゲの巣',room:true,rich:1.4,chest:50,keys:[['mail','岩トカゲの硬い鱗'],['axe','黒い鉱石']],info:[['king','hard']]},
+  reed:{ar:1,side:true,n:'葦刈りの小屋',room:true,rich:.6,chest:60,keys:[['cloth','葦の編み布'],['cloth','水をはじく油']],info:[['snake','swift']]},
+  kura:{ar:1,side:true,n:'渡し守の倉',room:true,rich:.8,chest:80,keys:[['dagger','渡し守の小刀'],['sword','古い砥石']],info:[['leechq','leech']]},
+  smithy:{ar:1,side:true,n:'沈んだ鍛冶小屋',room:true,rich:1,chest:90,keys:[['sword','錆びない鋼'],['axe','沼鉄の塊']],info:[['mudhand','hard']]},
+  inner:{ar:1,side:true,n:'祠の奥の間',room:true,rich:1.2,chest:110,keys:[['mail','祠の鎖'],['mail','銀の留め金']],info:[['catfish','aura']]},
+  deepnest:{ar:1,side:true,n:'ヒルの巣の奥',room:true,rich:1.6,chest:130,keys:[['axe','大ヒルの顎'],['dagger','女王の針'],['sword','沼の主のうろこ']],info:[['catfish','?']]},
 };
+NODES.hall.keys=[['sword','古い剣の柄']]; // 本道の部屋にも、主を倒したあと調べると見つかる品
+const STUDY_NEED=12; // 鍵の品ひとつを見つけるのにかかる手間（人数×ターン）
 for(const id of ['fork','spring','mouth','r1','r2','hall','boss'])NODES[id].ar=0;
 // エリア（章ごとに1つずつ進む）。いま挑んでいるのは S.area
 const AREAS=[{name:'西の洞窟',bossNode:'boss',short:'洞窟',min:1},{name:'北の湿地',bossNode:'sboss',short:'湿地',min:5}]; // min：ここで戦える目安のレベル
@@ -1303,6 +1329,16 @@ const EDGES=[
   {id:'m5',ar:1,a:'hut',b:'s2',len:9,risk:.2,zone:'marsh',mud:true,n:'渡し守の裏道'},
   {id:'m6',ar:1,a:'s2',b:'s3',len:6,risk:.3,zone:'bog',mud:true,n:'ぬかるむ獣道'},
   {id:'m7',ar:1,a:'s3',b:'sboss',len:4,risk:0,zone:'bog',n:'沼の主の間への道',bossWay:true},
+  // 脇道
+  {id:'x1',ar:0,a:'fork',b:'lodge',len:5,risk:.14,zone:'forest',n:'きこりの踏みあと',side:true},
+  {id:'x2',ar:0,a:'r1',b:'drip',len:4,risk:.3,zone:'cave',n:'狭い横穴',side:true},
+  {id:'x3',ar:0,a:'r2',b:'forge',len:5,risk:.28,zone:'cave',n:'崩れかけた坑道',side:true},
+  {id:'x4',ar:0,a:'hall',b:'nest',len:4,risk:.3,zone:'deep',n:'岩の割れ目',side:true},
+  {id:'y1',ar:1,a:'sfork',b:'reed',len:5,risk:.2,zone:'marsh',mud:true,n:'葦刈りの道',side:true},
+  {id:'y2',ar:1,a:'hut',b:'kura',len:4,risk:.16,zone:'marsh',n:'倉への桟橋',side:true},
+  {id:'y3',ar:1,a:'s1',b:'smithy',len:5,risk:.26,zone:'bog',mud:true,n:'沈んだ小道',side:true},
+  {id:'y4',ar:1,a:'s2',b:'inner',len:4,risk:.3,zone:'bog',n:'祠の裏の階段',side:true},
+  {id:'y5',ar:1,a:'s3',b:'deepnest',len:5,risk:.3,zone:'bog',mud:true,n:'巣の奥へのぬかるみ',side:true},
 ];
 for(const e of EDGES)if(e.ar===undefined)e.ar=0;
 // 魔物。swift:先に動く・逃げにくい poison:毒 （硬さは守りの高さで表す）
@@ -1326,9 +1362,9 @@ const MON={
 };
 for(const id of ['rat','bat','shroom','lizard','golem','bigrat','king','boss'])MON[id].ar=0; for(const id of ['frog','leech','snake','mudhand','bigfrog','leechq','catfish'])MON[id].ar=1;
 const ZONE={forest:[['rat',1]],cave:[['bat',.45],['shroom',.35],['rat',.2]],deep:[['lizard',.45],['golem',.25],['bat',.15],['shroom',.15]],marsh:[['frog',.45],['leech',.3],['snake',.25]],bog:[['leech',.35],['snake',.25],['mudhand',.25],['frog',.15]]};
-const DEPTH={gate:0,fork:1,spring:2,mouth:2,r1:3,r2:4,hall:5,boss:6,sfork:1,hut:2,s1:2,s2:3,s3:4,sboss:5};
-const units=S=>EDGES.filter(e=>inArea(S,e)&&!e.bossWay).length+Object.values(NODES).filter(n=>inArea(S,n)&&n.room).length+Object.values(NODES).filter(n=>inArea(S,n)&&n.master).length;
-function newWorld(){return {trips:{},searched:{},searchDay:{},master:{},chest:{},clue:false,cut:false,vein:{},veinG:{}};}
+const DEPTH={gate:0,fork:1,spring:2,mouth:2,r1:3,r2:4,hall:5,boss:6,sfork:1,hut:2,s1:2,s2:3,s3:4,sboss:5,lodge:2,drip:4,forge:5,nest:6,reed:2,kura:3,smithy:3,inner:4,deepnest:5};
+const units=S=>EDGES.filter(e=>inArea(S,e)&&!e.bossWay&&!e.side).length+Object.values(NODES).filter(n=>inArea(S,n)&&n.room&&!n.side).length+Object.values(NODES).filter(n=>inArea(S,n)&&n.master).length;
+function newWorld(){return {trips:{},searched:{},searchDay:{},master:{},chest:{},clue:false,cut:false,vein:{},veinG:{},study:{},keysTaken:{}};}
 const safety=(S,e)=>{const n=S.world.trips[e.id]||0; return n>=60?2:n>=1?1:0;};
 const elen=(S,e)=>Math.max(1,Math.ceil(e.len*[e.mud?1.3:1,.9,.75][safety(S,e)]));
 const erisk=(S,e)=>e.risk*[1,.8,.5][safety(S,e)];
@@ -1471,7 +1507,7 @@ function outTurn(S,a){
   if(o.act){ o.act.left--; if(o.act.left<=0){const k=o.act.k; o.act=null; actDone(S,a,k);} return; }
   if(o.edge){
     const E=o.edge; E.left--;
-    if(E.left<=0){ const was=S.world.trips[E.e.id]||0; S.world.trips[E.e.id]=was+mates(S,a).length; if(!was&&!E.e.bossWay){unit(S,a); ev(S,a,'n',{e:E.e.id});} o.at=E.to; o.edge=null; arriveNode(S,a); return; }
+    if(E.left<=0){ const was=S.world.trips[E.e.id]||0; S.world.trips[E.e.id]=was+mates(S,a).length; if(!was&&!E.e.bossWay){if(!E.e.side)unit(S,a); for(const x of mates(S,a))x.rep.newRoad=true; ev(S,a,'n',{e:E.e.id});} o.at=E.to; o.edge=null; arriveNode(S,a); return; }
     if(o.mode!=='ko'&&!(o.mode==='home'&&a.hp<=a.hpMax*(P.retreat||.3))&&r()<erisk(S,E.e)){
       const key='e:'+E.e.id;
       const tbl=ZONE[E.e.zone]; let x=r(), mid=tbl[tbl.length-1][0]; for(const [id,w] of tbl){if(x<w){mid=id;break;} x-=w;}
@@ -1496,15 +1532,26 @@ function actDone(S,a,k){
   if(k==='rest'){for(const x of M){const g=Math.ceil(x.hpMax*(N.rest?.3:.1)); x.hp=Math.min(x.hpMax,x.hp+g); ev(S,x,'r',{n:id,g});}}
   if(k==='search'){
     const got=cut(Math.round((10+Math.floor(r()*7))*(N.rich||1)*ELEM_K)); W.searchDay[id]=S.day;
-    const first=!W.searched[id]; if(first){W.searched[id]=true; unit(S,a);}
+    const first=!W.searched[id]; if(first){W.searched[id]=true; if(!N.side)unit(S,a);}
     let chest=0; if(N.chest&&!W.chest[id]){W.chest[id]=true; chest=cut(N.chest);}
     let clue=false; if(N.clue&&!W.clue){W.clue=true; clue=true;}
     for(const x of M){x.rep.elem+=got; x.gold+=chest; x.rep.gold+=chest; ev(S,x,'s',{n:id,e:got,first,chest,clue});}
   }
   if(k==='mine'){const v=W.vein[id]===undefined?1:W.vein[id], got=cut(Math.max(2,Math.round((9+r()*5)*v*(N.rich||1)*ELEM_K))); W.vein[id]=Math.max(0,v-.06); for(const x of M){x.rep.elem+=got; ev(S,x,'s',{n:id,e:got,mine:true});}}
   if(k==='treasure'){const v=W.veinG[id]===undefined?1:W.veinG[id], got=cut(Math.max(2,Math.round((9+r()*5)*v*(N.rich||1)))); W.veinG[id]=Math.max(0,v-.06); for(const x of M){x.gold+=got; x.rep.gold+=got; ev(S,x,'s',{n:id,g:got,treasure:true});}}
+  if(k==='study'){
+    W.study[id]=(W.study[id]||0)+2*Math.max(1,M.filter(x=>(x.quest||{}).k==='study'&&x.quest.n===id).length);
+    while(W.study[id]>=STUDY_NEED&&keysLeft(S,id)){W.study[id]-=STUDY_NEED; findKey(S,id,a,M);}
+  }
   if(k==='open'&&!W.cut){W.cut=true; a.rep.opened=true; ev(S,a,'o',{});}
   if(k==='detour'){for(const x of M){x.morale=Math.min(100,x.morale+6); x.hp=Math.min(x.hpMax,x.hp+2);}}
+}
+// 鍵の品を見つけた：店のその系統が、次の段階を入荷できるようになる。最初のひとつで、その部屋の手がかり（魔物の特徴）もわかる
+function findKey(S,id,a,M){
+  const W=S.world, N=NODES[id], i=W.keysTaken[id]||0, [l,name]=N.keys[i]; W.keysTaken[id]=i+1; S.keys[l]=(S.keys[l]||0)+1;
+  const by=M.filter(x=>(x.quest||{}).k==='study'&&x.quest.n===id); for(const x of (by.length?by:[a])){x.rep.keyGot=(x.rep.keyGot||[]).concat([{n:id,name,l}]); ev(S,x,'k',{n:id,name});}
+  (S.foundToday=S.foundToday||[]).push({key:true,n:id,name,l,by:(by.length?by:[a]).map(x=>x.name)});
+  if(i===0)for(const [mid,t] of N.info||[]){const m=MON[mid], K=S.know[mid]||(S.know[mid]={seen:0}), tt=t==='?'?(TRAITS.find(([k])=>m[k]&&!K[k])||[])[0]:t; if(!tt||K[tt]||!m[tt])continue; K[tt]=true; K.heard=true; const lb=TRAITS.find(([k])=>k===tt)[1]; S.foundToday.push({mid,t:tt,lb,by:a.name,note:true});}
 }
 function moveAlong(S,a,rt){const e=rt.path[0], M=mates(S,a), f=!e.mud?1:M.some(x=>x.al==='mail'&&x.alv>=2)?1.15:M.every(x=>x.al==='cloth'&&x.alv)?.8:1; a.out.edge={e,to:other(e,a.out.at),left:Math.max(1,Math.round(elen(S,e)*f))};} // よろい（2段階〜）はぬかるみで重く、全員が旅装束なら軽い
 function decide(S,a){
@@ -1529,6 +1576,8 @@ function decide(S,a){
   o.rests=0;
   // 部屋：調べる、近道を開く
   const strike=M.length>1&&((a.behest==='boss'&&S.explore>=100&&!S.bossDown)||Object.keys(NODES).some(nid=>inArea(S,NODES[nid])&&masterAlive(S,nid))); // 組んでいて、主か親玉が残っている：掘ったりせず、まっすぐ壁へ向かう
+  const Qs=a.quest||{};
+  if(Qs.k==='study'&&Qs.n===id&&keysLeft(S,id)&&slack>3&&!masterAlive(S,id)){o.act={k:'study',left:2}; return;} // 詳しく調べる（2ターンずつ）
   if(N.room&&!masterAlive(S,id)){
     if(W.searchDay[id]!==S.day&&slack>3&&!(strike&&W.searched[id])){o.act={k:'search',left:3}; return;}
     if(digStyle(a)&&!strike){o.digs=o.digs||{}; const vk=styleOf(a)==='mine'?'vein':'veinG', v=W[vk][id]===undefined?1:W[vk][id]; if((o.digs[id]||0)<2&&v>.25&&slack>6){o.digs[id]=(o.digs[id]||0)+1; o.act={k:styleOf(a),left:3}; return;}}
@@ -1544,7 +1593,8 @@ function decide(S,a){
     if(winnableP(S,a,bossMon(S),P.brave?-1:P.safe?.3:0))offer(AREAS[S.area].bossNode,50,'boss',{boss:true});
     else if(!a.rep.shy){for(const x of M){x.rep.shy=true; x.rep.shyNote=M.length>1?'組んでも親玉にはまだ勝てそうにないと見て、腕をみがいた':'親玉にはまだ勝てそうにないと見て、腕をみがいた';}}
   }
-  const Q=a.quest||{k:'self'}, qBoost=nid=>(Q.n===nid&&(Q.k==='room'||Q.k==='master'))?60:0;
+  const Q=a.quest||{k:'self'}, qBoost=nid=>(Q.n===nid&&(Q.k==='room'||Q.k==='master'||Q.k==='study'))?60:0;
+  if(Q.k==='study'&&Q.n&&Q.n!==id&&keysLeft(S,Q.n)&&!masterAlive(S,Q.n))offer(Q.n,70,'study');
   if(Q.k==='cut'&&W.clue&&!W.cut){const cn=Object.keys(NODES).find(i=>NODES[i].clue&&inArea(S,NODES[i])); if(cn&&cn!==id)offer(cn,40,'cut');}
   const dig=digStyle(a)&&!strike, vk=styleOf(a)==='mine'?'vein':'veinG';
   for(const nid in NODES){ const n=NODES[nid]; if(!n.room||!inArea(S,n))continue;
@@ -1654,7 +1704,8 @@ function highlights(S){
   const seen={}; for(const a of A)for(const e of a.rep.ev){ if(e.k==='s'&&e.first&&!seen[e.n]){seen[e.n]=1; const who=A.filter(x=>x.rep.ev.some(v=>v.k==='s'&&v.first&&v.n===e.n)); add(50,`${names(who.map(x=>x.name))}が${NODES[e.n].n}を初めて調べた`,{id:a.id});} }
   for(const b of S.builtToday){ if(/が完成$/.test(b))add(60,b,{}); else if(/入荷$/.test(b))add(25,b,{}); else if(/古い宝箱/.test(b))add(40,b,{}); else if(/^荒れ地を片づけた|^荒れた道を直した/.test(b))add(30,b,{}); }
   for(const a of S.advs)if(a.joinDay===S.day+1)add(30,`新しい冒険者・${a.name}（${PP(a).name}）が町に来た`,{});
-  for(const f of S.foundToday||[]){const m=MON[f.mid], who=f.by?`${f.by}の話では、`:''; if(f.t)add(m.boss?58:m.master?48:32,`${who}${m.n}は${f.lb}らしい`,{know:true}); else if(m.boss||m.master)add(36,`${f.by||'冒険者'}が${m.n}と初めて戦った`,{know:true});}
+  for(const f of S.foundToday||[]){ if(f.key){add(66,`${names(f.by)}が${NODES[f.n].n}で「${f.name}」を見つけた。${BUILD[LINES[f.l].shop].name}で${LINES[f.l].n}の次の段階を入荷できる`,{big:true}); continue;}
+    const m=MON[f.mid], who=f.note?`${NODES[(S.foundToday.find(x=>x.key)||{}).n]?.n||'部屋'}の書き付けによると、`:f.by?`${f.by}の話では、`:''; if(f.t)add(m.boss?58:m.master?48:32,`${who}${m.n}は${f.lb}らしい`,{know:true}); else if(m.boss||m.master)add(36,`${f.by||'冒険者'}が${m.n}と初めて戦った`,{know:true});}
   for(const a of A)if(a.rep.gear&&a.rep.gear.why)add(18,`${a.name}は${a.rep.gear.why}`,{id:a.id});
   return H.sort((x,y)=>y.w-x.w);
 }
@@ -1699,6 +1750,11 @@ function goalsFor(S,ch,ar){
     const kn=ar=>Object.keys(MON).filter(m=>MON[m].ar===ar).reduce((t,m)=>t+TRAITS.filter(([k])=>knows(S,m,k)).length,0);
     g('know3','洞窟の魔物の特徴を3つ知る',10,()=>kn(0)>=3);
     g('knowb','洞窟の親玉の特徴を知る',15,()=>knows(S,'boss','hard'));
+    const sideN=ar=>Object.keys(NODES).filter(id=>NODES[id].side&&NODES[id].ar===ar), keysAll=ar=>Object.keys(NODES).filter(id=>NODES[id].keys&&(NODES[id].ar??0)===ar);
+    g('side1','脇道の部屋を見つける',10,()=>sideN(0).some(id=>reached(S,id)));
+    g('sideall','洞窟の脇道の部屋をすべて見つける',15,()=>sideN(0).every(id=>reached(S,id)));
+    g('key1','鍵の品を見つける',10,()=>Object.values(S.keys).some(v=>v>0));
+    g('keyall','洞窟の鍵の品をすべて集める',20,()=>keysAll(0).every(id=>!keysLeft(S,id)));
     safe(3); early(3); wins(15); fast(12);
   } else {
     cl(15); cl(25); g('roadall','荒れた道をすべて直す',20,()=>!Object.keys(S.rough).length);
@@ -1713,6 +1769,9 @@ function goalsFor(S,ch,ar){
     g('lines3','武器屋に剣・斧・短剣がそろう',15,()=>SHOP_LINES.weapon.every(l=>S.stock[l]>=1));
     g('know4','湿地の魔物の特徴を4つ知る',10,()=>Object.keys(MON).filter(m=>MON[m].ar===1).reduce((t,m)=>t+TRAITS.filter(([k])=>knows(S,m,k)).length,0)>=4);
     g('knowc','沼の主の特徴を知る',15,()=>knows(S,'catfish','aura'));
+    g('side2','湿地の脇道の部屋をすべて見つける',15,()=>Object.keys(NODES).filter(id=>NODES[id].side&&NODES[id].ar===1).every(id=>reached(S,id)));
+    g('keyall2','湿地の鍵の品をすべて集める',20,()=>Object.keys(NODES).filter(id=>NODES[id].keys&&NODES[id].ar===1).every(id=>!keysLeft(S,id)));
+    g('tier5','どれかの系統を5段階まで入荷させる',15,()=>LINE_IDS.some(l=>S.stock[l]>=5));
     g('advs5','冒険者が5人そろう',15,()=>S.advs.length>=5); g('carp2','大工を2人にする',10,()=>S.carps.length>=2);
     stock(6); lv(10); safe(5); early(4); wins(30); fast(10);
   }
@@ -1734,7 +1793,7 @@ function autoInvest(S,reserve){
     if(!l||S.elem<investCost(S,l)+reserve)break; invest(S,l);
   }
 }
-const CH2_SEED=47; // 1章を平均的な日数・レベルで終える種（テストで選ぶ）
+const CH2_SEED=51; // 1章を平均的な日数・レベルで終える種（テストで選ぶ）
 // よくある建て方：武器屋と防具屋を城門への道ぞいに、家と診療所と公園をその近くに。店へは余裕があるときに投資
 function autoCh1(seed){
   const S=newState(mulberry(seed));
@@ -2675,9 +2734,9 @@ function renderPanel(){
     else if(b.type==='park')body=`<p class="lead">きょう休んだ冒険者 ${(S.parkUse||{})[b.id]||0}/${PARK_CAP}人</p><p class="rc-note">${BUILD.park.desc}</p>`;
     else if(b.type==='weapon'||b.type==='armor'){
       const T=b.type;
-      body=`<p class="lead">系統ごとに段階が上がる。どれが上ということはなく、冒険者が相手に合わせて選んで買い、持ち替える</p>`+SHOP_LINES[T].map(l=>{
+      body=`<p class="lead">系統ごとに段階が上がる。2段階までは時のかけらだけ、その先は1段階ごとに、脇道で見つかる鍵の品がひとつ要る</p>`+SHOP_LINES[T].map(l=>{
         const L=LINES[l], st=S.stock[l], lock=investLock(S,l), nx=itemName(l,st+1), nxt=(S.stockNext||{})[l], users=S.advs.filter(a=>a.own[l]).length;
-        return `<div class="blk linebk"><h4 class="sec">${L.n}<small class="lnum">${st?`${st}段階まで・${itemName(l,st)}`:'まだ入荷なし'}</small></h4><p class="rc-note">${L.desc}${users?`（持っている冒険者 ${users}人）`:''}</p>
+        return `<div class="blk linebk"><h4 class="sec">${L.n}<small class="lnum">${st?`${st}段階まで・${itemName(l,st)}`:'まだ入荷なし'}</small><small class="lkey">鍵の品 ${S.keys[l]||0}</small></h4><p class="rc-note">${L.desc}${users?`（持っている冒険者 ${users}人）`:''}</p>
         <button class="opt" data-invest="${l}" ${lock||S.elem<investCost(S,l)?'disabled':''}><b>${nxt?`あす入荷：${nx}`:lock?nx&&st<6?`入荷：${nx}`:'入荷':`投資して入荷：${nx}`}</b><span>${nxt?'投資ずみ。品物は翌朝に届く':lock||'翌朝、店に並ぶ'}</span><em>${lock?'—':investCost(S,l)}</em></button></div>`;}).join('')
         +(S.used[T].length?`<div class="blk"><h4 class="sec">おさがり（値引き）</h4><table class="eq"><tbody>${S.used[T].map(u=>`<tr><th scope="row">${LINES[u.l].n}</th><td>${u.from}のおさがりの${itemName(u.l,u.tier)}<small class="pr">${usedPrice(u.tier)}G</small></td></tr>`).join('')}</tbody></table></div>`:'');
     }
@@ -2891,7 +2950,8 @@ function renderBook(){
     const ms=Object.keys(MON).filter(m=>MON[m].ar===ar).sort((x,y)=>(MON[x].boss?2:MON[x].master?1:0)-(MON[y].boss?2:MON[y].master?1:0));
     const known=ms.filter(m=>seenMon(S,m)).length;
     return `<h4 class="sec">${A.name}<small class="lnum">${known}/${ms.length}種</small></h4><div class="bk-list">`+ms.map(m=>{const M=MON[m], K=S.know[m];
-      if(!K||!K.seen)return `<div class="bk unk"><b>？？？</b><small>${M.boss?'親玉':M.master?'部屋の主':''}まだ出会っていない</small></div>`;
+      if(!K||(!K.seen&&!K.heard))return `<div class="bk unk"><b>？？？</b><small>${M.boss?'親玉':M.master?'部屋の主':''}まだ出会っていない</small></div>`;
+      if(!K.seen){const tr=TRAITS.filter(([t])=>K[t]); return `<div class="bk unk"><b>${M.n}</b><small>まだ出会っていない。書き付けによると：</small><span class="bk-tr">${tr.map(([t,lb])=>`<i>${lb}</i>`).join('')}</span><small class="bk-tip">${tr.map(([t])=>tip[t]).join('。')}</small></div>`;}
       const tr=TRAITS.filter(([t])=>K[t]), more=TRAITS.some(([t])=>M[t]&&!K[t]);
       return `<div class="bk${M.boss?' boss':M.master?' master':''}"><b>${M.n}${M.boss?'<i class="bk-tag">親玉</i>':M.master?'<i class="bk-tag">部屋の主</i>':''}</b>
         <small class="bk-st">体力${M.hp}・攻撃${M.atk}・守り${M.def}　出会った回数 ${K.seen}</small>
@@ -2997,6 +3057,7 @@ function logHTML(r){
           continue; }
         txt=`${node.n}を${e.first?'初めて':''}調べ、${RES}を${e.e}見つけた`+(e.chest?`。宝箱から${e.chest}ゴールドも出てきた`:'')+(e.clue?'。近道の手がかりも見つけた':''); break;
       case 'o': txt='泉へ抜ける近道を切り開いた！'; break;
+      case 'k': txt=`${NODES[e.n].n}を詳しく調べて、「${e.name}」を見つけた！`; break;
       case 'd': txt=`寄り道：${(DT[e.z==='forest'?'forest':'cave'])[e.v%6]}`; break;
     }
     if(txt)add(e.t,txt);
@@ -3056,8 +3117,9 @@ function cardHTML(r,day,rows){
 }
 // ---------- 報告書：探索の地図 ----------
 // 行ったことのある場所だけを描く。道は安全度で線が変わり、きょう初めて歩いた道は金色で目立たせる
-const MAPXY={gate:[30,158],fork:[92,128],spring:[84,58],mouth:[150,146],r1:[200,116],r2:[236,66],hall:[288,104],boss:[306,40], sfork:[88,132],hut:[66,62],s1:[152,152],s2:[214,98],s3:[276,130],sboss:[306,50]};
-const MAP_ABOVE=new Set(['spring','boss','r2','hut','sboss','s2']), MAP_SIDE=new Set(['spring','boss','r2','hall','hut','sboss','s2','s3']);
+const MAPXY={gate:[30,158],fork:[92,128],spring:[84,58],mouth:[150,146],r1:[200,116],r2:[236,66],hall:[288,104],boss:[306,40], sfork:[88,132],hut:[66,62],s1:[152,152],s2:[214,98],s3:[276,130],sboss:[306,50],
+  lodge:[36,96],drip:[238,162],forge:[168,32],nest:[306,152], reed:[132,92],kura:[34,26],smithy:[204,168],inner:[180,40],deepnest:[300,166]};
+const MAP_ABOVE=new Set(['spring','boss','r2','hut','sboss','s2','lodge','forge','kura','inner','reed','drip','smithy','deepnest']), MAP_SIDE=new Set(['spring','boss','r2','hall','hut','sboss','s2','s3','lodge','drip','forge','nest','reed','kura','smithy','inner','deepnest']);
 function mapHTML(rep){
   const W=rep.world, W0=rep.worldFrom; if(!W)return '';
   const ar=rep.area||0, EA=EDGES.filter(e=>e.ar===ar), NA={}; for(const id in NODES)if(NODES[id].ar===undefined||NODES[id].ar===ar)NA[id]=NODES[id];
@@ -3080,6 +3142,7 @@ function mapHTML(rep){
     if(n.room||n.boss)marks+=`<rect x="${x-7}" y="${y-7}" width="14" height="14" rx="2" class="nd ${alive||bossAlive?'foe':W.searched[id]||n.boss?'done':''}"/>`;
     else marks+=`<circle cx="${x}" cy="${y}" r="${id==='gate'?7:5}" class="nd ${n.rest?'rest':''}"/>`;
     if(alive||bossAlive)marks+=`<text x="${x}" y="${y+3.5}" class="foe-t">${n.boss?'親':'主'}</text>`;
+    else if(n.keys&&(n.keys.length-((W.keysTaken||{})[id]||0))>0)marks+=`<text x="${x}" y="${y+3.5}" class="key-t">品</text>`;
     else if((n.master&&W.master[id])||(n.boss&&rep.bossDown))marks+=`<path d="M${x-3.5} ${y} l2.5 3 l4.5 -6" class="chk"/>`;
     const below=!MAP_ABOVE.has(id);
     labels+=`<text x="${x}" y="${below?y+19:y-12}" class="lb">${n.n}</text>`;
@@ -3091,6 +3154,7 @@ function mapHTML(rep){
   const newN=EA.filter(e=>trips(e.id)&&!W0.trips[e.id]).length;
   const news=[]; if(newN)news.push(`新しい道 ${newN}本`);
   for(const id in NA){ if(W.master[id]&&!W0.master[id])news.push(`${NODES[id].n}の主を倒した`); }
+  for(const id in NA){ const k=(W.keysTaken||{})[id]||0, k0=(W0.keysTaken||{})[id]||0; if(k>k0)news.push(`${NODES[id].n}で鍵の品を${k-k0}つ見つけた`); }
   if(W.clue&&!W0.clue&&!W.cut)news.push('近道の手がかりを発見'); if(W.cut&&!W0.cut)news.push('近道が開通');
   return `<section class="rmap" id="rpMap"><h4 class="sec">探索の地図：${AREAS[ar].name}</h4>
     <div class="mapbox"><svg viewBox="0 0 336 188" role="img" aria-label="これまでに歩いた道と、きょうの到達点">${glow}${roads}${marks}${labels}${faces}</svg></div>
