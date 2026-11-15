@@ -570,7 +570,7 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.24.1 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.24.2 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 広場の立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -3356,7 +3356,7 @@ function openOrders(dawn){
     <details class="goals blk"><summary>小目標　${gd}/${G.length}${cur>1&&G.some(q=>q.ch<cur&&!S.goals[q.id])?'（やり残しあり）':''}</summary>${[...Array(cur)].map((_,i)=>i+1).map(gsec).join('')}</details>
 `;
   $('reportActions').innerHTML=`${rep?'<button class="toggle" id="back3">報告書をもう一度見る</button>':''}<button class="primary" id="go" ${first(S,'board')&&!S.board.length?'disabled':''}>${first(S,'board')&&!S.board.length?'依頼を1枚以上貼ってください':`${S.day}日目をはじめる`}</button>`;
-  $('reportModal').hidden=false; secTypeOrders();
+  $('reportModal').hidden=false; $('reportModal').scrollTop=0; secTypeOrders(); // いちばん上から（貼り直しなどで開き直すときは、呼んだ側が位置を戻す）
   const reopen=()=>{const y=$('reportModal').scrollTop; openOrders(); $('reportModal').scrollTop=y;};
   $('reportSheet').querySelectorAll('[data-qadd]').forEach(el=>el.addEventListener('click',()=>{const q=questsAvail(S).find(q=>q.id===el.dataset.qadd); if(q&&S.board.length<boardMax(S))S.board.push({...q}); reopen();}));
   $('reportSheet').querySelectorAll('[data-qdel]').forEach(el=>el.addEventListener('click',()=>{S.board=S.board.filter(q=>q.id!==el.dataset.qdel); reopen();}));
