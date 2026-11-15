@@ -238,6 +238,7 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
 .actions .toggle{padding:10px 16px}
 .actions:empty{display:none}
 #titleModal .actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.cb{display:grid;line-height:1.25;text-align:left}.cb small{font-size:12px;font-family:var(--f-body);font-weight:700;letter-spacing:.04em;color:var(--muted)}
 .ch2-note{font-size:12px;opacity:.75;text-align:center;margin-top:6px}
 #titleModal{background:linear-gradient(180deg,#08120f40 0%,#08120fcc 75%)}
 #lineModal{z-index:30}
@@ -550,7 +551,7 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.22.1 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.23.0 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 広場の立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -558,8 +559,10 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
       <li>毎朝、立て札に貼る依頼を選びます。冒険者は自分に合う依頼を取って出かけ、翌朝の報告書で結果を知ります。</li>
     </ol>
   </div>
-  <div class="actions"><button class="primary" id="startBtn">はじめる</button><button id="ch2Btn">2章から始める</button></div>
-    <p class="ch2-note">2章からは、1章をよくある建て方で13日かけて終えたところから始まります（冒険者3人・Lv6〜7、武器屋と防具屋は4段階目まで入荷）。</p>
+  <div class="actions"><button class="primary" id="contBtn" hidden>続きから</button><button class="primary" id="startBtn">はじめる</button><button id="ch2Btn">2章から始める</button></div>
+    <p class="ch2-note" id="saveNote" hidden></p>
+    <p class="ch2-note">2章からは、1章をよくある建て方で14日かけて終えたところから始まります（冒険者3人・Lv6〜7）。</p>
+    <p class="ch2-note">1日が終わるたびに、このブラウザに自動で保存します。</p>
 </div>
 
 <div class="modal" id="reportModal" hidden>
@@ -3352,7 +3355,7 @@ function townHidden(){for(const e of _cover)if(e&&!e.hidden)return true;return f
 function loop(now){
   const dt=Math.min(.1,(now-lastT)/1000); lastT=now;
   if(S.phase==='day'&&speed>0){acc+=dt*speed*RATE; const whole=Math.floor(acc); if(whole>0){acc-=whole; tick(S,whole);}}
-  if(S.phase==='report'&&wasPhase==='day'){acc=0; showDuskCard();}
+  if(S.phase==='report'&&wasPhase==='day'){acc=0; showDuskCard(); saveGame();}
   wasPhase=S.phase;
   if(GFX&&!townHidden())GFX.draw(now,dt);
   updVoice(now);
@@ -3360,8 +3363,27 @@ function loop(now){
   requestAnimationFrame(loop);
 }
 $('resLbl').textContent=RES;
+// ---------- セーブ：1日が終わるたび（報告書の時間）にこのブラウザへ保存する ----------
+const SAVE_KEY='tct-save-v1';
+function saveGame(){
+  if(!S||S.phase!=='report')return;
+  try{ const o=JSON.parse(JSON.stringify(S,(k,v)=>typeof v==='function'?undefined:v)); o.fx=[]; o.fights=[];
+    localStorage.setItem(SAVE_KEY,JSON.stringify({v:1,at:Date.now(),day:S.day,ch:S.chapter||1,S:o})); }catch(e){}
+}
+function readSave(){try{const t=localStorage.getItem(SAVE_KEY); if(!t)return null; const d=JSON.parse(t); return d&&d.v===1&&d.S?d:null;}catch(e){return null;}}
+function loadGame(d){
+  const base=newState(Math.random), L=d.S;
+  for(const k in base)if(L[k]===undefined)L[k]=base[k]; // 古い保存にない項目は、はじめの値で埋める
+  L.world=Object.assign(newWorld(),L.world||{}); L.rng=Math.random; L.fx=[]; L.fights=[];
+  for(const a of L.advs){ if(!a.own){a.own={sword:a.wlv||0,axe:0,dagger:0,mail:a.alv||0,cloth:0}; a.wl='sword'; a.al='mail'; a.tags={};} }
+  return L;
+}
+{const d=readSave(); if(d){$('contBtn').hidden=false; $('contBtn').innerHTML=`<span class="cb">続きから<small>${d.ch}章・${d.day}日目</small></span>`; $('startBtn').textContent='はじめから'; $('startBtn').classList.remove('primary');
+  $('saveNote').hidden=false; $('saveNote').textContent='「はじめから」や「2章から始める」を選ぶと、いまの保存は上書きされます。';}}
+$('contBtn').addEventListener('click',()=>{const d=readSave(); if(!d)return; S=loadGame(d); sel=null; planning=false; baseDirty=true; wasPhase=S.phase; $('titleModal').hidden=true; updateHud(); renderPanel(); openReport();});
+addEventListener('pagehide',saveGame); document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')saveGame();});
 $('startBtn').addEventListener('click',()=>{$('titleModal').hidden=true; openReport();});
-$('ch2Btn').addEventListener('click',()=>{S=autoCh1(CH2_SEED); sel=null; planning=false; baseDirty=true; wasPhase=S.phase; $('titleModal').hidden=true; updateHud(); renderPanel(); openReport();});
+$('ch2Btn').addEventListener('click',()=>{S=autoCh1(CH2_SEED); saveGame(); sel=null; planning=false; baseDirty=true; wasPhase=S.phase; $('titleModal').hidden=true; updateHud(); renderPanel(); openReport();});
 // 開発用：コンソールやテストから日を早送りする  __tct.skip(3) で3日進めて報告書を開く
 if(DEV)window.__sel=v=>{sel=v; renderPanel();};
 if(DEV)window.__orders=()=>openOrders();
