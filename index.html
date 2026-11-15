@@ -534,7 +534,7 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.19.6 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.19.7 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 広場の立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -874,7 +874,7 @@ function startDay(S){
 }
 // 朝の支度を始められる状態にする
 function wake(S,a,leaveAt){const P=PP(a); a.state='home'; a.leaveAt=leaveAt; a.todo={park:!P.skipPark,board:true,shops:P.armorFirst?['armor','weapon']:['weapon','armor'],shopsVisited:0};}
-function tick(S,mins){for(let m=0;m<mins;m++){if(S.phase!=='day')return; S.t++; for(const a of S.advs)step(S,a); for(const c of S.carps)carpStep(S,c); for(const d of S.docs)docStep(S,d); if(S.t%TURN===0)outTurnAll(S); if(S.t>=DAY_END)endDay(S);}}
+function tick(S,mins){for(let m=0;m<mins;m++){if(S.phase!=='day')return; S.t++; for(const a of S.advs)step(S,a); for(const c of S.carps)carpStep(S,c); for(const d of S.docs)docStep(S,d); if(S.t%15===0)partyCheck(S); if(S.t%TURN===0)outTurnAll(S); if(S.t>=DAY_END)endDay(S);}}
 function step(S,a){
   const t=S.t;
   switch(a.state){
@@ -979,10 +979,18 @@ const MEET_AT=600; const MEET_WAIT=60; // 酒場で最初のひとりが待ち�
 function tavernArrive(S,a){
   const P=S.parties[a.pt]; if(!P){next(S,a); return;}
   if(P.gone){a.pt=null; a.rep.leftBehind=true; goTo(S,a,GATE,'gate'); return;} // 仲間はもう出てしまった
-  P.met.push(a.id); if(P.deadline===null){P.first=S.t; P.deadline=Math.max(S.t+MEET_WAIT,MEET_AT);} // 早く着いても、集合の時刻（10時）までは待つ
+  P.met.push(a.id); if(P.deadline===null){P.first=S.t; P.deadline=Math.max(S.t+MEET_WAIT,MEET_AT+60);} // 早く着いたら集合の10時まで待ち、来そうな子がいれば11時ごろまで待つ
   a.hidden=true; a.state='stop'; a.until=P.deadline; a.stopWhat='tavern';
-  if(P.met.length>=P.ids.length)setOut(S,P);
+  if(partyReady(S,P))setOut(S,P);
 }
+// 出発してよいか：3人そろった／10時を過ぎて、受けた子が全員着き、これから立て札を見て加わりそうな子もいない
+function partyReady(S,P){
+  if(P.met.length>=3)return true;
+  if(S.t<MEET_AT)return false;
+  if(P.ids.some(i=>!P.met.includes(i)))return false;
+  return !S.advs.some(b=>!b.pt&&b.todo&&b.todo.board&&(b.state==='home'||b.state==='walk'||b.state==='stop')&&P.q&&canTake(S,b,P.q));
+}
+function partyCheck(S){for(const P of Object.values(S.parties))if(!P.gone&&P.met.length&&partyReady(S,P))setOut(S,P);}
 // そろった（か、待ちきれなくなった）ので、いる顔ぶれで門へ向かう
 function setOut(S,P){
   const id=Object.keys(S.parties).find(k=>S.parties[k]===P);
@@ -1088,10 +1096,10 @@ function takeQuest(S,a){
   const q=best?{...best}:{k:'self',id:'self'}; a.quest=q; (S.taken[q.id]=S.taken[q.id]||[]).push(a.id);
   if(q.bonus){const b=S.board.find(x=>x.id===q.id); if(b&&!b.paid){b.paid=true; S.elem=Math.max(0,S.elem-BONUS_COST);}}
   a.behest=a.rep.behest=q.k==='boss'?'boss':'explore'; a.rep.quest={k:q.k,n:q.n||null,name:QK[q.k].name(q),reward:rewardOf(q),bonus:!!q.bonus,party:!!q.party};
-  if(q.party){ let id=S.qparty[q.id]; if(!id||!S.parties[id]||S.parties[id].gone||S.parties[id].ids.length>=3){ /* 3人そろった組は締め切り、次の子から新しい組 */id=++S.partyN; S.parties[id]={ids:[],leader:a.id,atGate:0,met:[],deadline:null}; S.qparty[q.id]=id;}
+  if(q.party){ let id=S.qparty[q.id]; if(!id||!S.parties[id]||S.parties[id].gone||S.parties[id].ids.length>=3){ /* 3人そろった組は締め切り、次の子から新しい組 */id=++S.partyN; S.parties[id]={ids:[],leader:a.id,atGate:0,met:[],deadline:null,q}; S.qparty[q.id]=id;}
     const P=S.parties[id]; P.ids.push(a.id); a.pt=id; a.rep.ptWhy=q.k;
-    // 先に酒場で待っている仲間がいたら、この子が来るまで少し待ってくれる（最初のひとりが着いてから最大150分）
-    if(P.deadline!==null){P.deadline=Math.min(Math.max(P.first+150,MEET_AT+60),Math.max(P.deadline,S.t+70)); for(const i of P.met){const x=S.advs.find(v=>v.id===i); if(x&&x.state==='stop'&&x.stopWhat==='tavern')x.until=P.deadline;}} }
+    // 先に酒場で待っている仲間がいたら、この子が来るまで待ってくれる（遅くとも12時半まで）
+    if(P.deadline!==null){P.deadline=Math.max(P.deadline,Math.min(S.t+100,MEET_AT+150)); for(const i of P.met){const x=S.advs.find(v=>v.id===i); if(x&&x.state==='stop'&&x.stopWhat==='tavern')x.until=P.deadline;}} }
 }
 // よくある貼り方（自動プレイ用）：親玉 → 主 → 近道 → 部屋 → 道 → 手伝い → 腕。主と親玉は、酒場があれば組んで
 function autoBoard(S){
@@ -2529,7 +2537,7 @@ function renderPanel(){
         <button class="opt" id="invest" data-type="${T}" ${lock||S.elem<investCost(S,T)?'disabled':''}><b>${(S.stockNext||{})[T]?`あす入荷：${nx}`:lock?'入荷':`投資して入荷：${nx}`}</b><span>${(S.stockNext||{})[T]?'投資ずみ。品物は翌朝に届く（1日に1段階まで）':lock||'翌朝、次の段階の品が店に並ぶ。冒険者は自分のお金で買う'}</span><em>${lock?'—':investCost(S,T)}</em></button>`;
     }
     else if(b.type==='tavern'){const T=Object.values(S.parties||{}).filter(P=>P.ids.length).map(P=>P.ids.map(i=>(S.advs.find(a=>a.id===i)||{}).name).join('・'));
-      body=`<p class="lead">${BUILD.tavern.desc}</p><p class="rc-note">${S.phase==='day'?(T.length?`きょうの組：${T.join(' ／ ')}`:'きょうは約束なし'):'討伐の依頼を貼ると、受けた子がここで待ち合わせる'}</p><p class="rc-note">集合は10時。最初のひとりが着いてから${MEET_WAIT}分たつか、全員がそろったら出発する。家や立て札から近いと、早くそろう。</p>`;}
+      body=`<p class="lead">${BUILD.tavern.desc}</p><p class="rc-note">${S.phase==='day'?(T.length?`きょうの組：${T.join(' ／ ')}`:'きょうは約束なし'):'討伐の依頼を貼ると、受けた子がここで待ち合わせる'}</p><p class="rc-note">集合は10時。3人そろうか、10時を過ぎて受けた子が全員着いたら出発する。遅れて受けた子がいれば12時半まで待つ。家や立て札から近いと、早くそろう。</p>`;}
     else if(b.type==='clinic'){const d=S.docs.find(d=>d.clinic===b.id), pt=d&&d.patient!==null&&S.advs.find(a=>a.id===d.patient);
       body=`<p class="lead">${BUILD.clinic.desc}</p><p class="rc-note">医者：${!d?'明日から':pt?`${pt.name}の家へ往診中`:'診療所で待機'}</p>`;}
     else if(b.type!=='board')body=`<p class="lead">${BUILD[b.type].desc}</p>`;
