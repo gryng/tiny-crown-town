@@ -534,7 +534,7 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.19.7 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.19.8 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 広場の立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -1085,7 +1085,7 @@ function want(S,a,q,i){
   if(q.bonus)v*=1.3;
   const n=(S.taken[q.id]||[]).length;
   if(q.party){ v*=n?(pf.team??1.5)*(1+.3*n):(pf.team??1)*.8; } // 組む依頼は、もう受けた子がいると加わりたくなる
-  else if(n)v*=(pf.team??1)/(1+.3*n); // 人数の上限はないが、ほかの子がもう受けた依頼は少しやりたくなくなる
+  else if(n)v*=(pf.team===0?.6:pf.team??1)/(1+.3*n); // 人数の上限はないが、ほかの子がもう受けた依頼は少しやりたくなくなる（一匹狼は人と組まないだけで、同じ依頼を受けるのは平気）
   v*=1+.25*(S.board.length-i)/S.board.length; if(pf.top&&i===0)v*=pf.top;  // 上に貼ってあるほど目に入る
   if(a.morale<40&&q.k!=='help')v*=.8;
   return v*(.9+S.rng()*.2);
