@@ -550,7 +550,7 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.21.1 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.22.0 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 広場の立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -1020,7 +1020,7 @@ function foesFor(S,a){
   return L;
 }
 const knows=(S,mid,t)=>!!(S.know[mid]&&S.know[mid][t]);
-const seenMon=(S,mid)=>!!(S.know[mid]&&S.know[mid].seen);
+const seenMon=(S,mid)=>!!(S.know[mid]&&(S.know[mid].seen||S.know[mid].scouted));
 // 知っていることだけで見積もる、1回の攻撃の手ごたえ
 function hitEst(S,a,l,t,mid){
   const m=MON[mid], base=a.atk-gearStat(a.wl,a.wlv).atk+(PP(a).atk||0)+gearStat(l,t).atk, def=seenMon(S,mid)?m.def:2;
@@ -1148,6 +1148,7 @@ const boardMax=S=>2+(S.chapter||1);
 const BONUS_COST=20;   // 特別手当：時のかけらを払うと報酬が1.5倍になり、受けてもらいやすくなる
 const QK={
   road:  {name:q=>'奥へ進め', noun:q=>'探索', desc:'まだだれも歩いていない道や部屋へ向かう', done:'探索を少しでも進める', reward:40, cap:2},
+  scout: {name:q=>'親玉のようすを探れ', noun:q=>'親玉の偵察', desc:'親玉の間の手前まで行き、物かげからようすを探る。強さや特徴がひとつわかる', done:'親玉のことをひとつ知る', reward:50, cap:2},
   study: {name:q=>`${NODES[q.n].n}を詳しく調べる`, noun:q=>`${NODES[q.n].n}のくわしい調査`, desc:'時間をかけて部屋を調べ、鍵の品や手がかりを持ち帰る。人数が多いほど早い', done:'品をひとつ見つける', reward:60, cap:3},
   room:  {name:q=>`${NODES[q.n].n}を調べよ`, noun:q=>`${NODES[q.n].n}の調査`, desc:'その部屋まで行って、中を調べる', done:'部屋を調べる', reward:50, cap:2},
   master:{name:q=>`${NODES[q.n].n}の主を倒せ`+(q.party?'（3人で組んで）':''), noun:q=>`${NODES[q.n].n}の主の討伐`, desc:'部屋の主に挑む', done:'主を倒す', reward:120, cap:1},
@@ -1166,6 +1167,7 @@ const known=(S,id)=>reached(S,id)||EDGES.some(e=>!e.bossWay&&!(e.cut&&!S.world.c
 function questsAvail(S){
   const W=S.world, L=[], add=(k,o={})=>{const q={k,...o}; q.id=qid(q); L.push(q);}, party=!!first(S,'tavern');
   if(S.explore>=100&&!S.bossDown)add('boss',{party});
+  {const an=anteNode(S); if(an&&!S.bossDown&&reached(S,an)&&!masterAlive(S,an)&&bossUnknown(S))add('scout');}
   const blk=t=>x=>x!==t&&masterAlive(S,x), way=t=>!!route(S,'gate',t,{block:blk(t)}); // ほかの主にふさがれずに行けるか
   for(const id in NODES){const n=NODES[id]; if(!inArea(S,n)||!known(S,id)||!way(id))continue;
     if(n.master&&masterAlive(S,id))add('master',{n:id,party});
@@ -1177,6 +1179,18 @@ function questsAvail(S){
   if(S.sites.length)add('help');
   add('train');
   return L;
+}
+// 親玉の間の手前の地点と、親玉についてまだわかっていないこと
+const anteNode=S=>{const e=EDGES.find(e=>e.bossWay&&e.ar===S.area); return e?e.a:null;};
+const bossId=S=>NODES[AREAS[S.area].bossNode].mon;
+function bossUnknown(S){const mid=bossId(S), m=MON[mid], K=S.know[mid]||{}; return !(K.seen||K.scouted)||TRAITS.some(([t])=>m[t]&&!K[t]);}
+// 偵察：まだ姿を知らなければ強さ、知っていれば特徴をひとつ
+function scoutBoss(S,a){
+  const mid=bossId(S), m=MON[mid], K=S.know[mid]||(S.know[mid]={seen:0}); let got=null;
+  if(!(K.seen||K.scouted)){K.scouted=true; got=`体力${m.hp}・攻撃${m.atk}・守り${m.def}ほど`; (S.foundToday=S.foundToday||[]).push({mid,scout:got,by:a.name});}
+  else {const t=TRAITS.find(([k])=>m[k]&&!K[k]); if(t){K[t[0]]=true; got=t[1]; (S.foundToday=S.foundToday||[]).push({mid,t:t[0],lb:t[1],by:a.name});}}
+  for(const x of mates(S,a)){x.rep.scouted=(x.rep.scouted||[]).concat(got?[got]:[]); ev(S,x,'sc',{m:mid,got});}
+  S.world.scoutDay=S.day;
 }
 const keysLeft=(S,id)=>{const n=NODES[id]; return n&&n.keys?n.keys.length-(S.world.keysTaken[id]||0):0;};
 const capOf=q=>q.party?3:Infinity, rewardOf=q=>Math.round(QK[q.k].reward*(q.bonus?1.5:1));
@@ -1230,7 +1244,7 @@ function takeQuest(S,a){
 }
 // よくある貼り方（自動プレイ用）：親玉 → 主 → 近道 → 部屋 → 道 → 手伝い → 腕。主と親玉は、酒場があれば組んで
 function autoBoard(S){
-  const backlog=S.sites.some(x=>x.kind==='build')&&S.sites.reduce((t,x)=>t+x.need-x.done,0)>900*S.carps.length, order=['boss','master','study','cut','room','road','help','train'];
+  const backlog=S.sites.some(x=>x.kind==='build')&&S.sites.reduce((t,x)=>t+x.need-x.done,0)>900*S.carps.length, order=['boss','master','scout','study','cut','room','road','help','train'];
   const av=questsAvail(S).filter(q=>q.k!=='help'||backlog);
   const rk=q=>q.k==='study'&&NODES[q.n].ar<S.area?order.indexOf('road')+.5:order.indexOf(q.k); // 前のエリアの品は後回し
   let pt=0; S.board=av.slice().sort((x,y)=>rk(x)-rk(y)).filter(q=>!q.party||!pt++).slice(0,boardMax(S)).map(q=>({...q})); // 組む依頼は1枚ずつ
@@ -1242,6 +1256,7 @@ function questDone(S,a){
     case 'road': return r.explore>0||!!r.newRoad;
     case 'room': return r.ev.some(e=>e.k==='s'&&e.n===q.n&&!e.mine&&!e.treasure);
     case 'study': return (r.keyGot||[]).some(k=>k.n===q.n);
+    case 'scout': return (r.scouted||[]).length>0;
     case 'master': return r.masterAt===q.n;
     case 'gather': return r.elem>=25;
     case 'train': return r.wins>=5;
@@ -1546,6 +1561,7 @@ function actDone(S,a,k){
   }
   if(k==='mine'){const v=W.vein[id]===undefined?1:W.vein[id], got=cut(Math.max(2,Math.round((9+r()*5)*v*(N.rich||1)*ELEM_K))); W.vein[id]=Math.max(0,v-.06); for(const x of M){x.rep.elem+=got; ev(S,x,'s',{n:id,e:got,mine:true});}}
   if(k==='treasure'){const v=W.veinG[id]===undefined?1:W.veinG[id], got=cut(Math.max(2,Math.round((9+r()*5)*v*(N.rich||1)))); W.veinG[id]=Math.max(0,v-.06); for(const x of M){x.gold+=got; x.rep.gold+=got; ev(S,x,'s',{n:id,g:got,treasure:true});}}
+  if(k==='scout'&&S.world.scoutDay!==S.day&&bossUnknown(S))scoutBoss(S,a);
   if(k==='study'){
     W.study[id]=(W.study[id]||0)+2*Math.max(1,M.filter(x=>(x.quest||{}).k==='study'&&x.quest.n===id).length);
     while(W.study[id]>=STUDY_NEED&&keysLeft(S,id)){W.study[id]-=STUDY_NEED; findKey(S,id,a,M);}
@@ -1558,7 +1574,7 @@ function findKey(S,id,a,M){
   const W=S.world, N=NODES[id], i=W.keysTaken[id]||0, [l,name]=N.keys[i]; W.keysTaken[id]=i+1; S.keys[l]=(S.keys[l]||0)+1; (S.items=S.items||{})[name]=true;
   const by=M.filter(x=>(x.quest||{}).k==='study'&&x.quest.n===id); for(const x of (by.length?by:[a])){x.rep.keyGot=(x.rep.keyGot||[]).concat([{n:id,name,l}]); ev(S,x,'k',{n:id,name});}
   (S.foundToday=S.foundToday||[]).push({key:true,n:id,name,l,by:(by.length?by:[a]).map(x=>x.name)});
-  if(i===0)for(const [mid,t] of N.info||[]){const m=MON[mid], K=S.know[mid]||(S.know[mid]={seen:0}), tt=t==='?'?(TRAITS.find(([k])=>m[k]&&!K[k])||[])[0]:t; if(!tt||K[tt]||!m[tt])continue; K[tt]=true; K.heard=true; const lb=TRAITS.find(([k])=>k===tt)[1]; S.foundToday.push({mid,t:tt,lb,by:a.name,note:true});}
+  if(i===0)for(const [mid,t] of N.info||[]){const m=MON[mid], K=S.know[mid]||(S.know[mid]={seen:0}), tt=t==='?'?(TRAITS.find(([k])=>m[k]&&!K[k])||[])[0]:t; if(!tt||K[tt]||!m[tt])continue; K[tt]=true; K.heard=true; const lb=TRAITS.find(([k])=>k===tt)[1]; S.foundToday.push({mid,t:tt,lb,by:a.name,note:true,n:id});}
 }
 function moveAlong(S,a,rt){const e=rt.path[0], M=mates(S,a), f=!e.mud?1:M.some(x=>x.al==='mail'&&x.alv>=2)?1.15:M.every(x=>x.al==='cloth'&&x.alv)?.8:1; a.out.edge={e,to:other(e,a.out.at),left:Math.max(1,Math.round(elen(S,e)*f))};} // よろい（2段階〜）はぬかるみで重く、全員が旅装束なら軽い
 function decide(S,a){
@@ -1585,6 +1601,7 @@ function decide(S,a){
   const strike=M.length>1&&((a.behest==='boss'&&S.explore>=100&&!S.bossDown)||Object.keys(NODES).some(nid=>inArea(S,NODES[nid])&&masterAlive(S,nid))); // 組んでいて、主か親玉が残っている：掘ったりせず、まっすぐ壁へ向かう
   const Qs=a.quest||{};
   if(Qs.k==='study'&&Qs.n===id&&keysLeft(S,id)&&slack>3&&!masterAlive(S,id)){o.act={k:'study',left:2}; return;} // 詳しく調べる（2ターンずつ）
+  if(Qs.k==='scout'&&id===anteNode(S)&&W.scoutDay!==S.day&&bossUnknown(S)&&slack>4&&!S.bossDown){o.act={k:'scout',left:4}; return;} // 物かげから親玉をのぞく（1日にひとつ）
   if(N.room&&!masterAlive(S,id)){
     if(W.searchDay[id]!==S.day&&slack>3&&!(strike&&W.searched[id])){o.act={k:'search',left:3}; return;}
     if(digStyle(a)&&!strike){o.digs=o.digs||{}; const vk=styleOf(a)==='mine'?'vein':'veinG', v=W[vk][id]===undefined?1:W[vk][id]; if((o.digs[id]||0)<2&&v>.25&&slack>6){o.digs[id]=(o.digs[id]||0)+1; o.act={k:styleOf(a),left:3}; return;}}
@@ -1597,11 +1614,12 @@ function decide(S,a){
   const block=nid=>masterAlive(S,nid);
   let best=null; const offer=(to,bonus,what,opt)=>{ if(to===id)return; const rt=route(S,id,to,{block,safe:P.safe,...opt}); if(!rt)return; const back=route(S,to,'gate'); if(rt.cost+(back?back.cost:99)+margin+3>left)return; const sc=rt.cost-bonus; if(!best||sc<best.sc)best={sc,rt,what,to}; };
   if(a.behest==='boss'&&S.explore>=100&&!S.bossDown){
-    if(winnableP(S,a,bossMon(S),P.brave?-1:P.safe?.3:0))offer(AREAS[S.area].bossNode,50,'boss',{boss:true});
+    if(winnableP(S,a,bossMon(S),(P.brave?-1:P.safe?.3:0)+(seenMon(S,bossId(S))?0:.15)))offer(AREAS[S.area].bossNode,50,'boss',{boss:true});
     else if(!a.rep.shy){for(const x of M){x.rep.shy=true; x.rep.shyNote=M.length>1?'組んでも親玉にはまだ勝てそうにないと見て、腕をみがいた':'親玉にはまだ勝てそうにないと見て、腕をみがいた';}}
   }
   const Q=a.quest||{k:'self'}, qBoost=nid=>(Q.n===nid&&(Q.k==='room'||Q.k==='master'||Q.k==='study'))?60:0;
   if(Q.k==='study'&&Q.n&&Q.n!==id&&keysLeft(S,Q.n)&&!masterAlive(S,Q.n))offer(Q.n,70,'study');
+  {const an=anteNode(S); if(Q.k==='scout'&&an&&an!==id&&W.scoutDay!==S.day&&!masterAlive(S,an))offer(an,70,'scout');}
   if(Q.k==='cut'&&W.clue&&!W.cut){const cn=Object.keys(NODES).find(i=>NODES[i].clue&&inArea(S,NODES[i])); if(cn&&cn!==id)offer(cn,40,'cut');}
   const dig=digStyle(a)&&!strike, vk=styleOf(a)==='mine'?'vein':'veinG';
   for(const nid in NODES){ const n=NODES[nid]; if(!n.room||!inArea(S,n))continue;
@@ -1712,7 +1730,8 @@ function highlights(S){
   for(const b of S.builtToday){ if(/が完成$/.test(b))add(60,b,{}); else if(/入荷$/.test(b))add(25,b,{}); else if(/古い宝箱/.test(b))add(40,b,{}); else if(/^荒れ地を片づけた|^荒れた道を直した/.test(b))add(30,b,{}); }
   for(const a of S.advs)if(a.joinDay===S.day+1)add(30,`新しい冒険者・${a.name}（${PP(a).name}）が町に来た`,{});
   for(const f of S.foundToday||[]){ if(f.key){add(66,`${names(f.by)}が${NODES[f.n].n}で「${f.name}」を見つけた。${BUILD[LINES[f.l].shop].name}の${LINES[f.l].n}を${Object.keys(REQ[f.l]).find(t=>REQ[f.l][t]===f.name)||''}段階めに上げるのに要る品`,{big:true}); continue;}
-    const m=MON[f.mid], who=f.note?`${NODES[(S.foundToday.find(x=>x.key)||{}).n]?.n||'部屋'}の書き付けによると、`:f.by?`${f.by}の話では、`:''; if(f.t)add(m.boss?58:m.master?48:32,`${who}${m.n}は${f.lb}らしい`,{know:true}); else if(m.boss||m.master)add(36,`${f.by||'冒険者'}が${m.n}と初めて戦った`,{know:true});}
+    if(f.scout){add(50,`${f.by}が物かげから${MON[f.mid].n}をのぞいた。${f.scout}`,{know:true}); continue;}
+    const m=MON[f.mid], who=f.note?`${(NODES[f.n]||{}).n||'部屋'}の書き付けによると、`:f.by?`${f.by}の話では、`:''; if(f.t)add(m.boss?58:m.master?48:32,`${who}${m.n}は${f.lb}らしい`,{know:true}); else if(m.boss||m.master)add(36,`${f.by||'冒険者'}が${m.n}と初めて戦った`,{know:true});}
   for(const a of A)if(a.rep.gear&&a.rep.gear.why)add(18,`${a.name}は${a.rep.gear.why}`,{id:a.id});
   return H.sort((x,y)=>y.w-x.w);
 }
@@ -2958,10 +2977,10 @@ function renderBook(){
     const known=ms.filter(m=>seenMon(S,m)).length;
     return `<h4 class="sec">${A.name}<small class="lnum">${known}/${ms.length}種</small></h4><div class="bk-list">`+ms.map(m=>{const M=MON[m], K=S.know[m];
       if(!K||(!K.seen&&!K.heard))return `<div class="bk unk"><b>？？？</b><small>${M.boss?'親玉':M.master?'部屋の主':''}まだ出会っていない</small></div>`;
-      if(!K.seen){const tr=TRAITS.filter(([t])=>K[t]); return `<div class="bk unk"><b>${M.n}</b><small>まだ出会っていない。書き付けによると：</small><span class="bk-tr">${tr.map(([t,lb])=>`<i>${lb}</i>`).join('')}</span><small class="bk-tip">${tr.map(([t])=>tip[t]).join('。')}</small></div>`;}
+      if(!K.seen&&!K.scouted){const tr=TRAITS.filter(([t])=>K[t]); return `<div class="bk unk"><b>${M.n}</b><small>まだ出会っていない。書き付けによると：</small><span class="bk-tr">${tr.map(([t,lb])=>`<i>${lb}</i>`).join('')}</span><small class="bk-tip">${tr.map(([t])=>tip[t]).join('。')}</small></div>`;}
       const tr=TRAITS.filter(([t])=>K[t]), more=TRAITS.some(([t])=>M[t]&&!K[t]);
       return `<div class="bk${M.boss?' boss':M.master?' master':''}"><b>${M.n}${M.boss?'<i class="bk-tag">親玉</i>':M.master?'<i class="bk-tag">部屋の主</i>':''}</b>
-        <small class="bk-st">体力${M.hp}・攻撃${M.atk}・守り${M.def}　出会った回数 ${K.seen}</small>
+        <small class="bk-st">体力${M.hp}・攻撃${M.atk}・守り${M.def}　${K.seen?`出会った回数 ${K.seen}`:'物かげから見た'}</small>
         <span class="bk-tr">${tr.map(([t,lb])=>`<i title="${tip[t]}">${lb}</i>`).join('')}${more?'<i class="q">？まだ何かありそう</i>':tr.length?'':'<i class="q">とくに変わったところはない</i>'}</span>
         ${tr.length?`<small class="bk-tip">${tr.map(([t])=>tip[t]).join('。')}</small>`:''}</div>`;}).join('')+'</div>';}).join('');
 }
@@ -3064,6 +3083,7 @@ function logHTML(r){
           continue; }
         txt=`${node.n}を${e.first?'初めて':''}調べ、${RES}を${e.e}見つけた`+(e.chest?`。宝箱から${e.chest}ゴールドも出てきた`:'')+(e.clue?'。近道の手がかりも見つけた':''); break;
       case 'o': txt='泉へ抜ける近道を切り開いた！'; break;
+      case 'sc': txt=e.got?`物かげから${MON[e.m].n}のようすを探った。${/ほど$/.test(e.got)?e.got:e.got+'らしい'}`:`物かげから${MON[e.m].n}をのぞいたが、新しいことはわからなかった`; break;
       case 'k': txt=`${NODES[e.n].n}を詳しく調べて、「${e.name}」を見つけた！`; break;
       case 'd': txt=`寄り道：${(DT[e.z==='forest'?'forest':'cave'])[e.v%6]}`; break;
     }
@@ -3097,7 +3117,7 @@ function cardHTML(r,day,rows){
   const qline=r.quest?`<p class="qline"><span class="xl">依頼</span><b>${r.jobNew?`${r.jobNew}に転職したあと、`:''}${r.quest.name}</b>${r.quest.k==='self'?'<small>合う依頼がなく自主練</small>':r.questDone?`<em class="qok">達成！ ${r.pay?r.pay+'G':'（受け取りそびれ）'}</em>`:`<em class="qng">未達成${r.pay?' '+r.pay+'G':''}</em>`}</p>`:r.behest==='rest'?'<p class="qline"><span class="xl">依頼</span><b>休ませた</b></p>':'';
   const bits=[]; if(r.ar!=null&&r.dep!=null&&r.ar!==(S.lastReport?S.lastReport.area:S.area))bits.push(`腕前に合った${AREAS[r.ar].name}へ向かった`); if(r.party)bits.push(`酒場で待ち合わせて、${r.party.join('、')}と組んで出かけた`); if(r.leftBehind)bits.push('酒場の待ち合わせに間に合わず、ひとりで出かけた'); if(r.noMate)bits.push('酒場で待ったが仲間が来ず、ひとりで出かけた'); if(r.jobNew)bits.push(`学び舎で手ほどきを受けて、${r.jobNew}になった`); if(r.overslept)bits.push(`きのうの傷がひびいて${r.overslept}分寝坊した`); if(r.healed)bits.push('往診のおかげで昼から動けた');
   if(r.note&&!(r.note==='傷ついて引き返した'&&r.hurt)&&!(r.note==='やられて逃げ帰った'&&r.ko))bits.push(r.note); if(r.missedWage&&r.quest&&r.quest.k!=='self')bits.push('城に寄れず、報酬を受け取りそびれた');
-  if(r.gear&&r.gear.why)bits.push(r.gear.why); if(r.learned)bits.push(`戦ってみて、${r.learned.join('、')}とわかった`);
+  if(r.gear&&r.gear.why)bits.push(r.gear.why); if(r.learned)bits.push(`戦ってみて、${r.learned.join('、')}とわかった`); if(r.scouted&&r.scouted.length)bits.push(`物かげから親玉をのぞいた（${r.scouted.join('、')}）`);
   if(r.wish)bits.push(`${Object.values(r.wish).join('と')}が欲しいが、まだ店に入っていない`);
   const hurt=r.injuredNew==='big'?'<span class="hurt">大けが。あすから2日は療養（医者の往診があれば1日）</span>':r.ko?'<span class="hurt">やられた。あすは療養（医者の往診があれば昼から動ける）</span>'
     :r.hurt?`<span class="hurt">傷ついて帰ってきた。あすは寝坊しそう${r.clinic?'（診療所に寄ったので軽くすむ）':''}</span>`:'';
