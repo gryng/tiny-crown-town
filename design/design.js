@@ -39,7 +39,7 @@ if(require.main===module){
 // ---- ここから下は、実装するときにそのまま index.html の NODES / EDGES / AREAS へ写せる形のデータ ----
 // 章ごとの決まり。min:そのエリアで戦える目安のレベル（腕前に合ったエリアの判定に使う） cap:冒険者の上限 stock:店に入荷できる段階 board:立て札の枚数 carps:大工の上限
 const CHAPTERS=[
- {ch:1,area:'西の洞窟',min:1,cap:3,stock:4,board:3,carps:1,masterElem:30,days:13,unlock:[]},
+ {ch:1,area:'南の洞窟',min:1,cap:3,stock:4,board:3,carps:1,masterElem:30,days:13,unlock:[]},
  {ch:2,area:'北の湿地',min:5,cap:5,stock:6,board:4,carps:2,masterElem:45,days:12,unlock:['酒場','白魔法の学院']},
  {ch:3,area:'古い街道',min:10,cap:6,stock:7,board:5,carps:3,masterElem:60,days:13,unlock:['訓練場（戦士）','道具屋（お守り）']},
  {ch:4,area:'雪の山',min:15,cap:7,stock:8,board:5,carps:3,masterElem:80,days:13,unlock:['黒魔法の学院','湯屋']},

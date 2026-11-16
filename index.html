@@ -570,7 +570,7 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.24.2 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.24.3 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 広場の立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -1351,7 +1351,7 @@ NODES.hall.keys=[['sword','古い剣の柄']]; // 本道の部屋にも、主を
 const STUDY_NEED=12; // 鍵の品ひとつを見つけるのにかかる手間（人数×ターン）
 for(const id of ['fork','spring','mouth','r1','r2','hall','boss'])NODES[id].ar=0;
 // エリア（章ごとに1つずつ進む）。いま挑んでいるのは S.area
-const AREAS=[{name:'西の洞窟',bossNode:'boss',short:'洞窟',min:1},{name:'北の湿地',bossNode:'sboss',short:'湿地',min:5}]; // min：ここで戦える目安のレベル
+const AREAS=[{name:'南の洞窟',bossNode:'boss',short:'洞窟',min:1},{name:'北の湿地',bossNode:'sboss',short:'湿地',min:5}]; // min：ここで戦える目安のレベル
 // 冒険者が外で動いているあいだは、その子が向かったエリア（S._ar）で考える。ふだんは、いま挑んでいるエリア
 const inArea=(S,x)=>x.ar===undefined||x.ar===(S._ar??S.area);
 // 腕前に合った行き先：いま挑んでいるエリアまでのうち、目安のレベルに届いているいちばん奥
