@@ -463,17 +463,17 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
 .dlg-ch button:hover{filter:brightness(1.08)}
 .dlg-next{position:absolute;right:14px;bottom:8px;font-style:normal;font-size:12px;color:var(--trim);animation:nextBob .8s ease-in-out infinite}
 @keyframes nextBob{50%{transform:translateY(3px)}}
-.tower-mark{position:absolute;z-index:4;transform:translate(-50%,-100%);padding:0 9px;font:800 16px/1.4 var(--f-head);color:var(--wood-2);background:#fffaf0;border:1.5px solid #120a05;border-radius:10px 10px 10px 2px;pointer-events:none;animation:nextBob 1s ease-in-out infinite}
+.tower-mark{line-height:1.4;position:absolute;z-index:4;transform:translate(-50%,-100%);padding:0 9px;font:800 16px/1.4 var(--f-head);color:var(--wood-2);background:#fffaf0;border:1.5px solid #120a05;border-radius:10px 10px 10px 2px;pointer-events:none;animation:nextBob 1s ease-in-out infinite}
 @media (max-width:1179.98px),(max-height:519.98px){.dlg{top:auto;bottom:calc(var(--peekH,150px) + env(safe-area-inset-bottom,0px) + 12px);grid-template-columns:48px minmax(0,1fr);padding:10px 14px 12px 10px}.dlg-face{width:48px;height:52px}.dlg-text{font-size:14.5px;min-height:2.4em}body.planning .dlg{display:none}}
 /* ===== 遠征図と大事なときの帯 ===== */
 .minimap{display:none}
-.banner{position:absolute;z-index:7;left:50%;top:22%;transform:translateX(-50%);display:grid;justify-items:center;gap:2px;padding:10px 60px;pointer-events:none;color:#fff3d0;background:linear-gradient(90deg,transparent,#1a100ae0 18%,#1a100ae0 82%,transparent);border-top:1.5px solid #c9a84c99;border-bottom:1.5px solid #c9a84c99;text-align:center;white-space:nowrap}
+.banner{position:absolute;z-index:7;left:50%;top:22%;transform:translateX(-50%);display:grid;justify-items:center;gap:4px;padding:12px 80px;line-height:1.3;pointer-events:none;color:#fff3d0;background:linear-gradient(90deg,transparent,#1a100ae0 18%,#1a100ae0 82%,transparent);border-top:1.5px solid #c9a84c99;border-bottom:1.5px solid #c9a84c99;text-align:center;white-space:nowrap}
 .banner b{font-family:var(--f-head);font-weight:800;font-size:clamp(24px,4vw,40px);letter-spacing:.12em;text-shadow:0 2px 0 #000}
 .banner span{font-family:var(--f-head);font-weight:800;font-size:13px;letter-spacing:.4em;color:var(--trim)}
 .banner.go{animation:bannerIn 3.4s ease forwards}
 @keyframes bannerIn{0%{opacity:0;letter-spacing:.4em}12%{opacity:1;letter-spacing:.12em}80%{opacity:1}100%{opacity:0}}
 @media (min-width:1180px) and (min-height:520px){
-  .minimap{display:block;position:absolute;z-index:5;right:18px;bottom:104px;width:290px;padding:8px 10px 6px;background:linear-gradient(180deg,#24160de6,#1a100ae6);border:1.5px solid #120a05;border-radius:10px;box-shadow:inset 0 0 0 1px var(--trim-dk),0 4px 12px #0008}
+  .minimap{display:block;line-height:1.4;position:absolute;z-index:5;right:18px;bottom:104px;width:290px;padding:8px 10px 6px;background:linear-gradient(180deg,#24160de6,#1a100ae6);border:1.5px solid #120a05;border-radius:10px;box-shadow:inset 0 0 0 1px var(--trim-dk),0 4px 12px #0008}
   .minimap h3{margin:0 0 2px;font-family:var(--f-head);font-weight:800;font-size:12px;letter-spacing:.3em;color:var(--trim)}
   .minimap h3 small{margin-left:8px;font-family:var(--f-body);font-size:10.5px;letter-spacing:0;color:#bfae88}
   .minimap svg{display:block;width:100%;height:auto;background:#3a2a1a;border-radius:6px;box-shadow:inset 0 0 0 1px #000}
@@ -750,7 +750,7 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
     <div class="voice" id="voice" hidden></div>
     <div class="dlg" id="dlg" hidden><span class="dlg-face"><svg class="cuckoo" viewBox="0 0 44 48" aria-hidden="true"><path d="M3 18 L22 4 L41 18 Z" fill="#5b3a22" stroke="#241c14" stroke-width="2" stroke-linejoin="round"/><rect x="7" y="17" width="30" height="26" rx="2" fill="#a8743f" stroke="#241c14" stroke-width="2"/><rect x="13" y="20" width="18" height="16" rx="8" fill="#2a2018"/><g class="bird"><ellipse cx="22" cy="31" rx="8" ry="6" fill="#c9c6bd" stroke="#241c14" stroke-width="1.5"/><circle cx="22" cy="24" r="5.5" fill="#dedad0" stroke="#241c14" stroke-width="1.5"/><path d="M26.5 24.5 l4 1.2 -4 1.2z" fill="#e0a040" stroke="#241c14" stroke-width="1"/><circle cx="23.6" cy="23.4" r="1" fill="#241c14"/><path d="M21.6 21.6 l3.4 -.8" stroke="#241c14" stroke-width="1.2" stroke-linecap="round"/><path d="M17.5 20 h9 l-1 -4 h-7z" fill="#1b4332" stroke="#241c14" stroke-width="1.2" stroke-linejoin="round"/><path d="M17 20.4 h10" stroke="#c9a84c" stroke-width="1.4"/></g><path d="M22 43 v4" stroke="#241c14" stroke-width="2"/><circle cx="22" cy="47" r="1.6" fill="#c9a84c"/></svg></span><div class="dlg-body"><b class="dlg-name">秘書<small>鳩時計の鳩</small></b><p class="dlg-text" id="dlgText"></p><div class="dlg-ch" id="dlgCh"></div></div><i class="dlg-next" aria-hidden="true">▼</i></div>
     <div class="tower-mark" id="towerMark" hidden>…</div>
-    <div class="banner" id="banner" hidden><span id="bannerSub"></span><b id="bannerMain"></b></div>
+    <div class="banner" id="banner" hidden><b id="bannerMain"></b><span id="bannerSub"></span></div>
     <div class="minimap" id="minimap" aria-label="遠征図"><h3>遠征図<small id="miniArea"></small></h3><svg id="miniSvg" viewBox="0 0 336 188"></svg></div>
     <div class="sec-dock" id="secDock" hidden><button class="sec-btn" id="secBtn" aria-label="秘書"><svg class="cuckoo" viewBox="0 0 44 48" aria-hidden="true"><path d="M3 18 L22 4 L41 18 Z" fill="#5b3a22" stroke="#241c14" stroke-width="2" stroke-linejoin="round"/><rect x="7" y="17" width="30" height="26" rx="2" fill="#a8743f" stroke="#241c14" stroke-width="2"/><rect x="13" y="20" width="18" height="16" rx="8" fill="#2a2018"/><g class="bird"><ellipse cx="22" cy="31" rx="8" ry="6" fill="#c9c6bd" stroke="#241c14" stroke-width="1.5"/><circle cx="22" cy="24" r="5.5" fill="#dedad0" stroke="#241c14" stroke-width="1.5"/><path d="M26.5 24.5 l4 1.2 -4 1.2z" fill="#e0a040" stroke="#241c14" stroke-width="1"/><circle cx="23.6" cy="23.4" r="1" fill="#241c14"/><path d="M21.6 21.6 l3.4 -.8" stroke="#241c14" stroke-width="1.2" stroke-linecap="round"/><path d="M17.5 20 h9 l-1 -4 h-7z" fill="#1b4332" stroke="#241c14" stroke-width="1.2" stroke-linejoin="round"/><path d="M17 20.4 h10" stroke="#c9a84c" stroke-width="1.4"/></g><path d="M22 43 v4" stroke="#241c14" stroke-width="2"/><circle cx="22" cy="47" r="1.6" fill="#c9a84c"/></svg></button><button class="sec-bub" id="secBub" hidden></button></div>
     <div class="glfail" id="glfail" hidden>3D表示を読み込めませんでした。<br>通信状況を確かめて、Safari や Chrome で開き直してください。</div>
@@ -774,7 +774,7 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.27.0 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.27.1 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 広場の立て札 → 店 → 城門 の順に歩いて出発します。</li>
