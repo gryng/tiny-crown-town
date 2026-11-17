@@ -570,7 +570,7 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.24.3 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.24.4 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 広場の立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -1332,7 +1332,7 @@ const NODES={
   gate:{n:'城門'}, fork:{n:'森の分かれ道'}, spring:{n:'森の泉',rest:true}, mouth:{n:'洞窟の入口'},
   r1:{n:'第一の部屋',room:true,rich:.6,master:'bigrat',chest:30}, r2:{n:'第二の部屋',room:true,rich:1,chest:40,clue:true},
   hall:{n:'奥の広間',room:true,rich:1.8,master:'king',chest:60}, boss:{n:'親玉の間',boss:true,mon:'boss'},
-  // エリア2：北の湿地（ar:1）。ぬかるみ(mud)の道は、誰かが歩くまで1.3倍かかる
+  // エリア2：東の湿地（ar:1）。ぬかるみ(mud)の道は、誰かが歩くまで1.3倍かかる
   sfork:{ar:1,n:'湿地の入口'}, hut:{ar:1,n:'渡し守の小屋',rest:true},
   s1:{ar:1,n:'葦の原',room:true,rich:.7,master:'bigfrog',chest:80}, s2:{ar:1,n:'沈んだ祠',room:true,rich:1,chest:100},
   s3:{ar:1,n:'ヒルの巣',room:true,rich:1.7,master:'leechq',chest:140}, sboss:{ar:1,n:'沼の主の間',boss:true,mon:'catfish'},
@@ -1351,7 +1351,7 @@ NODES.hall.keys=[['sword','古い剣の柄']]; // 本道の部屋にも、主を
 const STUDY_NEED=12; // 鍵の品ひとつを見つけるのにかかる手間（人数×ターン）
 for(const id of ['fork','spring','mouth','r1','r2','hall','boss'])NODES[id].ar=0;
 // エリア（章ごとに1つずつ進む）。いま挑んでいるのは S.area
-const AREAS=[{name:'南の洞窟',bossNode:'boss',short:'洞窟',min:1},{name:'北の湿地',bossNode:'sboss',short:'湿地',min:5}]; // min：ここで戦える目安のレベル
+const AREAS=[{name:'南の洞窟',bossNode:'boss',short:'洞窟',min:1},{name:'東の湿地',bossNode:'sboss',short:'湿地',min:5}]; // min：ここで戦える目安のレベル
 // 冒険者が外で動いているあいだは、その子が向かったエリア（S._ar）で考える。ふだんは、いま挑んでいるエリア
 const inArea=(S,x)=>x.ar===undefined||x.ar===(S._ar??S.area);
 // 腕前に合った行き先：いま挑んでいるエリアまでのうち、目安のレベルに届いているいちばん奥
@@ -3168,15 +3168,19 @@ function cardHTML(r,day,rows){
 }
 // ---------- 報告書：探索の地図 ----------
 // 行ったことのある場所だけを描く。道は安全度で線が変わり、きょう初めて歩いた道は金色で目立たせる
-const MAPXY={gate:[30,158],fork:[92,128],spring:[84,58],mouth:[150,146],r1:[200,116],r2:[236,66],hall:[288,104],boss:[306,40], sfork:[88,132],hut:[66,62],s1:[152,152],s2:[214,98],s3:[276,130],sboss:[306,50],
-  lodge:[36,96],drip:[238,162],forge:[168,32],nest:[306,152], reed:[132,92],kura:[34,26],smithy:[204,168],inner:[180,40],deepnest:[300,166]};
-const MAP_ABOVE=new Set(['spring','boss','r2','hut','sboss','s2','lodge','forge','kura','inner','reed','drip','smithy','deepnest']), MAP_SIDE=new Set(['spring','boss','r2','hall','hut','sboss','s2','s3','lodge','drip','forge','nest','reed','kura','smithy','inner','deepnest']);
+// 1章（南の洞窟）は城門から下へ、2章（東の湿地）は城門から右へ進む
+const MAPXY={fork:[92,66],spring:[84,136],mouth:[150,48],r1:[200,78],r2:[236,128],hall:[288,90],boss:[306,154],
+  lodge:[36,98],drip:[238,32],forge:[168,162],nest:[306,42],
+  sfork:[78,104],hut:[92,44],s1:[150,140],s2:[206,86],s3:[262,126],sboss:[314,74],
+  reed:[100,160],kura:[34,30],smithy:[216,170],inner:[214,26],deepnest:[300,170]};
+const GATEXY=[[30,36],[22,100]];
+const MAP_ABOVE=new Set(['gate','fork','mouth','r1','hall','nest','drip','hut','kura','inner','sboss','s2','smithy','deepnest']), MAP_SIDE=new Set(['spring','boss','r2','hall','hut','sboss','s2','s3','lodge','drip','forge','nest','reed','kura','smithy','inner','deepnest']);
 function mapHTML(rep){
   const W=rep.world, W0=rep.worldFrom; if(!W)return '';
   const ar=rep.area||0, EA=EDGES.filter(e=>e.ar===ar), NA={}; for(const id in NODES)if(NODES[id].ar===undefined||NODES[id].ar===ar)NA[id]=NODES[id];
   const trips=id=>W.trips[id]||0, saf=id=>trips(id)>=60?2:trips(id)>=1?1:0;
   const known={gate:true}; for(const e of EA)if(trips(e.id)){known[e.a]=true; known[e.b]=true;}
-  const P=id=>MAPXY[id], mid=(e)=>{const a=P(e.a),b=P(e.b); return e.cut?`M${a[0]} ${a[1]} Q ${(a[0]+b[0])/2} ${Math.min(a[1],b[1])-34} ${b[0]} ${b[1]}`:`M${a[0]} ${a[1]} L${b[0]} ${b[1]}`;};
+  const P=id=>id==='gate'?GATEXY[ar]:MAPXY[id], mid=(e)=>{const a=P(e.a),b=P(e.b), up=(a[1]+b[1])/2<94; return e.cut?`M${a[0]} ${a[1]} Q ${(a[0]+b[0])/2} ${up?Math.min(a[1],b[1])-34:Math.max(a[1],b[1])+34} ${b[0]} ${b[1]}`:`M${a[0]} ${a[1]} L${b[0]} ${b[1]}`;};
   let roads='', glow='', marks='', labels='', faces='';
   for(const e of EA){
     if(e.cut&&!W.cut){ if(W.clue&&known[e.b])roads+=`<path d="${mid(e)}" class="rd q"/>`; continue; }
@@ -3415,7 +3419,7 @@ const TIPS=[ // [id, 出す条件, せりふ]。一度出したら二度は出�
   ['boss', ()=>questsAvail(S).some(q=>q.k==='boss'), '探索が終わり、親玉の間が開きました。「親玉に挑め」を貼れます。'],
   ['tavern', ()=>first(S,'tavern'), '酒場ができました。主や親玉の討伐を「3人で組んで」出せます。受けた者は10時に酒場で待ち合わせます。'],
   ['academy', ()=>first(S,'academy'), '白魔法の学院ができました。冒険者の欄で「白魔道士に転職」を選ぶと、学院に寄ってから出かけます。'],
-  ['marsh', ()=>S.area>=1, '北の湿地です。ぬかるみでは、よろいが重くなります。旅装束なら足が軽いですよ。'],
+  ['marsh', ()=>S.area>=1, '東の湿地です。ぬかるみでは、よろいが重くなります。旅装束なら足が軽いですよ。'],
 ];
 function secSayHTML(hints){
   S.tips=S.tips||{}; const L=[];
@@ -3497,7 +3501,7 @@ $('ch2Btn').addEventListener('click',()=>{S=autoCh1(CH2_SEED); saveGame(); sel=n
 // 開発用：コンソールやテストから日を早送りする  __tct.skip(3) で3日進めて報告書を開く
 if(DEV)window.__sel=v=>{sel=v; renderPanel();};
 if(DEV)window.__orders=()=>openOrders();
-if(DEV)window.__tct={get S(){return S;},skip(n=1){for(let i=0;i<n;i++){if(S.phase!=='day')startDay(S); tick(S,2000);} wasPhase=S.phase; $('titleModal').hidden=true; $('dayCard').hidden=true; $('duskCard').hidden=true; openReport({instant:true});}};
+if(DEV)window.__tct={map:r=>mapHTML(r),get S(){return S;},skip(n=1){for(let i=0;i<n;i++){if(S.phase!=='day')startDay(S); tick(S,2000);} wasPhase=S.phase; $('titleModal').hidden=true; $('dayCard').hidden=true; $('duskCard').hidden=true; openReport({instant:true});}};
 updateHud(); renderPanel(); requestAnimationFrame(loop);
 initGfx().then(g=>{GFX=g; if(DEV)window.__gfx=g;}).catch(e=>{console.error(e); $('glfail').hidden=false;});
 </script>
