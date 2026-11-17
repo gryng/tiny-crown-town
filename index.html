@@ -367,19 +367,24 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
 .logl li{display:grid;grid-template-columns:3.6em minmax(0,1fr);gap:8px;padding:5px 0}
 .logl li+li{border-top:1px dashed #241c1426}
 .logl time{font-family:var(--f-head);font-weight:800;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
-/* 広い画面（PC・横向きタブレット）：左に町を大きく、右に情報と冒険者 */
+/* 広い画面（PC・横向きタブレット）：町を画面いっぱいに描き、上に日付などの札、右に冒険者のパネルを重ねる */
 @media (min-width:1180px) and (min-height:520px){
-  .wrap{max-width:1680px;display:grid;grid-template-columns:minmax(0,1fr) 392px;grid-template-rows:auto auto 1fr;align-items:start;gap:14px 26px;padding-block:14px 20px}
-  .screen{grid-column:1;grid-row:1/4;position:sticky;top:24px;margin:10px;height:calc(100vh - 48px);height:calc(100dvh - 48px)}
+  html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+  .wrap{position:fixed;inset:0;max-width:none;padding:0;display:block}
+  .screen{position:absolute;inset:0;border-radius:0;box-shadow:none}
+  .screen::after{box-shadow:inset 0 0 90px #0007}
   #town{height:100%;aspect-ratio:auto}
-  .hud{grid-column:2;grid-row:1}
-  .panel{grid-column:2;grid-row:2}
-  .foot{grid-column:2;grid-row:3}
-  .screen .seg{left:12px;top:12px}
+  .hud{position:absolute;z-index:6;top:16px;left:18px;width:min(620px,calc(100% - 460px))}
+  .screen .seg{left:18px;top:84px}
   .screen .seg button{padding:5px 12px;min-width:44px;font-size:14px}
+  .foot{position:absolute;z-index:6;top:16px;right:18px}
+  .foot .menu{top:calc(100% + 8px);bottom:auto}
+  .drawer{position:absolute;z-index:7;top:72px;right:18px;max-height:calc(100% - 90px);width:392px;display:flex;flex-direction:column}
+  .drawer .panel{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+  .drawer .panel::before{display:none}
+  .drawer .panel>*{flex-shrink:0}
+  .sec-dock{left:18px;bottom:18px}
 }
-/* 広い画面では、引き出しはただの入れ物（中のパネルがそのまま右の列に並ぶ） */
-@media (min-width:1180px) and (min-height:520px){.drawer{display:contents}.drawer::before{display:none}}
 /* スマホ・タブレット：画面いっぱいの町に、情報を重ねる。下のパネルは引き出し式 */
 @media (max-width:1179.98px),(max-height:519.98px){
   body.planning:not(.picked) #drawer{display:none}
@@ -570,7 +575,7 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.24.4 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.25.0 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 広場の立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -2434,13 +2439,20 @@ async function initGfx(){
 
   const ray=new T.Raycaster(), ndc=new T.Vector2(), gplane=new T.Plane(new T.Vector3(0,1,0),0), hp=new T.Vector3(), pv=new T.Vector3();
   // 拡大縮小と移動。zoom=1 で町の横幅がちょうど収まる。縦長の画面では最初から寄っておく
-  let zoom=null, baseFov=FOV;
+  let zoom=null, baseFov=FOV, wideFit=false, minZoom=1;
+  // 広い画面：右のパネル（約430px）を除いた左側に、城壁の内側がちょうど収まる拡大にして、町をその真ん中に寄せる
+  function fitWide(w,h){
+    const vis=w-430, need=W+1.5; // 町の横幅（マス）＋少しの余白
+    const span=2*DIST*Math.tan(baseFov*Math.PI/360)*(w/h); // zoom=1で見える横幅（マス）
+    zoom=Math.max(.55,Math.min(1.6,span*(vis/w)/need)); minZoom=Math.min(1,zoom); applyFov();
+    const k=2*DIST*Math.tan(cam.fov*Math.PI/360)/h; tgt.x=Math.min(W/2-1,215*k); tgt.z=-.25;
+  }
   const wideMQ=matchMedia('(min-width:1180px) and (min-height:520px)');
   function applyFov(){cam.fov=2*Math.atan(Math.tan(baseFov*Math.PI/360)/zoom)*180/Math.PI; cam.updateProjectionMatrix(); ptScale=cv.clientHeight*renderer.getPixelRatio()*.5/Math.tan(cam.fov*Math.PI/360);}
   function clampTgt(){tgt.x=Math.max(-W/2+1,Math.min(W/2-1,tgt.x)); tgt.z=Math.max(-H/2,Math.min(H/2+2,tgt.z));}
   function groundAt(px,py){const r=cv.getBoundingClientRect(); ndc.set(px/r.width*2-1,1-py/r.height*2); placeCam(performance.now()); cam.updateMatrixWorld(); ray.setFromCamera(ndc,cam); return ray.ray.intersectPlane(gplane,new T.Vector3());}
   function zoomBy(f,px,py){
-    const max=wideMQ.matches?3:4, z1=Math.max(1,Math.min(max,zoom*f)); if(z1===zoom)return;
+    const max=wideMQ.matches?3:4, z1=Math.max(wideMQ.matches?minZoom:1,Math.min(max,zoom*f)); if(z1===zoom)return;
     const a=groundAt(px,py); zoom=z1; applyFov(); const b=groundAt(px,py);
     if(a&&b){tgt.x+=a.x-b.x; tgt.z+=a.z-b.z;} clampTgt();
   }
@@ -2453,6 +2465,7 @@ async function initGfx(){
     cam.aspect=w/h; baseFov=2*Math.atan(Math.tan(FOV*Math.PI/360)*Math.max(1,1.6/(w/h)))*180/Math.PI;
     if(zoom===null){zoom=w/h<1?2.1:1; if(zoom>1)tgt.z=1.2;}
     applyFov();
+    if(wideMQ.matches&&!wideFit){wideFit=true; fitWide(w,h);}
     for(const p of [tiltH,tiltV]){p.uniforms.res.value.set(w*dpr,h*dpr); p.uniforms.amt.value=h*dpr/300;}
     torchA.castShadow=torchB.castShadow=!lite;
   }
