@@ -394,41 +394,58 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
 #reportSheet.goals-in .goalgot span{animation:goalStamp .3s cubic-bezier(.2,1.6,.4,1) forwards;animation-delay:calc(var(--i,0)*.18s)}
 @keyframes goalStamp{from{opacity:0;transform:scale(1.6)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){#reportSheet .hl li,#reportSheet .goalgot span,#reportSheet .rmap svg g{opacity:1;transform:none;animation:none!important}#reportSheet .rmap .rd.new{stroke-dasharray:none;animation:none}}
-/* PC：画面いっぱいの見開き */
+/* 一面とそのほかの記事 */
+.lead{display:grid;gap:6px;align-content:center;padding:14px 18px;background:var(--paper-3);border-left:6px solid var(--accent);box-shadow:2px 3px 0 #241c1426;min-width:0}
+.lead[data-go]{cursor:pointer}
+.lead .kicker{font-family:var(--f-head);font-weight:800;font-size:11px;letter-spacing:.3em;color:var(--muted)}
+.lead .headline{margin:0;font-family:var(--f-head);font-weight:800;font-size:22px;line-height:1.35;color:var(--ink);text-wrap:balance}
+.lead.mid .headline{font-size:19px} .lead.long .headline{font-size:16.5px}
+.lead.big{background:var(--grain),var(--accent);border-left-color:var(--gold);box-shadow:0 0 0 2px var(--ink),3px 4px 0 #0005}
+.lead.big .headline,.lead.big .won-sub{color:var(--paper)} .lead.big .kicker{color:var(--gold-soft)}
+.lead.bad{border-left-color:var(--bad)} .lead.bad .headline{color:var(--bad)}
+.lead.calm .headline{color:var(--muted);font-weight:600}
+.won-sub{margin:0;font-size:13px;font-weight:700;line-height:1.6}
+.loglist{list-style:none;margin:0;padding:0;display:grid}
+.loglist li{padding:7px 2px 7px 16px;position:relative;font-size:13.5px;font-weight:700;line-height:1.5;color:var(--ink)}
+.loglist li::before{content:"";position:absolute;left:2px;top:14px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.loglist li.town::before{background:var(--gold)} .loglist li.bad{color:var(--bad)} .loglist li.bad::before{background:var(--bad)}
+.loglist li+li{border-top:1px dashed #241c1433}
+.loglist li[data-go]{cursor:pointer}
+.rp-log{display:grid;gap:12px;align-content:start;min-width:0}
+.rp-log .goalgot{margin:0}
+#reportSheet .lead{opacity:0;transform:translateX(-14px)}
+#reportSheet.lead-in .lead{animation:hlIn .45s cubic-bezier(.2,1.2,.4,1) forwards}
+#reportSheet .loglist li{opacity:0}
+#reportSheet.map-in .loglist li{animation:hlIn .35s ease-out forwards;animation-delay:calc(var(--n,0)*.08s)}
+#reportSheet .loglist li:nth-child(2){--n:1} #reportSheet .loglist li:nth-child(3){--n:2} #reportSheet .loglist li:nth-child(4){--n:3} #reportSheet .loglist li:nth-child(5){--n:4} #reportSheet .loglist li:nth-child(n+6){--n:5}
+@media (prefers-reduced-motion:reduce){#reportSheet .lead,#reportSheet .loglist li{opacity:1;transform:none;animation:none!important}}
+/* PC：画面いっぱいの見開き。区画の大きさは中身によらず決まり、増えた分は「そのほかのできごと」の中でスクロールする */
 @media (min-width:1180px) and (min-height:520px){
   #reportModal.paper{padding:16px 22px;gap:12px;justify-content:flex-start}
   #reportModal.paper>:first-child{margin-top:0}
-  #reportModal.paper .sheet{max-width:1680px;transform:none;padding:22px 26px 20px;display:grid;gap:16px 22px;
-    grid-template-columns:minmax(0,1.05fr) minmax(0,1.35fr) minmax(0,.95fr);
-    grid-template-areas:"mast mast mast" "lead map side" "cards cards cards" "sec sec sec";align-items:start}
+  #reportModal.paper .sheet{max-width:1500px;transform:none;padding:22px 26px 20px;display:grid;gap:16px 24px;
+    grid-template-columns:minmax(0,1.7fr) minmax(320px,1fr);
+    grid-template-areas:"mast mast" "lead tally" "map log" "cards cards" "sec sec";align-items:stretch}
   #reportModal.paper .rp-mast{grid-area:mast;border-bottom:3px double #241c1488;padding-bottom:6px}
   #reportModal.paper .rp-head{min-height:0;align-items:center}
   #reportModal.paper .rp-head h2{font-size:34px}
   #reportModal.paper .rp-paper{font-size:13px}
-  #reportModal.paper .rp-lead{grid-area:lead;align-content:start}
-  #reportModal.paper .rp-mapc{grid-area:map;align-self:stretch}
-  #reportModal.paper .rp-side{grid-area:side;align-content:start}
-  #reportModal.paper .rp-mapc .rmap{height:100%}
-  #reportModal.paper .rp-mapc .mapbox{padding:10px}
-  #reportModal.paper .rp-mapc .mapbox svg{max-height:min(46vh,520px);margin:0 auto}
-  #reportModal.paper .rp-lead,#reportModal.paper .rp-side{border-right:0}
-  #reportModal.paper .rp-mapc{border-left:1.5px solid #241c1433;border-right:1.5px solid #241c1433;padding:0 20px}
-  #reportModal.paper .hl{margin:0;gap:10px}
-  #reportModal.paper .hl li{font-size:16px;padding:10px 14px}
-  #reportModal.paper .hl li:first-child{font-size:24px;line-height:1.35;padding:14px 16px;text-wrap:balance}
-  #reportModal.paper .hl li.big:first-child{font-size:28px}
-  #reportModal.paper .tally .t-res b{font-size:52px}
-  #reportModal.paper .cards{grid-area:cards;display:flex;gap:18px;overflow-x:auto;padding:6px 4px 14px;scroll-snap-type:x proximity;align-items:flex-start}
+  #reportModal.paper .rp-lead{grid-area:lead;display:grid}
+  #reportModal.paper .lead{min-height:118px;padding:16px 22px}
+  #reportModal.paper .lead .headline{font-size:30px} #reportModal.paper .lead.mid .headline{font-size:25px} #reportModal.paper .lead.long .headline{font-size:20px}
+  #reportModal.paper .rp-tally{grid-area:tally;display:grid}
+  #reportModal.paper .tally{align-content:center}
+  #reportModal.paper .tally .t-res b{font-size:48px}
+  #reportModal.paper .rp-mapc{grid-area:map}
+  #reportModal.paper .rp-mapc .rmap{gap:6px}
+  #reportModal.paper .rp-mapc .mapbox svg{max-height:min(44vh,480px);margin:0 auto}
+  #reportModal.paper .rp-log{grid-area:log;height:0;min-height:100%;overflow-y:auto;overscroll-behavior:contain;padding:0 4px 0 18px;border-left:1.5px solid #241c1433}
+  #reportModal.paper .cards{grid-area:cards;display:flex;justify-content:safe center;gap:18px;overflow-x:auto;padding:6px 4px 14px;scroll-snap-type:x proximity;align-items:flex-start;border-top:3px double #241c1488;padding-top:18px}
   #reportModal.paper .cards .rc{flex:0 0 300px;scroll-snap-align:start}
   #reportModal.paper .rp-sec{grid-area:sec;max-width:820px}
-  #reportModal.paper .actions{max-width:1680px}
-  /* 章をクリアした日：号外。見出しを紙面いっぱいに */
-  #reportModal.paper .sheet.special{grid-template-areas:"mast mast mast" "lead lead side" "map map side" "cards cards cards" "sec sec sec"}
-  #reportModal.paper .sheet.special .rp-mapc .mapbox svg{max-height:min(38vh,420px)}
-  #reportModal.paper .sheet.special .hl li:first-child{font-size:40px;text-align:center;padding:22px}
+  #reportModal.paper .actions{max-width:1500px}
   #reportModal.paper .sheet.special .rp-paper::after{content:"　号外";color:var(--bad)}
-  /* 何も起きなかった日：一面は小さく */
-  #reportModal.paper .sheet.quiet .hl li{font-size:15px}
+  #reportModal.paper .sheet.special .lead .headline{font-size:36px;text-align:left}
 }
 /* 広い画面（PC・横向きタブレット）：町を画面いっぱいに描き、上に日付などの札、右に冒険者のパネルを重ねる */
 @media (min-width:1180px) and (min-height:520px){
@@ -638,7 +655,7 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.26.0 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.26.1 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 広場の立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -3294,6 +3311,20 @@ function mapHTML(rep){
 }
 // opts.instant: 演出なしで結果だけ見せる（指示の画面から見返すとき）
 // きょうのハイライト：重みの大きい順に3つ。主や親玉を倒した行は帯にする
+// 一面：いちばん大事なできごとを1つだけ。中身の長さで文字の大きさを変える
+function leadHTML(rep){
+  const h=(rep.hl||[])[0], txt=h?h.txt:'静かな一日でした', n=[...txt].length;
+  const won=rep.won&&rep.cleared?`<p class="won-sub" id="rpWon">${rep.cleared.next?`${rep.cleared.chapter}章「${rep.cleared.next}」へ。冒険者の上限が上がり、大工を雇えるようになり、酒場と白魔法の学院が目覚めた。`:'ここまでがこの版の目標です。'}</p>`:'<p id="rpWon" hidden></p>';
+  return `<div class="lead${h&&h.big?' big':''}${h&&h.bad?' bad':''}${h?'':' calm'}${n>34?' long':n>20?' mid':''}" ${h&&h.id!==undefined?`data-go="${h.id}"`:''}><small class="kicker">${rep.cleared?'号外':'一面'}</small><p class="headline">${txt}</p>${won}</div>`;
+}
+// そのほかの記事：見出しの2つめ以降・街のできごと・小目標を、同じ形の行で並べる
+function logBoxHTML(rep){
+  const hl=(rep.hl||[]).slice(1,7), seen=new Set((rep.hl||[]).map(h=>h.txt)), built=(rep.built||[]).filter(b=>!seen.has(b));
+  const rows=[...hl.map(h=>`<li class="${h.bad?'bad':''}" ${h.id!==undefined?`data-go="${h.id}"`:''}>${h.txt}</li>`),...built.map(b=>`<li class="town">${b}</li>`)];
+  const G=rep.goalsNew||[];
+  return `<div class="log-sec"><h4 class="sec">そのほかのできごと</h4>${rows.length?`<ul class="loglist">${rows.join('')}</ul>`:'<p class="rc-note">ほかに知らせはありません。</p>'}</div>
+    ${G.length?`<div class="goalgot" id="rpGoals"><b>小目標を達成 <small>${rep.goalsDone}/${rep.goalsAll}</small></b>${G.map((q,i)=>`<span style="--i:${i}">${q.ch<(rep.chapterNow||q.ch)?`${q.ch}章：`:''}${q.name}<em>+${q.reward}</em></span>`).join('')}</div>`:''}`;
+}
 function hlHTML(rep){
   if(!rep.hl)return ''; const L=rep.hl.slice(0,3);
   if(!L.length)return '<ul class="hl"><li class="quiet">静かな一日でした</li></ul>';
@@ -3306,15 +3337,13 @@ function openReport(opts={}){
   const total=rep.advs.reduce((m,a)=>m+(a.elem||0),0), res0=(rep.elemAfter??S.elem)-total, ex0=rep.exploreFrom??rep.explore;
   $('reportSheet').innerHTML=`
     <div class="rp-mast"><div class="rp-head"><div class="rp-title"><small class="rp-paper">王国通信</small><h2>${rep.day}日目の報告書</h2><small class="rp-area">${rep.chapterNow||1}章・${AREAS[rep.area||0].name}</small></div><div class="stamp" id="rpStamp"><span>第${rep.day}日</span></div></div></div>
-    <div class="rp-lead">${hlHTML(rep)}
-    <div class="won" id="rpWon" ${rep.won?'':'hidden'}>${rep.cleared?`${rep.cleared.name}の親玉を倒した！ ${rep.cleared.next?`${rep.cleared.chapter}章「${rep.cleared.next}」へ。冒険者の上限が上がり、大工を雇えるようになり、酒場と白魔法の学院が目覚めた。`:'ここまでがこの版の目標です。'}`:''}</div></div>
-    <div class="rp-side"><div class="tally">
+    <div class="rp-lead">${leadHTML(rep)}</div>
+    <div class="rp-tally"><div class="tally">
       <div class="t-res"><span class="t-lbl"><i class="shard"></i>${RES}</span><b id="tRes">${res0}</b><em id="tAdd">+0</em></div>
       <div class="t-ex"><span class="t-lbl">${AREAS[rep.area||0].short}の探索</span><div class="xpbar big"><i id="tExBar" style="width:${ex0}%"></i></div><b id="tEx">${Math.floor(ex0)}%</b></div>
-    </div>
-    ${rep.built&&rep.built.length?`<p class="rc-note">街のできごと：${rep.built.join(' ／ ')}</p>`:''}
-    ${rep.goalsNew&&rep.goalsNew.length?`<div class="goalgot" id="rpGoals"><b>小目標を達成 <small>${rep.goalsDone}/${rep.goalsAll}</small></b>${rep.goalsNew.map((q,i)=>`<span style="--i:${i}">${q.ch<(rep.chapterNow||q.ch)?`${q.ch}章：`:''}${q.name}<em>+${q.reward}</em></span>`).join('')}</div>`:''}</div>
+    </div></div>
     <div class="rp-mapc">${mapHTML(rep)}</div>
+    <div class="rp-log">${logBoxHTML(rep)}</div>
     <div class="cards">${rep.advs.map(r=>cardHTML(r,rep.day,rep.advs)).join('')}</div>
     <div class="rp-sec"><span class="sec-face">${BIRD_HTML}</span><p id="rpSay"></p></div>`;
   $('reportModal').classList.add('paper'); $('reportSheet').classList.toggle('special',!!rep.cleared); $('reportSheet').classList.toggle('quiet',!(rep.hl&&rep.hl.length));
@@ -3323,7 +3352,7 @@ function openReport(opts={}){
   const sheet=$('reportSheet');
   const skip=e=>{if(e&&e.target.closest('summary,button,a'))return; repFast=true; sheet.classList.add('lead-in','map-in');};
   sheet.onclick=skip; $('skipRep').onclick=()=>{repFast=true;};
-  sheet.querySelectorAll('.hl [data-go]').forEach(li=>li.addEventListener('click',e=>{e.stopPropagation(); repFast=true; const c=sheet.querySelector(`.rc[data-id="${li.dataset.go}"]`); if(c)c.scrollIntoView({block:'start',behavior:RM?'auto':'smooth'});}));
+  sheet.querySelectorAll('[data-go]').forEach(li=>li.addEventListener('click',e=>{e.stopPropagation(); repFast=true; const c=sheet.querySelector(`.rc[data-id="${li.dataset.go}"]`); if(c)c.scrollIntoView({block:'start',behavior:RM?'auto':'smooth'});}));
   playReport(rep,tok,res0,ex0,total).then(()=>{
     if(tok!==repTok)return; sheet.onclick=null;
     $('reportActions').innerHTML=`<button class="primary" id="next1">${opts.back?'指示にもどる':'あすの指示へ'}</button>`;
