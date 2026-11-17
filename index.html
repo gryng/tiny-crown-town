@@ -117,7 +117,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 /* 画面下のメニュー */
 .foot{position:relative;display:flex;justify-content:flex-end}
 .menu-btn{font-family:var(--f-head);font-weight:800;font-size:13px;padding:4px 14px}
-.menu{position:absolute;right:0;bottom:calc(100% + 12px);width:min(300px,100%);padding:12px 14px;display:grid;gap:6px;z-index:5}
+.menu{position:absolute;right:0;bottom:calc(100% + 12px);width:min(300px,calc(100vw - 32px));padding:12px 14px;display:grid;gap:6px;z-index:5}
 .menu[hidden]{display:none}
 .menu-h{margin:0;font-family:var(--f-head);font-weight:800;font-size:15px;color:var(--accent)}
 .mi{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:0 12px;align-items:center;text-align:left;background:none;border:0;border-top:1.5px dashed #241c1440;padding:9px 2px;color:var(--ink)}
@@ -494,7 +494,7 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
 .tb-day b{font-size:22px;line-height:1}
 .tb-crown{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe9a8,var(--trim) 55%,var(--trim-dk));color:var(--wood-2);font-size:15px;box-shadow:0 0 0 1.5px #120a05}
 .tb-dial{width:40px;height:20px;flex:0 0 auto}
-.tb-time b{font-size:17px}
+.tb-time b{font-size:17px;display:inline-block;min-width:3.1em;text-align:center}
 .tb-chip b{font-size:17px}
 .tb-chip .shard{width:10px;height:10px}
 .tb-fx{position:absolute;right:-2px;top:-12px;font-style:normal;font-weight:800;font-size:12px;color:#ffe9a8;opacity:0;pointer-events:none;text-shadow:0 1px 0 #000}
@@ -774,7 +774,7 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.27.1 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.27.2 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 広場の立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -3121,10 +3121,10 @@ function renderRoster(p){
   if(!S.advs.length){p.innerHTML='<h2>冒険者</h2><p class="lead">まだ冒険者がいない</p>'; p.dataset.mode=''; return;}
   if(!S.advs.some(a=>a.id===pickAdv))pickAdv=S.advs[0].id;
   if(p.dataset.mode!=='roster'||p.dataset.n!==String(S.advs.length)){
-    p.innerHTML=`<h2><span>冒険者 <small id="advCount"></small></span><span class="hlinks"><button class="linkb" id="seeCastle">工事</button><button class="linkb" id="seeBoard">おふれ</button><button class="x winx" id="close">閉じる</button></span></h2><div class="tabs" role="tablist">${S.advs.map(a=>`<button class="tabf" role="tab" data-adv="${a.id}" aria-label="${a.name}"><img src="${faceURL(a)}" alt=""><i class="st"></i><em class="md"></em></button>`).join('')}</div><div class="ad" id="advDetail" role="tabpanel"></div>`;
+    p.innerHTML=`<h2><span>冒険者 <small id="advCount"></small></span><span class="hlinks"><button class="x winx" id="close">閉じる</button></span></h2><div class="tabs" role="tablist">${S.advs.map(a=>`<button class="tabf" role="tab" data-adv="${a.id}" aria-label="${a.name}"><img src="${faceURL(a)}" alt=""><i class="st"></i><em class="md"></em></button>`).join('')}</div><div class="ad" id="advDetail" role="tabpanel"></div>`;
     p.dataset.mode='roster'; p.dataset.n=String(S.advs.length);
   }
-  $('seeBoard').hidden=!first(S,'board'); $('seeCastle').textContent=S.sites.length?`工事 ${S.sites.length}件`:'工事'; $('advCount').textContent=`${S.advs.length}/${advCap(S)}人`;
+  $('advCount').textContent=`${S.advs.length}/${advCap(S)}人`;
   p.querySelectorAll('.tabf').forEach(b=>{const a=S.advs.find(x=>x.id===+b.dataset.adv), [txt,cls]=status(a); b.setAttribute('aria-pressed',String(a.id===pickAdv)); b.querySelector('.st').className=`st ${cls}`; b.querySelector('.md').textContent=S.phase==='day'&&a.rep&&a.rep.mood&&a.rep.back!=null?MOOD[a.rep.mood]:''; b.title=`${a.name}：${txt}`;});
   const a=S.advs.find(x=>x.id===pickAdv), P=PP(a), [txt,cls]=status(a), r=a.rep, v=shownStats(a);
   const today=S.phase==='day'&&r&&!r.rested?[r.dep!=null?`${hm(r.dep)}に出発`:'', r.bought.length?`${r.bought.map(b=>b.name).join('、')}を買った`:''].filter(Boolean).join(' · '):'';
@@ -3743,7 +3743,7 @@ function dlgShow(m,now,hold){
 // 塔を押すと、聞きたいことを選べる
 function secMenu(){
   const now=performance.now(); dlgShow({text:'王様、何をお聞きになりますか？'},now,true);
-  const Q=[['now','いまのようす'],['boss','親玉について'],['left','やり残し'],['bye','なんでもない']];
+  const Q=[['now','いまのようす'],['board','おふれのようす'],['sites','工事のようす'],['boss','親玉について'],['left','やり残し'],['bye','なんでもない']];
   $('dlgCh').innerHTML=Q.map(([k,l])=>`<button data-ask="${k}">${l}</button>`).join('');
 }
 function secAnswer(k){
@@ -3751,6 +3751,12 @@ function secAnswer(k){
   if(k==='bye'){hideSecBub(); return;}
   let t='';
   if(k==='now'){ if(S.phase!=='day')t='いまは夜です。報告書と、あすの立て札を決める時間です'; else {const out=S.advs.filter(a=>a.state==='away'), home=S.advs.filter(a=>a.rep&&a.rep.back!=null); t=`${Math.floor(S.t/60)}時${String(S.t%60).padStart(2,'0')}分です。${out.length?`外に${out.length}人（${out.map(a=>a.name).join('・')}）`:'いま外にいる者はいません'}${home.length?`、帰ってきたのは${home.length}人`:''}です`;}}
+  if(k==='board'){ const B=S.board||[]; if(!B.length)t='きょうの立て札には、何も貼っておりません';
+    else t=B.map(q=>{const who=S.advs.filter(a=>a.quest&&a.quest.id===q.id).map(a=>a.name); return `「${QK[q.k].name(q)}」は${who.length?who.join('・')+'が受けました':'まだだれも受けておりません'}`;}).join('。')+'。';
+    const bd=first(S,'board'); if(bd){sel={kind:'building',x:bd.x,y:bd.y}; advWin=false; renderPanel(); setDrawer(true);} }
+  if(k==='sites'){ const L=S.sites; if(!L.length)t='いま、大工の工事はございません';
+    else t=`工事は${L.length}件です。`+L.slice(0,3).map(x=>`${siteName(x)}は${Math.floor(x.done/x.need*100)}%`).join('、')+(L.length>3?'、ほか':'')+'。';
+    sel={kind:'castle'}; advWin=false; renderPanel(); setDrawer(true); }
   if(k==='boss'){ const mid=bossId(S), m=MON[mid], K=S.know[mid]||{}, tr=TRAITS.filter(([x])=>K[x]).map(x=>x[1]);
     t=S.bossDown?`${AREAS[S.area].name}の親玉は、もう倒しました`:!(K.seen||K.scouted||tr.length)?`${AREAS[S.area].name}の親玉は、まだだれも姿を見ておりません。親玉の間の手前で、ようすを探らせてはいかがでしょう`:`${m.n}${K.seen||K.scouted?`、体力${m.hp}・攻撃${m.atk}・守り${m.def}ほど`:''}。${tr.length?`${tr.join('・')}らしいです。`:''}${TRAITS.some(([x])=>m[x]&&!K[x])?'まだ何か隠していそうです':'知っていることは、これで全部です'}`; }
   if(k==='left'){ const G=goalsOf(S).filter(q=>q.ch===(S.chapter||1)), left=G.filter(q=>!(S.goals&&S.goals[q.id])).length, rooms=Object.keys(NODES).filter(id=>keysLeft(S,id)&&reached(S,id)).map(id=>NODES[id].n);
