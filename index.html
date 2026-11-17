@@ -447,6 +447,120 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
   #reportModal.paper .sheet.special .rp-paper::after{content:"　号外";color:var(--bad)}
   #reportModal.paper .sheet.special .lead .headline{font-size:36px;text-align:left}
 }
+
+/* ===== 秘書の会話の窓（RPGのせりふ風） ===== */
+.dlg{position:absolute;z-index:8;left:50%;bottom:110px;transform:translateX(-50%);width:min(640px,calc(100% - 32px));display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;align-items:start;padding:12px 18px 14px 12px;color:#fff3d0;background:linear-gradient(180deg,#2a1a10f2,#1a100af2);border:2px solid #120a05;border-radius:12px;box-shadow:inset 0 0 0 1.5px var(--trim),inset 0 0 0 4px #2a1a10,inset 0 0 0 5px #c9a84c66,0 8px 22px #000a;line-height:1.6;cursor:pointer}
+.dlg.pop{animation:dlgIn .22s ease-out}
+@keyframes dlgIn{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translateX(-50%)}}
+.dlg-face{width:64px;height:68px;display:block;background:radial-gradient(circle at 50% 40%,#5a3a22,#2a1a10);border-radius:8px;box-shadow:0 0 0 1.5px var(--trim-dk);padding:4px}
+.dlg-face .cuckoo .bird{transform:translateY(-3px) scale(1.08)}
+.dlg-name{display:inline-block;font-family:var(--f-head);font-weight:800;font-size:13px;letter-spacing:.1em;color:var(--trim);margin-bottom:2px}
+.dlg-name small{margin-left:8px;font-family:var(--f-body);font-size:10.5px;color:#bfae88;letter-spacing:0}
+.dlg-text{margin:0;font-family:var(--f-hand);font-weight:600;font-size:16px;line-height:1.65;min-height:3.3em;color:#fff3d0}
+.dlg-ch{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.dlg-ch:empty{display:none}
+.dlg-ch button{font:700 13px var(--f-body);color:var(--wood-2);background:linear-gradient(180deg,#ffe9a8,var(--trim));border:1.5px solid #120a05;border-radius:6px;padding:5px 12px;cursor:pointer}
+.dlg-ch button:hover{filter:brightness(1.08)}
+.dlg-next{position:absolute;right:14px;bottom:8px;font-style:normal;font-size:12px;color:var(--trim);animation:nextBob .8s ease-in-out infinite}
+@keyframes nextBob{50%{transform:translateY(3px)}}
+.tower-mark{position:absolute;z-index:4;transform:translate(-50%,-100%);padding:0 9px;font:800 16px/1.4 var(--f-head);color:var(--wood-2);background:#fffaf0;border:1.5px solid #120a05;border-radius:10px 10px 10px 2px;pointer-events:none;animation:nextBob 1s ease-in-out infinite}
+@media (max-width:1179.98px),(max-height:519.98px){.dlg{top:auto;bottom:calc(var(--peekH,150px) + env(safe-area-inset-bottom,0px) + 12px);grid-template-columns:48px minmax(0,1fr);padding:10px 14px 12px 10px}.dlg-face{width:48px;height:52px}.dlg-text{font-size:14.5px;min-height:2.4em}body.planning .dlg{display:none}}
+/* ===== 遠征図と大事なときの帯 ===== */
+.minimap{display:none}
+.banner{position:absolute;z-index:7;left:50%;top:22%;transform:translateX(-50%);display:grid;justify-items:center;gap:2px;padding:10px 60px;pointer-events:none;color:#fff3d0;background:linear-gradient(90deg,transparent,#1a100ae0 18%,#1a100ae0 82%,transparent);border-top:1.5px solid #c9a84c99;border-bottom:1.5px solid #c9a84c99;text-align:center;white-space:nowrap}
+.banner b{font-family:var(--f-head);font-weight:800;font-size:clamp(24px,4vw,40px);letter-spacing:.12em;text-shadow:0 2px 0 #000}
+.banner span{font-family:var(--f-head);font-weight:800;font-size:13px;letter-spacing:.4em;color:var(--trim)}
+.banner.go{animation:bannerIn 3.4s ease forwards}
+@keyframes bannerIn{0%{opacity:0;letter-spacing:.4em}12%{opacity:1;letter-spacing:.12em}80%{opacity:1}100%{opacity:0}}
+@media (min-width:1180px) and (min-height:520px){
+  .minimap{display:block;position:absolute;z-index:5;right:18px;bottom:104px;width:290px;padding:8px 10px 6px;background:linear-gradient(180deg,#24160de6,#1a100ae6);border:1.5px solid #120a05;border-radius:10px;box-shadow:inset 0 0 0 1px var(--trim-dk),0 4px 12px #0008}
+  .minimap h3{margin:0 0 2px;font-family:var(--f-head);font-weight:800;font-size:12px;letter-spacing:.3em;color:var(--trim)}
+  .minimap h3 small{margin-left:8px;font-family:var(--f-body);font-size:10.5px;letter-spacing:0;color:#bfae88}
+  .minimap svg{display:block;width:100%;height:auto;background:#3a2a1a;border-radius:6px;box-shadow:inset 0 0 0 1px #000}
+  .minimap .mr{stroke:#8a7458;stroke-width:2.5;stroke-dasharray:3 4;fill:none} .minimap .mr.on{stroke:#e8d6a8;stroke-dasharray:none}
+  .minimap .mn{fill:#efe4c8;stroke:#120a05;stroke-width:1.5} .minimap .mn.foe{fill:#e07a5a} .minimap .mn.boss{fill:#b0462c}
+  .minimap .md circle{stroke:#fff3d0;stroke-width:2}
+  .minimap .md.fight circle{stroke:#ff5a3a;animation:mFight .5s ease-in-out infinite alternate}
+  @keyframes mFight{to{stroke-width:5}}
+  body.win .minimap{display:none}
+}
+/* ===== 昼の画面のHUD（ゲーム風：こげ茶の木と金の縁） ===== */
+:root{--wood:#3a2616;--wood-2:#24160d;--wood-hi:#5a3a22;--trim:#c9a84c;--trim-dk:#7a5a20;--hud-ink:#f1e2bd}
+.topbar{display:flex;align-items:center;gap:4px;padding:5px 8px;color:var(--hud-ink);background:linear-gradient(180deg,var(--wood-hi),var(--wood) 45%,var(--wood-2));border:1.5px solid #120a05;border-radius:10px;box-shadow:inset 0 0 0 1.5px var(--trim-dk),inset 0 1px 0 #ffffff22,0 4px 10px #0007;font-family:var(--f-head)}
+.topbar b{font-weight:800;color:#fff3d0;font-variant-numeric:tabular-nums;text-shadow:0 1px 0 #000a;white-space:nowrap}
+.topbar .u,.topbar small{font-family:var(--f-body);font-size:10.5px;font-weight:700;color:#d9c49a;letter-spacing:.04em;white-space:nowrap}
+.tb-day,.tb-time,.tb-chip{display:flex;align-items:center;gap:6px;padding:2px 10px;min-width:0;position:relative}
+.tb-day+div,.tb-time+div,.tb-chip+div{border-left:1px solid #c9a84c44}
+.tb-day b{font-size:22px;line-height:1}
+.tb-crown{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe9a8,var(--trim) 55%,var(--trim-dk));color:var(--wood-2);font-size:15px;box-shadow:0 0 0 1.5px #120a05}
+.tb-dial{width:40px;height:20px;flex:0 0 auto}
+.tb-time b{font-size:17px}
+.tb-chip b{font-size:17px}
+.tb-chip .shard{width:10px;height:10px}
+.tb-fx{position:absolute;right:-2px;top:-12px;font-style:normal;font-weight:800;font-size:12px;color:#ffe9a8;opacity:0;pointer-events:none;text-shadow:0 1px 0 #000}
+.tb-fx.on{animation:fxUp 1.4s ease-out}
+@keyframes fxUp{0%{opacity:0;transform:translateY(6px)}15%{opacity:1}100%{opacity:0;transform:translateY(-10px)}}
+.tb-ring{width:18px;height:18px;border-radius:50%;background:conic-gradient(var(--trim) var(--p,0%),#5a4028 0);display:grid;place-items:center;flex:0 0 auto}
+.tb-ring i{width:10px;height:10px;border-radius:50%;background:var(--wood)}
+.goalsbox,.party{display:none}
+.sp-play{display:none}
+/* 窓（パネル）：紙の中身を、木枠と金の縁で囲む */
+.drawer::before{box-shadow:0 0 0 3px var(--wood-hi),0 0 0 5px var(--trim),0 0 0 7px var(--wood-2),0 10px 26px #000a!important}
+.panel>h2{color:var(--wood-2)}
+.winx{display:none}
+@media (min-width:1180px) and (min-height:520px){
+  .hud.topbar{top:14px;left:16px;width:auto;max-width:calc(100% - 140px);padding:6px 10px}
+  .tb-day b{font-size:26px}
+  .tb-time b,.tb-chip b{font-size:19px}
+  /* 目標（左） */
+  .goalsbox{display:grid;gap:4px;position:absolute;z-index:5;left:16px;top:84px;width:250px;padding:10px 12px 10px;color:var(--hud-ink);background:linear-gradient(180deg,#24160dd9,#24160db8);border:1px solid #120a05;border-radius:8px;box-shadow:inset 0 0 0 1px #c9a84c55,0 4px 10px #0006}
+  .goalsbox h3{margin:0 0 2px;font-family:var(--f-head);font-weight:800;font-size:12px;letter-spacing:.3em;color:var(--trim)}
+  .goalsbox .gx{margin:0;display:flex;gap:6px;font-size:12.5px;font-weight:700;line-height:1.45;color:#f1e2bd}
+  .goalsbox .gx i{font-style:normal;color:#d9c49a;flex:0 0 auto}
+  .goalsbox .gx.main{font-family:var(--f-head);font-size:14px;color:#fff3d0} .goalsbox .gx.main i{color:var(--trim)}
+  .goalsbox .gx.done{text-decoration:line-through;opacity:.7}
+  .goalsbox .gx.more{font-size:11px;color:#bfae88;margin-top:2px}
+  /* 顔ぶれ（左下） */
+  .party{display:flex;gap:8px;position:absolute;z-index:5;left:16px;bottom:16px;max-width:calc(100% - 300px);overflow-x:auto;padding:4px}
+  .pf{position:relative;display:grid;grid-template-columns:44px auto;grid-template-rows:auto auto auto;gap:1px 8px;align-items:center;text-align:left;min-width:150px;padding:6px 10px 6px 6px;color:var(--hud-ink);background:linear-gradient(180deg,var(--wood-hi),var(--wood) 50%,var(--wood-2));border:1.5px solid #120a05;border-radius:10px;box-shadow:inset 0 0 0 1px var(--trim-dk),0 4px 10px #0007;cursor:pointer}
+  .pf:hover,.pf.on{box-shadow:inset 0 0 0 1.5px var(--trim),0 0 0 2px var(--trim),0 4px 12px #000a}
+  .pf img{grid-row:1/4;width:44px;height:44px;border-radius:8px;image-rendering:pixelated;background:#5a4028;box-shadow:0 0 0 1.5px var(--trim-dk)}
+  .pf-n{font-family:var(--f-head);font-weight:800;font-size:14px;color:#fff3d0;line-height:1.1;white-space:nowrap}
+  .pf-n small{margin-left:6px;font-family:var(--f-body);font-size:10px;color:#d9c49a}
+  .pf-hp{display:block;height:6px;border-radius:3px;background:#120a05;box-shadow:0 0 0 1px #000;overflow:hidden}
+  .pf-hp i{display:block;height:100%;background:linear-gradient(90deg,#6fbf5a,#a9e07a)} .pf-hp i.away{background:repeating-linear-gradient(90deg,#c9a84c 0 6px,#8a6a1e 6px 12px);animation:awayMove 1s linear infinite}
+  @keyframes awayMove{to{background-position:12px 0}}
+  .pf-st{font-size:10.5px;font-weight:700;color:#d9c49a;white-space:nowrap}
+  .pf.away .pf-st{color:#ffd77a} .pf.hurt .pf-st{color:#ff9a7a} .pf.off{opacity:.75}
+  .pf-mood{position:absolute;left:4px;top:4px;width:10px;height:10px;border-radius:50%;box-shadow:0 0 0 1.5px #120a05}
+  .pf-mood.m0{background:#7bd36a} .pf-mood.m1{background:#9ad0b8} .pf-mood.m2{background:#d9c49a} .pf-mood.m3{background:#e0a050} .pf-mood.m4{background:#e06a50}
+  /* 時の流れ：右下の丸いボタンと目盛り */
+  .screen .seg{left:auto;top:auto;right:18px;bottom:18px;display:flex;align-items:center;gap:4px;padding:6px 8px 6px 6px;border-radius:40px}
+  .screen .seg::before{border-radius:40px;filter:none;background:linear-gradient(180deg,var(--wood-hi),var(--wood-2));box-shadow:0 0 0 1.5px #120a05,inset 0 0 0 1px var(--trim-dk),0 4px 12px #0008}
+  .screen .seg button{color:#f1e2bd;min-width:40px;padding:4px 8px;font-size:13px}
+  .screen .seg button[aria-pressed="true"]{background:var(--trim);color:var(--wood-2)}
+  .screen .seg #sp0{display:none}
+  .sp-play{display:grid;place-items:center;width:58px;height:58px;padding:0!important;border-radius:50%!important;background:radial-gradient(circle at 35% 30%,#ffe9a8,var(--trim) 50%,var(--trim-dk))!important;color:var(--wood-2)!important;font-size:24px!important;box-shadow:0 0 0 2px #120a05,inset 0 -3px 0 #0004;margin-right:4px}
+  .sp-play.paused{animation:pulse 1.6s ease-in-out infinite}
+  @keyframes pulse{50%{box-shadow:0 0 0 2px #120a05,0 0 0 7px #c9a84c55}}
+  /* 窓は、何か選んだときと顔を押したときだけ */
+  body:not(.win) .drawer{display:none}
+  .winx{display:inline-block}
+  .drawer{top:84px;max-height:calc(100% - 190px)}
+  .foot .menu-btn{color:var(--hud-ink)}
+  .foot .menu-btn::before{background:linear-gradient(180deg,var(--wood-hi),var(--wood-2));filter:none;box-shadow:0 0 0 1.5px #120a05,inset 0 0 0 1px var(--trim-dk),0 4px 10px #0007;border-radius:8px}
+  .sec-dock{left:auto;right:96px;bottom:22px}
+}
+/* スマホでも、速さとメニューは木の札に */
+.screen .seg::before,.foot .menu-btn::before{background:linear-gradient(180deg,var(--wood-hi),var(--wood-2));filter:none;box-shadow:0 0 0 1.5px #120a05,inset 0 0 0 1px var(--trim-dk),0 4px 10px #0007;border-radius:8px}
+.screen .seg button,.foot .menu-btn{color:#f1e2bd}
+.screen .seg button[aria-pressed="true"]{background:var(--trim);color:var(--wood-2)}
+@media (max-width:1179.98px),(max-height:519.98px){
+  .topbar{flex-wrap:wrap;gap:2px;padding:4px 6px}
+  .tb-day,.tb-time,.tb-chip{padding:2px 6px}
+  .tb-day b{font-size:18px} .tb-time b,.tb-chip b{font-size:15px}
+  .tb-dial{width:30px;height:15px} .tb-adv{display:none}
+}
 /* 広い画面（PC・横向きタブレット）：町を画面いっぱいに描き、上に日付などの札、右に冒険者のパネルを重ねる */
 @media (min-width:1180px) and (min-height:520px){
   html,body{height:100%;overflow:hidden;overscroll-behavior:none}
@@ -455,15 +569,12 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
   .screen::after{box-shadow:inset 0 0 90px #0007}
   #town{height:100%;aspect-ratio:auto}
   .hud{position:absolute;z-index:6;top:16px;left:18px;width:min(620px,calc(100% - 460px))}
-  .screen .seg{left:18px;top:84px}
-  .screen .seg button{padding:5px 12px;min-width:44px;font-size:14px}
   .foot{position:absolute;z-index:6;top:16px;right:18px}
   .foot .menu{top:calc(100% + 8px);bottom:auto}
-  .drawer{position:absolute;z-index:7;top:72px;right:18px;max-height:calc(100% - 90px);width:392px;display:flex;flex-direction:column}
+  .drawer{position:absolute;z-index:7;top:84px;right:22px;max-height:calc(100% - 190px);width:392px;display:flex;flex-direction:column}
   .drawer .panel{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain}
   .drawer .panel::before{display:none}
   .drawer .panel>*{flex-shrink:0}
-  .sec-dock{left:18px;bottom:18px}
 }
 /* スマホ・タブレット：画面いっぱいの町に、情報を重ねる。下のパネルは引き出し式 */
 @media (max-width:1179.98px),(max-height:519.98px){
@@ -616,16 +727,20 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
   <filter id="roughL" x="-3%" y="-3%" width="106%" height="106%"><feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="3" seed="3"/><feDisplacementMap in="SourceGraphic" scale="9"/></filter>
 </svg>
 <div class="wrap">
-  <header class="hud plate">
-    <div class="hi"><b id="day">1</b><span class="u">日目</span></div>
-    <div class="hi clock"><b id="clock">06:00</b><div class="sunbar"><i id="sun"></i></div></div>
-    <div class="hi"><span class="u" id="resLbl">時のかけら</span><b id="elem">0</b></div>
-    <div class="hi"><span class="u">探索</span><b id="explore">0%</b><div class="bar"><i id="exbar"></i></div></div>
+  <header class="hud topbar">
+    <div class="tb-day"><span class="tb-crown" aria-hidden="true">♛</span><b id="day">1</b><small>日目</small></div>
+    <div class="tb-time"><svg class="tb-dial" viewBox="0 0 60 30" aria-hidden="true"><path d="M5 27 A25 25 0 0 1 55 27" fill="none" stroke="#5a4028" stroke-width="3" stroke-linecap="round"/><path id="sunArc" d="M5 27 A25 25 0 0 1 55 27" fill="none" stroke="#e8c870" stroke-width="3" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100"/><circle id="sunDot" cx="5" cy="27" r="4.5" fill="#ffe6a0" stroke="#7a5a20" stroke-width="1.2"/></svg><b id="clock">06:00</b><div class="sunbar" hidden><i id="sun"></i></div></div>
+    <div class="tb-chip"><i class="shard"></i><b id="elem">0</b><em class="tb-fx" id="elemFx"></em></div>
+    <div class="tb-chip" title="いま挑んでいるエリアの探索"><span class="tb-ring" id="exRing"><i></i></span><span class="u" id="areaLbl">洞窟</span><b id="explore">0%</b><div class="bar" hidden><i id="exbar"></i></div></div>
+    <div class="tb-chip tb-adv"><span class="u">冒険者</span><b id="advN">0</b></div>
   </header>
+  <aside class="goalsbox" id="goalsBox" aria-label="目標"></aside>
+  <div class="party" id="party" aria-label="冒険者の顔ぶれ"></div>
 
   <div class="screen">
     <canvas id="town" aria-label="城下町のジオラマ。空き地をタップして建物を建てる"></canvas>
     <div class="seg" role="group" aria-label="時間の速さ">
+      <button class="sp-play" id="spPlay" aria-label="時の流れを止める／動かす"><span>⏸</span></button>
       <button id="sp0" data-sp="0" aria-pressed="false">停止</button>
       <button id="sp1" data-sp="1" aria-pressed="true">×1</button>
       <button id="sp2" data-sp="2" aria-pressed="false">×2</button>
@@ -633,7 +748,11 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
     </div>
     <div class="planbar plate" id="planBar" hidden><span>荒れ地・空き地・道・建物をタップ（時間は止まっています）</span><button class="primary" id="planDone">指示にもどる</button></div>
     <div class="voice" id="voice" hidden></div>
-    <div class="sec-dock" id="secDock"><button class="sec-btn" id="secBtn" aria-label="秘書"><svg class="cuckoo" viewBox="0 0 44 48" aria-hidden="true"><path d="M3 18 L22 4 L41 18 Z" fill="#5b3a22" stroke="#241c14" stroke-width="2" stroke-linejoin="round"/><rect x="7" y="17" width="30" height="26" rx="2" fill="#a8743f" stroke="#241c14" stroke-width="2"/><rect x="13" y="20" width="18" height="16" rx="8" fill="#2a2018"/><g class="bird"><ellipse cx="22" cy="31" rx="8" ry="6" fill="#c9c6bd" stroke="#241c14" stroke-width="1.5"/><circle cx="22" cy="24" r="5.5" fill="#dedad0" stroke="#241c14" stroke-width="1.5"/><path d="M26.5 24.5 l4 1.2 -4 1.2z" fill="#e0a040" stroke="#241c14" stroke-width="1"/><circle cx="23.6" cy="23.4" r="1" fill="#241c14"/><path d="M21.6 21.6 l3.4 -.8" stroke="#241c14" stroke-width="1.2" stroke-linecap="round"/><path d="M17.5 20 h9 l-1 -4 h-7z" fill="#1b4332" stroke="#241c14" stroke-width="1.2" stroke-linejoin="round"/><path d="M17 20.4 h10" stroke="#c9a84c" stroke-width="1.4"/></g><path d="M22 43 v4" stroke="#241c14" stroke-width="2"/><circle cx="22" cy="47" r="1.6" fill="#c9a84c"/></svg></button><button class="sec-bub" id="secBub" hidden></button></div>
+    <div class="dlg" id="dlg" hidden><span class="dlg-face"><svg class="cuckoo" viewBox="0 0 44 48" aria-hidden="true"><path d="M3 18 L22 4 L41 18 Z" fill="#5b3a22" stroke="#241c14" stroke-width="2" stroke-linejoin="round"/><rect x="7" y="17" width="30" height="26" rx="2" fill="#a8743f" stroke="#241c14" stroke-width="2"/><rect x="13" y="20" width="18" height="16" rx="8" fill="#2a2018"/><g class="bird"><ellipse cx="22" cy="31" rx="8" ry="6" fill="#c9c6bd" stroke="#241c14" stroke-width="1.5"/><circle cx="22" cy="24" r="5.5" fill="#dedad0" stroke="#241c14" stroke-width="1.5"/><path d="M26.5 24.5 l4 1.2 -4 1.2z" fill="#e0a040" stroke="#241c14" stroke-width="1"/><circle cx="23.6" cy="23.4" r="1" fill="#241c14"/><path d="M21.6 21.6 l3.4 -.8" stroke="#241c14" stroke-width="1.2" stroke-linecap="round"/><path d="M17.5 20 h9 l-1 -4 h-7z" fill="#1b4332" stroke="#241c14" stroke-width="1.2" stroke-linejoin="round"/><path d="M17 20.4 h10" stroke="#c9a84c" stroke-width="1.4"/></g><path d="M22 43 v4" stroke="#241c14" stroke-width="2"/><circle cx="22" cy="47" r="1.6" fill="#c9a84c"/></svg></span><div class="dlg-body"><b class="dlg-name">秘書<small>鳩時計の鳩</small></b><p class="dlg-text" id="dlgText"></p><div class="dlg-ch" id="dlgCh"></div></div><i class="dlg-next" aria-hidden="true">▼</i></div>
+    <div class="tower-mark" id="towerMark" hidden>…</div>
+    <div class="banner" id="banner" hidden><span id="bannerSub"></span><b id="bannerMain"></b></div>
+    <div class="minimap" id="minimap" aria-label="遠征図"><h3>遠征図<small id="miniArea"></small></h3><svg id="miniSvg" viewBox="0 0 336 188"></svg></div>
+    <div class="sec-dock" id="secDock" hidden><button class="sec-btn" id="secBtn" aria-label="秘書"><svg class="cuckoo" viewBox="0 0 44 48" aria-hidden="true"><path d="M3 18 L22 4 L41 18 Z" fill="#5b3a22" stroke="#241c14" stroke-width="2" stroke-linejoin="round"/><rect x="7" y="17" width="30" height="26" rx="2" fill="#a8743f" stroke="#241c14" stroke-width="2"/><rect x="13" y="20" width="18" height="16" rx="8" fill="#2a2018"/><g class="bird"><ellipse cx="22" cy="31" rx="8" ry="6" fill="#c9c6bd" stroke="#241c14" stroke-width="1.5"/><circle cx="22" cy="24" r="5.5" fill="#dedad0" stroke="#241c14" stroke-width="1.5"/><path d="M26.5 24.5 l4 1.2 -4 1.2z" fill="#e0a040" stroke="#241c14" stroke-width="1"/><circle cx="23.6" cy="23.4" r="1" fill="#241c14"/><path d="M21.6 21.6 l3.4 -.8" stroke="#241c14" stroke-width="1.2" stroke-linecap="round"/><path d="M17.5 20 h9 l-1 -4 h-7z" fill="#1b4332" stroke="#241c14" stroke-width="1.2" stroke-linejoin="round"/><path d="M17 20.4 h10" stroke="#c9a84c" stroke-width="1.4"/></g><path d="M22 43 v4" stroke="#241c14" stroke-width="2"/><circle cx="22" cy="47" r="1.6" fill="#c9a84c"/></svg></button><button class="sec-bub" id="secBub" hidden></button></div>
     <div class="glfail" id="glfail" hidden>3D表示を読み込めませんでした。<br>通信状況を確かめて、Safari や Chrome で開き直してください。</div>
   </div>
 
@@ -655,7 +774,7 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.26.1 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.27.0 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 広場の立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -2116,6 +2235,24 @@ async function initGfx(){
     // 主塔の旗
     add(new T.Mesh(new T.BoxGeometry(.04,.75,.04),darkMat),0,3.55,-4.45,castle);
   }
+  /* ----- 秘書の鳩時計塔（城の右どなり。話すときは扉から鳩が出てくる） ----- */
+  const tower=new T.Group(); tower.position.set(CX+2.3,0,CZ-4.5); scene.add(tower);
+  const woodTower=new T.MeshLambertMaterial({color:0xa8743f}), roofBrown=new T.MeshLambertMaterial({color:0x5b3a22,flatShading:true}), creamMat=new T.MeshLambertMaterial({color:0xf3ead3,emissive:0x2a2418});
+  add(new T.Mesh(boxGeo(.62,.25,.62),castleMat),0,0,0,tower);
+  add(new T.Mesh(boxGeo(.52,1.5,.52),woodTower),0,.25,0,tower);
+  add(new T.Mesh(new T.ConeGeometry(.55,.62,4).rotateY(Math.PI/4).translate(0,.31,0),roofBrown),0,1.75,0,tower);
+  add(new T.Mesh(new T.BoxGeometry(.05,.18,.05),goldMat),0,2.42,0,tower);
+  add(new T.Mesh(new T.CircleGeometry(.17,16),creamMat),0,1.42,.262,tower,false);
+  const hand1=add(new T.Mesh(new T.BoxGeometry(.018,.13,.01).translate(0,.065,0),darkMat),0,1.42,.27,tower,false), hand2=add(new T.Mesh(new T.BoxGeometry(.018,.09,.01).translate(0,.045,0),darkMat),0,1.42,.272,tower,false);
+  add(new T.Mesh(new T.PlaneGeometry(.24,.22),darkMat),0,.98,.262,tower,false);
+  const bird=new T.Group(); bird.position.set(0,.98,.12); tower.add(bird);
+  const birdMat=new T.MeshLambertMaterial({color:0xdedad0}), beakMat=new T.MeshLambertMaterial({color:0xe0a040});
+  add(new T.Mesh(new T.BoxGeometry(.15,.12,.15),birdMat),0,0,0,bird); add(new T.Mesh(new T.BoxGeometry(.11,.1,.11),birdMat),0,.1,.03,bird);
+  add(new T.Mesh(new T.BoxGeometry(.04,.03,.05),beakMat),0,.1,.11,bird); add(new T.Mesh(new T.BoxGeometry(.1,.04,.1),roofGreen),0,.17,.03,bird);
+  let birdOut=0, birdWant=0; const tp=new T.Vector3();
+  function towerScreen(){tp.set(tower.position.x,2.2,tower.position.z).project(cam); return {x:(tp.x+1)/2*cv.clientWidth,y:(1-tp.y)/2*cv.clientHeight};}
+  function towerFoot(){tp.set(tower.position.x,.9,tower.position.z).project(cam); return {x:(tp.x+1)/2*cv.clientWidth,y:(1-tp.y)/2*cv.clientHeight};}
+  function secTalk(on){birdWant=on?1:0;}
   const flagTex=tex(24,5,g=>{for(let f=0;f<3;f++){const o=f*8; for(let x=0;x<7;x++){const dy=[[0,0,1,1,0,0,0],[0,1,1,0,0,1,1],[1,1,0,0,1,1,0]][f][x]; P(g,x<1?'#e4cf8f':'#c9a84c',o+x,dy,1,4); P(g,'#9c8236',o+x,dy+3,1,1);}}});
   flagTex.repeat.set(1/3,1);
   const flag=add(new T.Mesh(new T.PlaneGeometry(8*U,5*U).translate(4*U,0,0),new T.MeshLambertMaterial({map:flagTex,alphaTest:.5,side:T.DoubleSide,emissive:0x221a06})),.27,3.75,-4.45,scene,false);
@@ -2522,10 +2659,10 @@ async function initGfx(){
   let zoom=null, baseFov=FOV, wideFit=false, minZoom=1;
   // 広い画面：右のパネル（約430px）を除いた左側に、城壁の内側がちょうど収まる拡大にして、町をその真ん中に寄せる
   function fitWide(w,h){
-    const vis=w-430, need=W+1.5; // 町の横幅（マス）＋少しの余白
+    const vis=w-120, need=W+1.5; // 町の横幅（マス）＋少しの余白。窓は必要なときだけ開くので、町は画面の真ん中に
     const span=2*DIST*Math.tan(baseFov*Math.PI/360)*(w/h); // zoom=1で見える横幅（マス）
     zoom=Math.max(.55,Math.min(1.6,span*(vis/w)/need)); minZoom=Math.min(1,zoom); applyFov();
-    const k=2*DIST*Math.tan(cam.fov*Math.PI/360)/h; tgt.x=Math.min(W/2-1,215*k); tgt.z=-.25;
+    tgt.x=0; tgt.z=.2;
   }
   const wideMQ=matchMedia('(min-width:1180px) and (min-height:520px)');
   function applyFov(){cam.fov=2*Math.atan(Math.tan(baseFov*Math.PI/360)/zoom)*180/Math.PI; cam.updateProjectionMatrix(); ptScale=cv.clientHeight*renderer.getPixelRatio()*.5/Math.tan(cam.fov*Math.PI/360);}
@@ -2570,6 +2707,8 @@ async function initGfx(){
   /* ----- 毎フレーム ----- */
   let smokeAcc=0, flyAcc=0, torchAcc=0, jetAcc=0;
   function draw(now,dt){
+    birdOut+=(birdWant-birdOut)*Math.min(1,dt*7); bird.position.z=.12+.3*birdOut; bird.position.y=.98+(birdOut>.5?Math.abs(Math.sin(now/140))*.04:0); bird.visible=birdOut>.05;
+    {const m=S.t%60, h=(S.t/60)%12; hand1.rotation.z=-m/60*Math.PI*2; hand2.rotation.z=-h/12*Math.PI*2;}
     if(baseDirty){syncBuildings(); paintLots(); baseDirty=false;} else if(canAfford()!==lotOn)paintLots();
     syncSites(now);
     for(const f of S.fx)sparkle(wx(f.x),wz(f.y)); S.fx.length=0;
@@ -2614,7 +2753,7 @@ async function initGfx(){
   const sp=new T.Vector3();
   function screenOf(a){const w=walkers.get(a.id); if(!w||!w.mesh.visible)return null; sp.copy(w.mesh.position); sp.y+=FH*U+.55; sp.project(cam); return {x:(sp.x+1)/2*cv.clientWidth, y:(1-sp.y)/2*cv.clientHeight};}
   function tileScreen(x,y){sp.set(wx(x),0,wz(y)).project(cam); const r=cv.getBoundingClientRect(); return {x:r.left+(sp.x+1)/2*r.width, y:r.top+(1-sp.y)/2*r.height};} // 開発用：マスの中心の画面位置
-  return {draw,pick,resize,screenOf,panBy,zoomBy,tileScreen};
+  return {draw,pick,resize,screenOf,panBy,zoomBy,tileScreen,towerScreen,towerFoot,secTalk};
 }
 
 /*VOICE-START*/
@@ -2828,7 +2967,28 @@ function updateHud(){
   $('sun').style.width=`${pc}%`; $('sun').style.setProperty('--sunw',`${10000/Math.max(pc,1)}%`);
   $('elem').textContent=S.elem+(S.refund?` (+${S.refund})`:'');
   $('explore').textContent=`${Math.floor(S.explore)}%`+(S.bossDown?' 制覇':''); $('exbar').style.width=`${S.explore}%`;
+  // 日時計：太陽が弧をすすむ
+  const k=pc/100, ang=Math.PI*(1-k); $('sunArc').setAttribute('stroke-dasharray',`${pc} 100`); $('sunDot').setAttribute('cx',(30+25*Math.cos(ang)).toFixed(1)); $('sunDot').setAttribute('cy',(27-25*Math.sin(ang)).toFixed(1));
+  $('exRing').style.setProperty('--p',`${S.explore}%`); $('areaLbl').textContent=AREAS[S.area].short; $('advN').textContent=`${S.advs.length}/${advCap(S)}`;
+  if(hudElem!==null&&S.elem>hudElem){const f=$('elemFx'); f.textContent=`+${S.elem-hudElem}`; f.classList.remove('on'); void f.offsetWidth; f.classList.add('on');} hudElem=S.elem;
+  const now=performance.now(); if(now-hudSlow>1200){hudSlow=now; renderGoalsBox(); renderParty();}
 }
+let hudElem=null, hudSlow=0;
+// 左の目標：章の目標と、近い小目標を3つ
+function renderGoalsBox(){
+  const box=$('goalsBox'); if(!box)return; const G=goalsOf(S).filter(q=>q.ch===(S.chapter||1)), done=q=>S.goals&&S.goals[q.id], left=G.filter(q=>!done(q)).slice(0,3);
+  const html=`<h3>目標</h3><p class="gx main${S.bossDown?' done':''}"><i>★</i>${AREAS[S.area].name}の親玉を倒す</p>${left.map(q=>`<p class="gx"><i>□</i>${q.name}</p>`).join('')}<p class="gx more">小目標 ${G.filter(done).length}/${G.length}</p>`;
+  if(box.innerHTML!==html)box.innerHTML=html;
+}
+// 左下の顔ぶれ：押すと、その子の窓が開く
+function renderParty(){
+  const box=$('party'); if(!box)return;
+  const html=S.advs.map(a=>{const [txt,cls]=status(a), out=a.state==='away'||a.state==='back', v=shownStats(a), hp=Math.max(0,Math.min(1,v.hp/v.hpMax));
+    return `<button class="pf ${cls}${pickAdv===a.id&&advWin?' on':''}" data-pf="${a.id}" title="${a.name}：${txt}"><img src="${faceURL(a)}" alt=""><span class="pf-n">${a.name}<small>Lv${v.lv}</small></span><span class="pf-hp"><i style="width:${out?100:hp*100}%" class="${out?'away':''}"></i></span><span class="pf-st">${out?'冒険中':txt.length>6?txt.slice(0,6):txt}</span><i class="pf-mood m${moodLv(a.morale)}"></i></button>`;}).join('');
+  if(box.innerHTML!==html)box.innerHTML=html;
+}
+let advWin=false;
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-pf]'); if(!b)return; pickAdv=+b.dataset.pf; sel=null; advWin=true; renderPanel(); renderParty(); setDrawer(true);});
 const PLACE={tavern:'酒場で仲間を待つ',school:'学び舎で転職の手ほどき',clinic:'診療所で手当て',park:'公園で休憩',board:'立て札でおふれを確認',weapon:'武器屋で買い物',armor:'防具屋で買い物',gate:'城門へ',castle:'城へ報告',home:'家へ帰る'};
 function status(a){
   switch(a.state){
@@ -2846,7 +3006,7 @@ function status(a){
   return ['',''];
 }
 function renderPanel(){
-  const p=$('panel');
+  const p=$('panel'); document.body.classList.toggle('win',!!sel||advWin);
   if(sel&&sel.kind==='lot'&&siteAt(S,sel.x,sel.y)){const st=siteAt(S,sel.x,sel.y); sel={kind:'site',id:st.id,x:sel.x,y:sel.y};}
   if(sel&&sel.kind==='lot'){
     const opts=Object.keys(BUILD).map(k=>{const e=canBuild(S,k,sel.x,sel.y); return `<button class="opt" data-build="${k}" ${e?'disabled':''}><b>${BUILD[k].name}</b><span>${e&&e!==`${RES}が足りない`?e:BUILD[k].desc}</span><em>${BUILD[k].cost}</em></button>`;}).join('');
@@ -2961,7 +3121,7 @@ function renderRoster(p){
   if(!S.advs.length){p.innerHTML='<h2>冒険者</h2><p class="lead">まだ冒険者がいない</p>'; p.dataset.mode=''; return;}
   if(!S.advs.some(a=>a.id===pickAdv))pickAdv=S.advs[0].id;
   if(p.dataset.mode!=='roster'||p.dataset.n!==String(S.advs.length)){
-    p.innerHTML=`<h2><span>冒険者 <small id="advCount"></small></span><span class="hlinks"><button class="linkb" id="seeCastle">工事</button><button class="linkb" id="seeBoard">おふれ</button></span></h2><div class="tabs" role="tablist">${S.advs.map(a=>`<button class="tabf" role="tab" data-adv="${a.id}" aria-label="${a.name}"><img src="${faceURL(a)}" alt=""><i class="st"></i><em class="md"></em></button>`).join('')}</div><div class="ad" id="advDetail" role="tabpanel"></div>`;
+    p.innerHTML=`<h2><span>冒険者 <small id="advCount"></small></span><span class="hlinks"><button class="linkb" id="seeCastle">工事</button><button class="linkb" id="seeBoard">おふれ</button><button class="x winx" id="close">閉じる</button></span></h2><div class="tabs" role="tablist">${S.advs.map(a=>`<button class="tabf" role="tab" data-adv="${a.id}" aria-label="${a.name}"><img src="${faceURL(a)}" alt=""><i class="st"></i><em class="md"></em></button>`).join('')}</div><div class="ad" id="advDetail" role="tabpanel"></div>`;
     p.dataset.mode='roster'; p.dataset.n=String(S.advs.length);
   }
   $('seeBoard').hidden=!first(S,'board'); $('seeCastle').textContent=S.sites.length?`工事 ${S.sites.length}件`:'工事'; $('advCount').textContent=`${S.advs.length}/${advCap(S)}人`;
@@ -2986,7 +3146,7 @@ function renderRoster(p){
 $('panel').addEventListener('click',e=>{
   const t=e.target.closest('button'); if(!t)return;
   if(t.dataset.adv!==undefined){pickAdv=+t.dataset.adv; renderPanel(); setDrawer(true); return;}
-  if(t.id==='close'){sel=null; renderPanel(); setDrawer(false); return;}
+  if(t.id==='close'){sel=null; advWin=false; renderPanel(); renderParty(); setDrawer(false); return;}
   if(t.id==='seeBoard'){const b=first(S,'board'); if(b){sel={kind:'building',x:b.x,y:b.y}; renderPanel();} return;}
   if(t.dataset.build){const err=orderBuild(S,t.dataset.build,sel.x,sel.y); if(err){$('msg').textContent=err; return;} baseDirty=true; const st=siteAt(S,sel.x,sel.y); sel={kind:'site',id:st.id,x:sel.x,y:sel.y}; renderPanel(); updateHud(); return;}
   if(t.dataset.clear){const err=orderClear(S,sel.x,sel.y); if(err){$('msg').textContent=err; return;} baseDirty=true; const st=siteAt(S,sel.x,sel.y); sel={kind:'site',id:st.id,x:sel.x,y:sel.y}; renderPanel(); updateHud(); return;}
@@ -3004,6 +3164,8 @@ $('panel').addEventListener('click',e=>{
 });
 function tapAt(e){
   if(!GFX)return;
+  {const r=$('town').getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top, a=GFX.towerScreen(), b=GFX.towerFoot(); // 鳩時計塔
+   if(Math.abs(mx-a.x)<26&&my>a.y-10&&my<b.y+30){secMenu(); return;}}
   const hit=GFX.pick(e), now=performance.now();
   if(hit&&hit.adv){
     // 冒険者をタップすると声が聞ける（効果はなし）
@@ -3080,8 +3242,10 @@ function afterPanel(){
   g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault(); setDrawer(!drawerOpen);}});
   addEventListener('resize',measurePeek);
 })();
-document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>setSpeed(+b.dataset.sp)));
-function setSpeed(s){speed=s; document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.sp===s)));}
+document.querySelectorAll('.seg button[data-sp]').forEach(b=>b.addEventListener('click',()=>setSpeed(+b.dataset.sp)));
+let lastSpeed=1;
+$('spPlay').addEventListener('click',()=>setSpeed(speed?0:lastSpeed||1));
+function setSpeed(s){speed=s; if(s)lastSpeed=s; document.querySelectorAll('.seg button[data-sp]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.sp===s))); $('spPlay').querySelector('span').textContent=s?'⏸':'⏵'; $('spPlay').classList.toggle('paused',!s);}
 $('trails').addEventListener('click',()=>{showTrails=!showTrails; $('trails').setAttribute('aria-pressed',String(showTrails));});
 $('lite').setAttribute('aria-pressed',String(lite));
 $('planDone').addEventListener('click',endPlanning);
@@ -3440,7 +3604,7 @@ function playCard(c,ms,next,say){
 function typeInto(el,text,speed=40){
   if(el._typ)clearInterval(el._typ); const ch=[...text]; el._full=text; el._done=false; el.textContent='';
   if(RM||!ch.length){el.textContent=text; el._done=true; return 0;}
-  let i=0; el._typ=setInterval(()=>{i++; el.textContent=ch.slice(0,i).join(''); if(i>=ch.length){clearInterval(el._typ); el._typ=null; el._done=true;}},speed);
+  const t0=performance.now(); el._typ=setInterval(()=>{const i=Math.min(ch.length,1+Math.floor((performance.now()-t0)/speed)); el.textContent=ch.slice(0,i).join(''); if(i>=ch.length){clearInterval(el._typ); el._typ=null; el._done=true;}},20); // 経過時間で進める（重い場面でも遅れない）
   return ch.length*speed;
 }
 function typeFinish(el){ if(el&&el._typ){clearInterval(el._typ); el._typ=null; el.textContent=el._full; el._done=true; return true;} return false; }
@@ -3520,12 +3684,12 @@ function loop(now){
   if(S.phase==='report'&&wasPhase==='day'){acc=0; showDuskCard(); saveGame();}
   wasPhase=S.phase;
   if(GFX&&!townHidden())GFX.draw(now,dt);
-  if(!townHidden())secWatch(now);
+  if(!townHidden()){secWatch(now); secMarkPos(); if(S.phase==='day')renderMini(now);}
   updVoice(now);
   if(now-panelClock>300&&!townHidden()){panelClock=now; updateHud(); if(S.dirty){S.dirty=false; baseDirty=true; if(sel&&sel.kind!=='castle')renderPanel();} if(!sel)renderPanel(); else updLive();}
   requestAnimationFrame(loop);
 }
-$('resLbl').textContent=RES;
+// （時のかけらの名前は上の帯ではアイコンで示す）
 // ================= 秘書（鳩時計の鳩） =================
 // 1) 指示の画面で、朝のあいさつ・はじめての仕組みの案内・気づきをひとこと
 // 2) 昼は町の隅から、大事なできごとだけを吹き出しで知らせる（時間は止めない）
@@ -3565,10 +3729,35 @@ function secTypeOrders(){
 // 昼の知らせ
 const secQ=[]; let secShow=null, secNext=0, secSeen=null;
 function secSay(text,o={}){ if(secQ.length>=4){const i=secQ.findIndex(x=>(x.pri||0)<(o.pri||0)); if(i<0)return; secQ.splice(i,1);} secQ.push({text,...o}); }
-function secDayStart(){ secQ.length=0; secSeen={day:S.day,found:0,fights:new Set(),ko:new Set(),masters:Object.keys(S.world.master).filter(k=>S.world.master[k]).length,noon:false,eve:false,boss:S.bossDown}; hideSecBub();
+function secDayStart(){ showBanner(`${S.day}日目`,`${AREAS[S.area].name}へ`); secQ.length=0; secSeen={day:S.day,found:0,fights:new Set(),ko:new Set(),masters:Object.keys(S.world.master).filter(k=>S.world.master[k]).length,noon:false,eve:false,boss:S.bossDown}; hideSecBub();
   if(S.day===1){S.tips=S.tips||{}; }
 }
-function hideSecBub(){ $('secBub').hidden=true; $('secDock').classList.remove('talk'); secShow=null; }
+function hideSecBub(){ $('dlg').hidden=true; $('dlgCh').innerHTML=''; $('towerMark').hidden=true; if(GFX&&GFX.secTalk)GFX.secTalk(false); secShow=null; }
+// 会話の窓に出す（昼のお知らせ・塔を押したときの答え）
+function dlgShow(m,now,hold){
+  const d=$('dlg'); d.hidden=false; d.classList.remove('pop'); void d.offsetWidth; d.classList.add('pop'); $('dlgCh').innerHTML='';
+  const t=$('dlgText'); const ty=typeInto(t,m.text+(m.sub?`（${m.sub}）`:''));
+  if(GFX&&GFX.secTalk)GFX.secTalk(true); $('towerMark').hidden=false;
+  secShow={...m,until:hold?Infinity:now+ty+Math.max(3600,m.text.length*75)}; secNext=secShow.until+900;
+}
+// 塔を押すと、聞きたいことを選べる
+function secMenu(){
+  const now=performance.now(); dlgShow({text:'王様、何をお聞きになりますか？'},now,true);
+  const Q=[['now','いまのようす'],['boss','親玉について'],['left','やり残し'],['bye','なんでもない']];
+  $('dlgCh').innerHTML=Q.map(([k,l])=>`<button data-ask="${k}">${l}</button>`).join('');
+}
+function secAnswer(k){
+  const now=performance.now();
+  if(k==='bye'){hideSecBub(); return;}
+  let t='';
+  if(k==='now'){ if(S.phase!=='day')t='いまは夜です。報告書と、あすの立て札を決める時間です'; else {const out=S.advs.filter(a=>a.state==='away'), home=S.advs.filter(a=>a.rep&&a.rep.back!=null); t=`${Math.floor(S.t/60)}時${String(S.t%60).padStart(2,'0')}分です。${out.length?`外に${out.length}人（${out.map(a=>a.name).join('・')}）`:'いま外にいる者はいません'}${home.length?`、帰ってきたのは${home.length}人`:''}です`;}}
+  if(k==='boss'){ const mid=bossId(S), m=MON[mid], K=S.know[mid]||{}, tr=TRAITS.filter(([x])=>K[x]).map(x=>x[1]);
+    t=S.bossDown?`${AREAS[S.area].name}の親玉は、もう倒しました`:!(K.seen||K.scouted||tr.length)?`${AREAS[S.area].name}の親玉は、まだだれも姿を見ておりません。親玉の間の手前で、ようすを探らせてはいかがでしょう`:`${m.n}${K.seen||K.scouted?`、体力${m.hp}・攻撃${m.atk}・守り${m.def}ほど`:''}。${tr.length?`${tr.join('・')}らしいです。`:''}${TRAITS.some(([x])=>m[x]&&!K[x])?'まだ何か隠していそうです':'知っていることは、これで全部です'}`; }
+  if(k==='left'){ const G=goalsOf(S).filter(q=>q.ch===(S.chapter||1)), left=G.filter(q=>!(S.goals&&S.goals[q.id])).length, rooms=Object.keys(NODES).filter(id=>keysLeft(S,id)&&reached(S,id)).map(id=>NODES[id].n);
+    t=`この章の小目標は、あと${left}個です。${rooms.length?`${rooms.join('・')}には、まだ品が眠っています`:'見つけてある部屋の品は、取り尽くしました'}`; }
+  dlgShow({text:t},now,false);
+}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-ask]'); if(b){e.stopPropagation(); secAnswer(b.dataset.ask);}});
 function secWatch(now){
   if(!secSeen||secSeen.day!==S.day||S.phase!=='day')return;
   const F=S.foundToday||[];
@@ -3577,7 +3766,7 @@ function secWatch(now){
     else if(f.scout)secSay(`${f.by}が物かげから${m.n}をのぞいてきました。${f.scout}だそうです。`,{pri:3});
     else if(f.t)secSay(`${f.note?`${(NODES[f.n]||{}).n}の書き付けによると`:`${f.by}の話では`}、${m.n}は${f.lb}らしいです。`,{pri:m.boss||m.master?2:1});}
   for(const Fi of S.fights){ if(secSeen.fights.has(Fi)||!(Fi.m.boss||Fi.m.master))continue; secSeen.fights.add(Fi);
-    const who=names(Fi.members.map(x=>x.name)); secSay(Fi.m.boss?`${who}が${Fi.m.n}に挑みます！`:`${who}が${NODES[Fi.atNode].n}の主に挑みます`,{pri:Fi.m.boss?3:2,adv:Fi.members[0]&&Fi.members[0].id}); }
+    const who=names(Fi.members.map(x=>x.name)); if(Fi.m.boss)showBanner(`${Fi.m.n}との戦い！`,who); secSay(Fi.m.boss?`${who}が${Fi.m.n}に挑みます！`:`${who}が${NODES[Fi.atNode].n}の主に挑みます`,{pri:Fi.m.boss?3:2,adv:Fi.members[0]&&Fi.members[0].id}); }
   const mk=Object.keys(S.world.master).filter(k=>S.world.master[k]); if(mk.length>secSeen.masters){secSeen.masters=mk.length; secSay(`${NODES[mk[mk.length-1]].n}の主を倒しました！`,{pri:3});}
   if(S.bossDown&&!secSeen.boss){secSeen.boss=true; secSay(`親玉を討ち取りました！ 王様、おめでとうございます`,{pri:4});}
   for(const a of S.advs){ if(a.rep&&a.rep.ko&&!secSeen.ko.has(a.id)){secSeen.ko.add(a.id); secSay(`${a.name}がやられました。城門へ逃げ帰っています`,{pri:2,adv:a.id});} }
@@ -3586,14 +3775,35 @@ function secWatch(now){
   if(S.day===1){ const T=S.tips; // 1日目だけの案内
     if(!T.walk&&S.t>=450){T.walk=1; secSay('冒険者が家を出ました。公園、立て札、店と回ってから城門へ向かいます。建物の置き場所で、出発の時刻が変わります',{pri:5});}
     if(!T.lot&&S.t>=570){T.lot=1; secSay('空き地や荒れ地を押すと、大工におふれを出せます。',{pri:5});}
-    if(!T.speed&&S.t>=660){T.speed=1; secSay('時の流れは左上で速められます。日が暮れたら、報告書をお持ちします',{pri:5});}
+    if(!T.speed&&S.t>=660){T.speed=1; secSay('時の流れは、時計のボタンで速めたり止めたりできます。日が暮れたら、報告書をお持ちします',{pri:5});}
+    if(!T.tower&&S.t>=760){T.tower=1; secSay('わたしは、お城の横の鳩時計塔におります。塔を押していただければ、いつでもお答えします',{pri:5});}
   }
   if(secShow&&now>secShow.until)hideSecBub();
-  if(!secShow&&secQ.length&&now>secNext){ secQ.sort((x,y)=>(y.pri||0)-(x.pri||0)); const m=secQ.shift(), b=$('secBub');
-    b.innerHTML=`<span class="t"></span>${m.sub?`<small>${m.sub}</small>`:''}`; b.hidden=false; const d=$('secDock'); d.classList.remove('talk'); void d.offsetWidth; d.classList.add('talk');
-    const ty=typeInto(b.querySelector('.t'),m.text); secShow={...m,until:now+ty+Math.max(3200,m.text.length*70)}; secNext=secShow.until+900; }
+  if(!secShow&&secQ.length&&now>secNext){ secQ.sort((x,y)=>(y.pri||0)-(x.pri||0)); dlgShow(secQ.shift(),now,false); }
 }
-$('secBub').addEventListener('click',()=>{ const t=$('secBub').querySelector('.t'); if(typeFinish(t)){if(secShow)secShow.until=performance.now()+3500; return;} const m=secShow; hideSecBub(); if(m&&m.adv!=null){sel=null; pickAdv=m.adv; renderPanel(); setDrawer(true);} });
+// 遠征図：外にいる冒険者が、いまどこを歩いているか
+let miniClock=0;
+function renderMini(now){
+  if(now-miniClock<400)return; miniClock=now; const svg=$('miniSvg'); if(!svg||getComputedStyle($('minimap')).display==='none')return;
+  const W_=S.world, cur=S.area, else_=S.advs.filter(a=>a.state==='away'&&a.out&&(a.out.ar??cur)!==cur).length; $('miniArea').textContent=AREAS[cur].name+(else_?`（ほかのエリアに${else_}人）`:'');
+  const P=(id,ar)=>id==='gate'?GATEXY[ar]:MAPXY[id];
+  const known={gate:true}; for(const e of EDGES)if(e.ar===cur&&W_.trips[e.id]){known[e.a]=1; known[e.b]=1;}
+  let h='';
+  for(const e of EDGES){ if(e.ar!==cur||(e.cut&&!W_.cut))continue; if(!known[e.a]&&!known[e.b])continue; const a=P(e.a,cur), b=P(e.b,cur); h+=`<path d="M${a[0]} ${a[1]} L${b[0]} ${b[1]}" class="mr ${W_.trips[e.id]?'on':''}"/>`; }
+  for(const id in NODES){ const n=NODES[id]; if((n.ar??0)!==cur||!known[id])continue; const [x,y]=P(id,cur);
+    h+=n.boss?`<rect x="${x-7}" y="${y-7}" width="14" height="14" class="mn boss"/>`:n.room?`<rect x="${x-5}" y="${y-5}" width="10" height="10" class="mn ${n.master&&!W_.master[id]?'foe':''}"/>`:`<circle cx="${x}" cy="${y}" r="${id==='gate'?6:4}" class="mn"/>`; }
+  { const [x,y]=GATEXY[cur]; h+=`<circle cx="${x}" cy="${y}" r="6" class="mn"/>`; }
+  for(const a of S.advs){ if(a.state!=='away'||!a.out||(a.out.ar??cur)!==cur)continue; const o=a.out; let x,y;
+    if(o.edge){ const e=o.edge.e, to=P(o.edge.to,cur), fr=P(other(e,o.edge.to),cur), L=Math.max(1,elen(S,e)), k=Math.max(0,Math.min(1,1-o.edge.left/L)); x=fr[0]+(to[0]-fr[0])*k; y=fr[1]+(to[1]-fr[1])*k; }
+    else { const q=P(o.at,cur); if(!q)continue; [x,y]=q; }
+    const i=S.advs.indexOf(a); x+=(i%3-1)*4; y+=(Math.floor(i/3)%2)*4;
+    h+=`<g class="md${o.fight?' fight':''}"><circle cx="${x}" cy="${y}" r="9" fill="${a.tunic}"/><title>${a.name}</title></g>`; }
+  svg.innerHTML=h;
+}
+// 大事なときの帯（地名表示ふう）
+function showBanner(main,sub){ const b=$('banner'); $('bannerMain').textContent=main; $('bannerSub').textContent=sub||''; b.hidden=false; b.classList.remove('go'); void b.offsetWidth; b.classList.add('go'); clearTimeout(b._t); b._t=setTimeout(()=>{b.hidden=true;},3400); }
+function secMarkPos(){ const m=$('towerMark'); if(m.hidden||!GFX||!GFX.towerScreen)return; const p=GFX.towerScreen(); m.style.left=`${p.x}px`; m.style.top=`${p.y}px`; }
+$('dlg').addEventListener('click',e=>{ if(e.target.closest('[data-ask]'))return; const t=$('dlgText'); if(typeFinish(t)){if(secShow&&secShow.until!==Infinity)secShow.until=performance.now()+3500; return;} if(secShow&&secShow.until===Infinity)return; const m=secShow; hideSecBub(); if(m&&m.adv!=null){sel=null; pickAdv=m.adv; advWin=true; renderPanel(); renderParty(); setDrawer(true);} });
 $('secBtn').addEventListener('click',()=>{ // 押すと、いまのようすをひとこと
   if(S.phase!=='day'){secQ.length=0; return;}
   const out=S.advs.filter(a=>a.state==='away'), home=S.advs.filter(a=>a.rep&&a.rep.back!=null);
@@ -3624,7 +3834,7 @@ $('ch2Btn').addEventListener('click',()=>{S=autoCh1(CH2_SEED); saveGame(); sel=n
 // 開発用：コンソールやテストから日を早送りする  __tct.skip(3) で3日進めて報告書を開く
 if(DEV)window.__sel=v=>{sel=v; renderPanel();};
 if(DEV)window.__orders=()=>openOrders();
-if(DEV)window.__tct={map:r=>mapHTML(r),get S(){return S;},skip(n=1){for(let i=0;i<n;i++){if(S.phase!=='day')startDay(S); tick(S,2000);} wasPhase=S.phase; $('titleModal').hidden=true; $('dayCard').hidden=true; $('duskCard').hidden=true; openReport({instant:true});}};
+if(DEV)window.__tct={map:r=>mapHTML(r),say:(t,o)=>secSay(t,o||{pri:3}),menu:()=>secMenu(),ask:k=>secAnswer(k),get S(){return S;},skip(n=1){for(let i=0;i<n;i++){if(S.phase!=='day')startDay(S); tick(S,2000);} wasPhase=S.phase; $('titleModal').hidden=true; $('dayCard').hidden=true; $('duskCard').hidden=true; openReport({instant:true});}};
 updateHud(); renderPanel(); requestAnimationFrame(loop);
 initGfx().then(g=>{GFX=g; if(DEV)window.__gfx=g;}).catch(e=>{console.error(e); $('glfail').hidden=false;});
 </script>
