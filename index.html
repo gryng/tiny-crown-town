@@ -507,7 +507,8 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
 /* 窓（パネル）：紙の中身を、木枠と金の縁で囲む */
 .drawer::before{box-shadow:0 0 0 3px var(--wood-hi),0 0 0 5px var(--trim),0 0 0 7px var(--wood-2),0 10px 26px #000a!important}
 .panel>h2{color:var(--wood-2)}
-.winx{display:none}
+.x.xicon.winx{display:none}
+.x.xicon{display:inline-grid;place-items:center;width:34px;height:34px;padding:0;font-size:22px;line-height:1;font-weight:700}
 @media (min-width:1180px) and (min-height:520px){
   .hud.topbar{top:14px;left:16px;width:auto;max-width:calc(100% - 140px);padding:6px 10px}
   .tb-day b{font-size:26px}
@@ -545,7 +546,7 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
   @keyframes pulse{50%{box-shadow:0 0 0 2px #120a05,0 0 0 7px #c9a84c55}}
   /* 窓は、何か選んだときと顔を押したときだけ */
   body:not(.win) .drawer{display:none}
-  .winx{display:inline-block}
+  .x.xicon.winx{display:inline-grid}
   .drawer{top:84px;max-height:calc(100% - 190px)}
   .foot .menu-btn{color:var(--hud-ink)}
   .foot .menu-btn::before{background:linear-gradient(180deg,var(--wood-hi),var(--wood-2));filter:none;box-shadow:0 0 0 1.5px #120a05,inset 0 0 0 1px var(--trim-dk),0 4px 10px #0007;border-radius:8px}
@@ -774,7 +775,7 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.27.2 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.27.3 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 広場の立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -3011,23 +3012,23 @@ function renderPanel(){
   if(sel&&sel.kind==='lot'){
     const opts=Object.keys(BUILD).map(k=>{const e=canBuild(S,k,sel.x,sel.y); return `<button class="opt" data-build="${k}" ${e?'disabled':''}><b>${BUILD[k].name}</b><span>${e&&e!==`${RES}が足りない`?e:BUILD[k].desc}</span><em>${BUILD[k].cost}</em></button>`;}).join('');
     p.dataset.mode='lot'; const wk_=wasteAt(S,sel.x,sel.y), Wk=wk_&&WASTE[wk_], hrs=m=>m>=60?`${Math.floor(m/60)}時間${m%60?`${m%60}分`:''}`:`${m}分`;
-    p.innerHTML=wk_?`<h2>荒れ地：${Wk.n} <button class="x" id="close">閉じる</button></h2><p class="rc-note">大工が片づけると、${RES}が${Wk.elem[0]}〜${Wk.elem[1]}出て、建てられる空き地になる（大工1人で${hrs(Wk.work)}）。${wk_==='grass'?'':'たまに掘り出し物も出る。'}</p>
+    p.innerHTML=wk_?`<h2>荒れ地：${Wk.n} <button class="x xicon" id="close" aria-label="閉じる" title="閉じる（Esc）">×</button></h2><p class="rc-note">大工が片づけると、${RES}が${Wk.elem[0]}〜${Wk.elem[1]}出て、建てられる空き地になる（大工1人で${hrs(Wk.work)}）。${wk_==='grass'?'':'たまに掘り出し物も出る。'}</p>
         <div class="opts"><button class="opt" data-clear="1"><b>片づけるだけ</b><span>空き地にして、${RES}を得る</span><em>+${Wk.elem[0]}〜</em></button></div>
         <h4 class="sec">片づけてから建てる（そのぶん時間がかかる）</h4><div class="opts">${opts}</div><p class="msg" id="msg"></p>`
-      :`<h2>建設のおふれを出す <button class="x" id="close">閉じる</button></h2><p class="rc-note">選ぶと城の掲示板におふれが貼られ、大工が歩いて建てに来る。</p><div class="opts">${opts}</div><p class="msg" id="msg"></p>`;
+      :`<h2>建設のおふれを出す <button class="x xicon" id="close" aria-label="閉じる" title="閉じる（Esc）">×</button></h2><p class="rc-note">選ぶと城の掲示板におふれが貼られ、大工が歩いて建てに来る。</p><div class="opts">${opts}</div><p class="msg" id="msg"></p>`;
   } else if(sel&&sel.kind==='road'){
     const g=SEGS.find(g=>g.id===sel.seg); if(!g||!S.rough[g.id]){sel=null; return renderPanel();}
     const st=S.sites.find(x=>x.kind==='repair'&&x.seg===g.id); if(st){sel={kind:'site',id:st.id,x:st.x,y:st.y}; return renderPanel();}
     p.dataset.mode='road';
-    p.innerHTML=`<h2>荒れた道 <button class="x" id="close">閉じる</button></h2><p class="rc-note">ひび割れと穴だらけで、冒険者はここを歩くのに${ROUGH}倍の時間がかかる。交差点から交差点までの${g.tiles.length}マスをまとめて直す（大工1人で${g.tiles.length*REPAIR_WORK}分）。</p>
+    p.innerHTML=`<h2>荒れた道 <button class="x xicon" id="close" aria-label="閉じる" title="閉じる（Esc）">×</button></h2><p class="rc-note">ひび割れと穴だらけで、冒険者はここを歩くのに${ROUGH}倍の時間がかかる。交差点から交差点までの${g.tiles.length}マスをまとめて直す（大工1人で${g.tiles.length*REPAIR_WORK}分）。</p>
       <div class="opts"><button class="opt" data-repair="${g.id}"><b>道を直す</b><span>毎朝ここを通る冒険者が、早く門を出られる</span><em>+${g.tiles.length}</em></button></div><p class="msg" id="msg"></p>`;
   } else if(sel&&sel.kind==='castle'){
     p.dataset.mode='castle'; lastLive=castleHTML();
-    p.innerHTML=`<h2>城 <button class="x" id="close">閉じる</button></h2><div id="liveBox" class="ad">${lastLive}</div><p class="msg" id="msg"></p>`;
+    p.innerHTML=`<h2>城 <button class="x xicon" id="close" aria-label="閉じる" title="閉じる（Esc）">×</button></h2><div id="liveBox" class="ad">${lastLive}</div><p class="msg" id="msg"></p>`;
   } else if(sel&&sel.kind==='site'){
     const st=S.sites.find(x=>x.id===sel.id); if(!st){sel=null; return renderPanel();}
     p.dataset.mode='site'; lastLive=siteRow(st);
-    p.innerHTML=`<h2>工事の現場 <button class="x" id="close">閉じる</button></h2><div id="liveBox" class="ad">${lastLive}</div><p class="msg" id="msg"></p>`;
+    p.innerHTML=`<h2>工事の現場 <button class="x xicon" id="close" aria-label="閉じる" title="閉じる（Esc）">×</button></h2><div id="liveBox" class="ad">${lastLive}</div><p class="msg" id="msg"></p>`;
   } else if(sel&&sel.kind==='building'){
     const b=at(S,sel.x,sel.y); if(!b){sel=null; return renderPanel();}
     let body='';
@@ -3050,7 +3051,7 @@ function renderPanel(){
     const acts=st?'':sel.moving?`<p class="rc-note">移設先の空き地をタップしてください（${RES} ${moveCost(b.type)}）。</p><button class="toggle" id="moveOff">やめる</button>`
       :`<div class="actrow"><button class="toggle" id="moveOn">移設</button><button class="danger" id="demo">${sel.confirm?`撤去のおふれを出す（${RES}は撤去の翌朝もどる）`:'撤去'}</button></div>`;
     p.dataset.mode='building';
-    p.innerHTML=`<h2>${BUILD[b.type].name} <button class="x" id="close">閉じる</button></h2>${body}${live?`<div id="liveBox" class="ad">${lastLive}</div>`:''}${acts}<p class="msg" id="msg"></p>`;
+    p.innerHTML=`<h2>${BUILD[b.type].name} <button class="x xicon" id="close" aria-label="閉じる" title="閉じる（Esc）">×</button></h2>${body}${live?`<div id="liveBox" class="ad">${lastLive}</div>`:''}${acts}<p class="msg" id="msg"></p>`;
   } else renderRoster(p);
   afterPanel();
 }
@@ -3121,7 +3122,7 @@ function renderRoster(p){
   if(!S.advs.length){p.innerHTML='<h2>冒険者</h2><p class="lead">まだ冒険者がいない</p>'; p.dataset.mode=''; return;}
   if(!S.advs.some(a=>a.id===pickAdv))pickAdv=S.advs[0].id;
   if(p.dataset.mode!=='roster'||p.dataset.n!==String(S.advs.length)){
-    p.innerHTML=`<h2><span>冒険者 <small id="advCount"></small></span><span class="hlinks"><button class="x winx" id="close">閉じる</button></span></h2><div class="tabs" role="tablist">${S.advs.map(a=>`<button class="tabf" role="tab" data-adv="${a.id}" aria-label="${a.name}"><img src="${faceURL(a)}" alt=""><i class="st"></i><em class="md"></em></button>`).join('')}</div><div class="ad" id="advDetail" role="tabpanel"></div>`;
+    p.innerHTML=`<h2><span>冒険者 <small id="advCount"></small></span><span class="hlinks"><button class="x xicon winx" id="close" aria-label="閉じる" title="閉じる（Esc）">×</button></span></h2><div class="tabs" role="tablist">${S.advs.map(a=>`<button class="tabf" role="tab" data-adv="${a.id}" aria-label="${a.name}"><img src="${faceURL(a)}" alt=""><i class="st"></i><em class="md"></em></button>`).join('')}</div><div class="ad" id="advDetail" role="tabpanel"></div>`;
     p.dataset.mode='roster'; p.dataset.n=String(S.advs.length);
   }
   $('advCount').textContent=`${S.advs.length}/${advCap(S)}人`;
@@ -3249,6 +3250,12 @@ function setSpeed(s){speed=s; if(s)lastSpeed=s; document.querySelectorAll('.seg 
 $('trails').addEventListener('click',()=>{showTrails=!showTrails; $('trails').setAttribute('aria-pressed',String(showTrails));});
 $('lite').setAttribute('aria-pressed',String(lite));
 $('planDone').addEventListener('click',endPlanning);
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape')return; if(document.querySelector('.modal:not([hidden])')||!$('dayCard').hidden||!$('duskCard').hidden)return; // 報告書や指示の画面のときは何もしない
+  if(!$('menu').hidden){$('menu').hidden=true; $('menuBtn').setAttribute('aria-expanded','false'); return;}
+  if(!$('dlg').hidden){hideSecBub(); return;}
+  if(sel||advWin){sel=null; advWin=false; renderPanel(); renderParty(); setDrawer(false);}
+});
 function renderBook(){
   const tip={hard:'斧が効く',swift:'短剣が先に斬れる。旅装束なら逃げやすい',poison:'白魔道士の毒消しが効く',leech:'長引かせない',aura:'白魔道士の毒消しが効く'};
   $('bookBody').innerHTML=AREAS.slice(0,S.area+1).map((A,ar)=>{
