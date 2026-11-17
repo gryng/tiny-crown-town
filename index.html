@@ -562,6 +562,41 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
   .tb-day b{font-size:18px} .tb-time b,.tb-chip b{font-size:15px}
   .tb-dial{width:30px;height:15px} .tb-adv{display:none}
 }
+
+/* ===== 報告書・指示の画面・記録帳も、昼の画面と同じ木と金の窓に ===== */
+#reportModal,#bookModal{background:radial-gradient(120% 90% at 50% 30%,#1a100ad0,#08050380)}
+#reportModal .sheet::before,#reportModal .sheet.baked::before,#bookModal .sheet::before,#bookModal .sheet.baked::before{inset:0!important;filter:none!important;border-radius:10px;background:var(--paper-bg)!important;box-shadow:0 0 0 3px var(--wood-hi),0 0 0 6px var(--trim),0 0 0 9px var(--wood-2),0 0 0 10px #120a05,0 18px 50px #000c!important}
+#reportModal .sheet.baked::after,#bookModal .sheet.baked::after{display:none}
+#reportModal .sheet,#bookModal .sheet{transform:none}
+/* 指示の画面の見出しは、木の札 */
+#reportSheet>h2,#bookModal .sheet>h2{margin:-24px -22px 4px;padding:14px 22px 12px;color:#fff3d0;background:linear-gradient(180deg,var(--wood-hi),var(--wood) 55%,var(--wood-2));border-radius:8px 8px 0 0;box-shadow:inset 0 -2px 0 var(--trim),inset 0 -4px 0 var(--wood-2);text-shadow:0 2px 0 #000a;font-size:26px}
+#reportSheet .sec,#bookModal .sec{color:var(--wood-hi);letter-spacing:.2em}
+#reportSheet .sec::after,#bookModal .sec::after{background:linear-gradient(90deg,var(--trim),#c9a84c00)}
+/* 秘書のひとことは、昼の会話の窓と同じ見た目 */
+#reportSheet .sec-say p,#reportSheet .rp-sec p{color:#fff3d0;background:linear-gradient(180deg,#2a1a10,#1a100a);border:2px solid #120a05;box-shadow:inset 0 0 0 1.5px var(--trim),0 3px 8px #0006}
+#reportSheet .sec-say p:empty{visibility:hidden}
+#reportSheet .sec-say .sec-face,#reportSheet .rp-sec .sec-face{background:radial-gradient(circle at 50% 40%,#5a3a22,#2a1a10);border-radius:8px;box-shadow:0 0 0 1.5px var(--trim-dk);padding:3px}
+/* 依頼の札・冒険者の行：金の縁 */
+#reportSheet .qrow{border-color:var(--wood-hi);box-shadow:inset 0 0 0 1px #c9a84c55,2px 3px 0 #241c1426}
+#reportSheet .qrow.on{background:#fffaf0;border-color:var(--trim-dk);box-shadow:inset 0 0 0 1.5px var(--trim),2px 3px 0 var(--trim-dk)}
+#reportSheet .qrow .qn{background:linear-gradient(180deg,var(--wood-hi),var(--wood-2));color:var(--trim);box-shadow:0 0 0 1.5px #120a05}
+#reportSheet .qrow .qa button{border-color:var(--wood-hi)}
+#reportSheet .qrow .qa button[aria-pressed="true"]{background:linear-gradient(180deg,#ffe9a8,var(--trim))}
+#reportSheet .nomrow select{border-color:var(--wood-hi)}
+/* 下のボタン：金の大きなボタンと、木のボタン */
+#reportModal .actions .primary,#bookModal .primary{color:var(--wood-2);border-radius:40px;padding:13px 30px 13px 26px}
+#reportModal .actions .primary::before,#bookModal .primary::before{filter:none;border-radius:40px;background:radial-gradient(120% 140% at 35% 20%,#ffe9a8,var(--trim) 55%,var(--trim-dk));box-shadow:0 0 0 2px #120a05,inset 0 -3px 0 #0004,0 6px 14px #0008}
+#reportModal .actions .primary::after{border-left-color:var(--wood-2)}
+#reportModal .actions .primary:disabled::before{background:linear-gradient(180deg,#8a7a5a,#5a4a32)}
+#reportModal .actions .toggle,#reportSheet .toggle{color:#f1e2bd}
+#reportModal .actions .toggle::before,#reportSheet .toggle::before{filter:none;border-radius:8px;background:linear-gradient(180deg,var(--wood-hi),var(--wood-2));box-shadow:0 0 0 1.5px #120a05,inset 0 0 0 1px var(--trim-dk),0 4px 10px #0006}
+/* 報告書の題字の帯 */
+#reportModal.paper .rp-mast,.rp-mast{position:relative}
+.rp-mast{margin:-24px -22px 0;padding:16px 22px 10px;background:linear-gradient(180deg,var(--wood-hi),var(--wood) 55%,var(--wood-2));border-radius:8px 8px 0 0;box-shadow:inset 0 -2px 0 var(--trim),inset 0 -4px 0 var(--wood-2)}
+.rp-mast h2{color:#fff3d0!important;text-shadow:0 2px 0 #000a}
+.rp-mast .rp-paper,.rp-mast .rp-area{color:#d9c49a}
+.rp-mast .stamp{background:#fffaf0cc}
+@media (min-width:1180px) and (min-height:520px){ #reportModal.paper .rp-mast{margin:-22px -26px 0;padding:18px 26px 12px;border-bottom:0} }
 /* 広い画面（PC・横向きタブレット）：町を画面いっぱいに描き、上に日付などの札、右に冒険者のパネルを重ねる */
 @media (min-width:1180px) and (min-height:520px){
   html,body{height:100%;overflow:hidden;overscroll-behavior:none}
@@ -775,7 +810,7 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.27.3 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.28.0 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 広場の立て札 → 店 → 城門 の順に歩いて出発します。</li>
