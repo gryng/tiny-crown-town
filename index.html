@@ -367,6 +367,69 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
 .logl li{display:grid;grid-template-columns:3.6em minmax(0,1fr);gap:8px;padding:5px 0}
 .logl li+li{border-top:1px dashed #241c1426}
 .logl time{font-family:var(--f-head);font-weight:800;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* ===== 報告書（王国通信）：区画と演出。スマホは縦に積み、PCは見開きの紙面 ===== */
+.rp-lead,.rp-side,.rp-mapc{display:grid;gap:10px;min-width:0}
+.rp-title{display:grid;gap:0}
+.rp-paper{font-family:var(--f-head);font-weight:800;font-size:11px;letter-spacing:.4em;color:var(--muted)}
+.rp-area{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.06em}
+.rp-sec{display:flex;align-items:center;gap:10px}
+.rp-sec .sec-face{width:40px;height:44px}
+.rp-sec p{flex:1;min-width:0;min-height:1.6em;margin:0;font-family:var(--f-hand);font-weight:600;font-size:14px;line-height:1.6;color:var(--ink);background:#fffaf0;border:1.5px solid var(--ink);border-radius:4px 14px 13px 12px;padding:8px 12px}
+.rp-sec p:empty{visibility:hidden}
+/* 一面の見出しは、すべり込んでくる */
+#reportSheet .hl li{opacity:0;transform:translateX(-14px)}
+#reportSheet.lead-in .hl li{animation:hlIn .4s cubic-bezier(.2,1.2,.4,1) forwards;animation-delay:calc(var(--n,0)*.12s)}
+#reportSheet .hl li:nth-child(2){--n:1} #reportSheet .hl li:nth-child(3){--n:2} #reportSheet .hl li:nth-child(4){--n:3}
+@keyframes hlIn{to{opacity:1;transform:none}}
+/* 地図：きょう初めて歩いた道が光ってのび、顔がぽんと出る */
+#reportSheet .rmap .rd.new{stroke-dasharray:420;stroke-dashoffset:420}
+#reportSheet.map-in .rmap .rd.new{animation:roadDraw 1.1s ease-out forwards}
+@keyframes roadDraw{to{stroke-dashoffset:0}}
+#reportSheet .rmap svg g{opacity:0;transform-box:fill-box;transform-origin:center;transform:scale(.4)}
+#reportSheet.map-in .rmap svg g{animation:facePop .35s cubic-bezier(.2,1.6,.4,1) .7s forwards}
+@keyframes facePop{to{opacity:1;transform:none}}
+/* 小目標：1つずつハンコ */
+#reportSheet .goalgot span{opacity:0}
+#reportSheet.goals-in .goalgot span{animation:goalStamp .3s cubic-bezier(.2,1.6,.4,1) forwards;animation-delay:calc(var(--i,0)*.18s)}
+@keyframes goalStamp{from{opacity:0;transform:scale(1.6)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){#reportSheet .hl li,#reportSheet .goalgot span,#reportSheet .rmap svg g{opacity:1;transform:none;animation:none!important}#reportSheet .rmap .rd.new{stroke-dasharray:none;animation:none}}
+/* PC：画面いっぱいの見開き */
+@media (min-width:1180px) and (min-height:520px){
+  #reportModal.paper{padding:16px 22px;gap:12px;justify-content:flex-start}
+  #reportModal.paper>:first-child{margin-top:0}
+  #reportModal.paper .sheet{max-width:1680px;transform:none;padding:22px 26px 20px;display:grid;gap:16px 22px;
+    grid-template-columns:minmax(0,1.05fr) minmax(0,1.35fr) minmax(0,.95fr);
+    grid-template-areas:"mast mast mast" "lead map side" "cards cards cards" "sec sec sec";align-items:start}
+  #reportModal.paper .rp-mast{grid-area:mast;border-bottom:3px double #241c1488;padding-bottom:6px}
+  #reportModal.paper .rp-head{min-height:0;align-items:center}
+  #reportModal.paper .rp-head h2{font-size:34px}
+  #reportModal.paper .rp-paper{font-size:13px}
+  #reportModal.paper .rp-lead{grid-area:lead;align-content:start}
+  #reportModal.paper .rp-mapc{grid-area:map;align-self:stretch}
+  #reportModal.paper .rp-side{grid-area:side;align-content:start}
+  #reportModal.paper .rp-mapc .rmap{height:100%}
+  #reportModal.paper .rp-mapc .mapbox{padding:10px}
+  #reportModal.paper .rp-mapc .mapbox svg{max-height:min(46vh,520px);margin:0 auto}
+  #reportModal.paper .rp-lead,#reportModal.paper .rp-side{border-right:0}
+  #reportModal.paper .rp-mapc{border-left:1.5px solid #241c1433;border-right:1.5px solid #241c1433;padding:0 20px}
+  #reportModal.paper .hl{margin:0;gap:10px}
+  #reportModal.paper .hl li{font-size:16px;padding:10px 14px}
+  #reportModal.paper .hl li:first-child{font-size:24px;line-height:1.35;padding:14px 16px;text-wrap:balance}
+  #reportModal.paper .hl li.big:first-child{font-size:28px}
+  #reportModal.paper .tally .t-res b{font-size:52px}
+  #reportModal.paper .cards{grid-area:cards;display:flex;gap:18px;overflow-x:auto;padding:6px 4px 14px;scroll-snap-type:x proximity;align-items:flex-start}
+  #reportModal.paper .cards .rc{flex:0 0 300px;scroll-snap-align:start}
+  #reportModal.paper .rp-sec{grid-area:sec;max-width:820px}
+  #reportModal.paper .actions{max-width:1680px}
+  /* 章をクリアした日：号外。見出しを紙面いっぱいに */
+  #reportModal.paper .sheet.special{grid-template-areas:"mast mast mast" "lead lead side" "map map side" "cards cards cards" "sec sec sec"}
+  #reportModal.paper .sheet.special .rp-mapc .mapbox svg{max-height:min(38vh,420px)}
+  #reportModal.paper .sheet.special .hl li:first-child{font-size:40px;text-align:center;padding:22px}
+  #reportModal.paper .sheet.special .rp-paper::after{content:"　号外";color:var(--bad)}
+  /* 何も起きなかった日：一面は小さく */
+  #reportModal.paper .sheet.quiet .hl li{font-size:15px}
+}
 /* 広い画面（PC・横向きタブレット）：町を画面いっぱいに描き、上に日付などの札、右に冒険者のパネルを重ねる */
 @media (min-width:1180px) and (min-height:520px){
   html,body{height:100%;overflow:hidden;overscroll-behavior:none}
@@ -575,7 +638,7 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.25.0 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.26.0 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 広場の立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -3242,21 +3305,23 @@ function openReport(opts={}){
   const tok=++repTok; repFast=!!opts.instant;
   const total=rep.advs.reduce((m,a)=>m+(a.elem||0),0), res0=(rep.elemAfter??S.elem)-total, ex0=rep.exploreFrom??rep.explore;
   $('reportSheet').innerHTML=`
-    <div class="rp-head"><h2>${rep.day}日目の報告書</h2><div class="stamp" id="rpStamp"><span>第${rep.day}日</span></div></div>
-    ${hlHTML(rep)}
-    <div class="tally">
+    <div class="rp-mast"><div class="rp-head"><div class="rp-title"><small class="rp-paper">王国通信</small><h2>${rep.day}日目の報告書</h2><small class="rp-area">${rep.chapterNow||1}章・${AREAS[rep.area||0].name}</small></div><div class="stamp" id="rpStamp"><span>第${rep.day}日</span></div></div></div>
+    <div class="rp-lead">${hlHTML(rep)}
+    <div class="won" id="rpWon" ${rep.won?'':'hidden'}>${rep.cleared?`${rep.cleared.name}の親玉を倒した！ ${rep.cleared.next?`${rep.cleared.chapter}章「${rep.cleared.next}」へ。冒険者の上限が上がり、大工を雇えるようになり、酒場と白魔法の学院が目覚めた。`:'ここまでがこの版の目標です。'}`:''}</div></div>
+    <div class="rp-side"><div class="tally">
       <div class="t-res"><span class="t-lbl"><i class="shard"></i>${RES}</span><b id="tRes">${res0}</b><em id="tAdd">+0</em></div>
       <div class="t-ex"><span class="t-lbl">${AREAS[rep.area||0].short}の探索</span><div class="xpbar big"><i id="tExBar" style="width:${ex0}%"></i></div><b id="tEx">${Math.floor(ex0)}%</b></div>
     </div>
     ${rep.built&&rep.built.length?`<p class="rc-note">街のできごと：${rep.built.join(' ／ ')}</p>`:''}
-    ${rep.goalsNew&&rep.goalsNew.length?`<div class="goalgot"><b>小目標を達成 <small>${rep.goalsDone}/${rep.goalsAll}</small></b>${rep.goalsNew.map(q=>`<span>${q.ch<(rep.chapterNow||q.ch)?`${q.ch}章：`:''}${q.name}<em>+${q.reward}</em></span>`).join('')}</div>`:''}
-    <div class="won" id="rpWon" ${rep.won?'':'hidden'}>${rep.cleared?`${rep.cleared.name}の親玉を倒した！ ${rep.cleared.next?`${rep.cleared.chapter}章「${rep.cleared.next}」へ。冒険者の上限・装備の入荷できる段階が上がり、大工を雇えるようになり、酒場と白魔法の学院が目覚めた。`:'ここまでがこの版の目標です。'}`:''}</div>
-    ${mapHTML(rep)}
-    <div class="cards">${rep.advs.map(r=>cardHTML(r,rep.day,rep.advs)).join('')}</div>`;
+    ${rep.goalsNew&&rep.goalsNew.length?`<div class="goalgot" id="rpGoals"><b>小目標を達成 <small>${rep.goalsDone}/${rep.goalsAll}</small></b>${rep.goalsNew.map((q,i)=>`<span style="--i:${i}">${q.ch<(rep.chapterNow||q.ch)?`${q.ch}章：`:''}${q.name}<em>+${q.reward}</em></span>`).join('')}</div>`:''}</div>
+    <div class="rp-mapc">${mapHTML(rep)}</div>
+    <div class="cards">${rep.advs.map(r=>cardHTML(r,rep.day,rep.advs)).join('')}</div>
+    <div class="rp-sec"><span class="sec-face">${BIRD_HTML}</span><p id="rpSay"></p></div>`;
+  $('reportModal').classList.add('paper'); $('reportSheet').classList.toggle('special',!!rep.cleared); $('reportSheet').classList.toggle('quiet',!(rep.hl&&rep.hl.length));
   $('reportActions').innerHTML='<button class="toggle" id="skipRep">スキップ</button>';
   $('reportModal').hidden=false; $('reportModal').scrollTop=0;
   const sheet=$('reportSheet');
-  const skip=e=>{if(e&&e.target.closest('summary,button,a'))return; repFast=true;};
+  const skip=e=>{if(e&&e.target.closest('summary,button,a'))return; repFast=true; sheet.classList.add('lead-in','map-in');};
   sheet.onclick=skip; $('skipRep').onclick=()=>{repFast=true;};
   sheet.querySelectorAll('.hl [data-go]').forEach(li=>li.addEventListener('click',e=>{e.stopPropagation(); repFast=true; const c=sheet.querySelector(`.rc[data-id="${li.dataset.go}"]`); if(c)c.scrollIntoView({block:'start',behavior:RM?'auto':'smooth'});}));
   playReport(rep,tok,res0,ex0,total).then(()=>{
@@ -3269,12 +3334,15 @@ async function playReport(rep,tok,res0,ex0,total){
   const q=(el,sel)=>el.querySelector(sel), alive=()=>tok===repTok;
   let res=res0, ex=ex0, sum=0;
   const tRes=$('tRes'), tAdd=$('tAdd'), tExBar=$('tExBar'), tEx=$('tEx');
+  const sheet=$('reportSheet'); sheet.classList.remove('lead-in','map-in','goals-in');
   await wait(300); if(!alive())return; $('rpStamp').classList.add('in');
-  await wait(350);
+  await wait(350); if(!alive())return; sheet.classList.add('lead-in');
+  await wait(500); if(!alive())return; sheet.classList.add('map-in');
+  await wait(wideMQ.matches?900:300);
   for(const r of rep.advs){
     if(!alive())return;
     const el=document.querySelector(`.rc[data-id="${r.id}"]`); if(!el)return; el.classList.add('in'); // 途中で画面が切りかわったら止める
-    if(!repFast&&!RM)el.scrollIntoView({block:'nearest',behavior:'smooth'});
+    if(!repFast&&!RM){ if(wideMQ.matches){const row=el.parentElement; if(el.offsetLeft+el.offsetWidth>row.scrollLeft+row.clientWidth)row.scrollTo({left:el.offsetLeft-20,behavior:'smooth'});} else el.scrollIntoView({block:'nearest',behavior:'smooth'}); } // PCでは横に並んだカードだけを送る
     await wait(320); if(!alive())return;
     if(!r.rested&&r.dep!==null){
       // かけら・ゴールド・探索が数え上がり、上の集計も一緒に増える
@@ -3310,6 +3378,19 @@ async function playReport(rep,tok,res0,ex0,total){
   if(!alive())return;
   tRes.textContent=res0+total; tAdd.textContent=`+${total}`; tExBar.style.width=`${rep.explore}%`; tEx.textContent=`${Math.floor(rep.explore)}%`;
   tAdd.classList.add('done'); if(rep.won)$('rpWon').classList.add('in');
+  $('reportSheet').classList.add('goals-in');
+  const say=$('rpSay'); if(say)typeInto(say,secReportLine(rep));
+}
+function secReportLine(rep){
+  if(rep.cleared)return `王様、${rep.cleared.name}を平定しました！ 民も大喜びです`;
+  const h=rep.hl||[]; if(!h.length)return '静かな一日でした。こういう日も大切です';
+  const ups=rep.advs.filter(a=>a.ups&&a.ups.length).map(a=>a.name);
+  const T=h.map(x=>x.txt).join(' ');
+  if(/を見つけた/.test(T))return '王様、品が見つかりました。あすは店をのぞいてみましょう';
+  if(/主を討伐/.test(T))return '主を倒しました。この先へ道が開けます';
+  if(/らしい/.test(T))return '魔物のことが少しわかりました。記録帳に書きとめておきます';
+  if(ups.length)return `${names(ups)}が腕を上げました。あすも頼もしいですね`;
+  return 'きょうの報告は以上です。あすの立て札を決めましょう';
 }
 // 全画面カード：タップ・キー・時間経過のどれかで次へ
 let cardTimer=null;
@@ -3351,7 +3432,7 @@ function showDayCard(){
 let planning=false;
 function endPlanning(){planning=false; document.body.classList.remove('planning'); $('planBar').hidden=true; sel=null; renderPanel(); setDrawer(false); openOrders();}
 function openOrders(dawn){
-  if(dawn===true)ordersDawn=S.day; repTok++; // 報告書の演出が動いていたら止める
+  if(dawn===true)ordersDawn=S.day; repTok++; $('reportModal').classList.remove('paper'); $('reportSheet').classList.remove('special','quiet'); // 報告書の演出が動いていたら止める
   const rep=S.lastReport;
   const hints=hintsFor(rep);
   syncBoard(S);
