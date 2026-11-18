@@ -815,6 +815,10 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
 @keyframes veilOut{from{clip-path:circle(80% at 50% 50%)}to{clip-path:circle(0% at 50% 50%)}}
 .veil-crown{display:grid;place-items:center;width:64px;height:64px;border-radius:50%;font-size:34px;color:var(--wood-2);background:radial-gradient(circle at 35% 30%,#fff0bf,var(--trim) 55%,var(--trim-dk));box-shadow:0 0 0 2px #120a05,0 0 0 5px var(--trim-dk),0 0 30px #c9a84c88;animation:veilCrown .7s ease-out}
 @keyframes veilCrown{from{transform:scale(.4) rotate(-20deg);opacity:0}60%{transform:scale(1.08)}to{transform:none;opacity:1}}
+#bookModal .sheet{position:relative}
+#bookModal .x.xicon.book-x{position:absolute;top:10px;right:12px;z-index:2;width:36px;height:36px;border-radius:50%;color:var(--wood-2);background:radial-gradient(circle at 35% 30%,#fff0bf,var(--trim) 60%,var(--trim-dk));border:1.5px solid #120a05;box-shadow:0 2px 6px #0008;cursor:pointer}
+#bookModal .x.xicon.book-x:hover{filter:brightness(1.1)}
+#bookModal .x.xicon.book-x::before{display:none}
 /* ===== タイトル画面（v0.30.0） ===== */
 .title-screen{position:fixed;inset:0;z-index:25;display:flex;flex-direction:column;align-items:center;overflow:hidden;line-height:1.5;color:var(--hud-ink);background:radial-gradient(120% 80% at 50% 58%,transparent 20%,#05080cd0 78%),linear-gradient(180deg,#0a1124f2 0%,#141a3acc 22%,#1a1a3a55 46%,#0000 62%,#05080ce0 100%)}
 .title-screen[hidden]{display:none}
@@ -974,7 +978,7 @@ body:has(#titleModal:not([hidden])) .wrap>:not(.screen),body:has(#titleModal:not
     </nav>
     <p class="tt-note" id="saveNote" hidden></p>
   </div>
-  <footer class="tt-foot"><span class="tt-ver">プロトタイプ v0.32.9 · HD-2D</span><span>1日が終わるたびに、このブラウザに自動で保存します</span><span>© Fuch.io</span></footer>
+  <footer class="tt-foot"><span class="tt-ver">プロトタイプ v0.32.10 · HD-2D</span><span>1日が終わるたびに、このブラウザに自動で保存します</span><span>© Fuch.io</span></footer>
   <div class="tt-how" id="howWin" hidden>
     <div class="tt-how-box" role="dialog" aria-label="あそびかた">
       <b class="sl-name">あそびかた</b>
@@ -1036,9 +1040,9 @@ body:has(#titleModal:not([hidden])) .wrap>:not(.screen),body:has(#titleModal:not
 <div class="modal" id="bookModal" hidden>
   <div class="sheet">
     <h2>魔物の記録帳</h2>
+    <button class="x xicon book-x" id="bookClose" aria-label="閉じる" title="閉じる（Esc）">×</button>
     <p class="lead">冒険者は、ここに書いてあることをもとに武器と防具を選ぶ。戦うたびに、少しずつわかっていく</p>
     <div id="bookBody" class="book"></div>
-    <button class="primary" id="bookClose">閉じる</button>
   </div>
 </div>
 
@@ -3520,7 +3524,7 @@ function renderBook(){
     const ms=Object.keys(MON).filter(m=>MON[m].ar===ar).sort((x,y)=>(MON[x].boss?2:MON[x].master?1:0)-(MON[y].boss?2:MON[y].master?1:0));
     const known=ms.filter(m=>seenMon(S,m)).length;
     return `<h4 class="sec">${A.name}<small class="lnum">${known}/${ms.length}種</small></h4><div class="bk-list">`+ms.map(m=>{const M=MON[m], K=S.know[m];
-      if(!K||(!K.seen&&!K.heard))return `<div class="bk unk"><b>？？？</b><small>${M.boss?'親玉':M.master?'部屋の主':''}まだ出会っていない</small></div>`;
+      if(!K||(!K.seen&&!K.heard))return `<div class="bk unk"><b>？？？</b><small>${M.boss?'親玉・':M.master?'部屋の主・':''}まだ出会っていない</small></div>`;
       if(!K.seen&&!K.scouted){const tr=TRAITS.filter(([t])=>K[t]); return `<div class="bk unk"><b>${M.n}</b><small>まだ出会っていない。書き付けによると：</small><span class="bk-tr">${tr.map(([t,lb])=>`<i>${lb}</i>`).join('')}</span><small class="bk-tip">${tr.map(([t])=>tip[t]).join('。')}</small></div>`;}
       const tr=TRAITS.filter(([t])=>K[t]), more=TRAITS.some(([t])=>M[t]&&!K[t]);
       return `<div class="bk${M.boss?' boss':M.master?' master':''}"><b>${M.n}${M.boss?'<i class="bk-tag">親玉</i>':M.master?'<i class="bk-tag">部屋の主</i>':''}</b>
@@ -3531,6 +3535,7 @@ function renderBook(){
 $('tipsBtn').addEventListener('click',()=>{$('menu').hidden=true; S.tips={}; secSay('かしこまりました。仕組みが出てくるたびに、もう一度ご案内します',{pri:9});});
 $('bookBtn').addEventListener('click',()=>{$('menu').hidden=true; renderBook(); $('bookModal').hidden=false;});
 $('bookClose').addEventListener('click',()=>{$('bookModal').hidden=true;});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('bookModal').hidden){e.preventDefault(); $('bookModal').hidden=true;}});
 $('menuBtn').addEventListener('click',e=>{e.stopPropagation(); const m=$('menu'); m.hidden=!m.hidden; $('menuBtn').setAttribute('aria-expanded',String(!m.hidden));});
 document.addEventListener('click',e=>{const m=$('menu'); if(!m.hidden&&!m.contains(e.target)&&e.target!==$('menuBtn')){m.hidden=true; $('menuBtn').setAttribute('aria-expanded','false');}});
 $('lite').addEventListener('click',()=>{lite=!lite; $('lite').setAttribute('aria-pressed',String(lite)); try{localStorage.setItem('tct-lite',lite?'1':'0');}catch(e){} if(GFX)GFX.resize();});
