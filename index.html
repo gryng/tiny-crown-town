@@ -966,7 +966,7 @@ body:has(#titleModal:not([hidden])) .wrap>:not(.screen),body:has(#titleModal:not
     </nav>
     <p class="tt-note" id="saveNote" hidden></p>
   </div>
-  <footer class="tt-foot"><span class="tt-ver">プロトタイプ v0.32.6 · HD-2D</span><span>1日が終わるたびに、このブラウザに自動で保存します</span><span>© Fuch.io</span></footer>
+  <footer class="tt-foot"><span class="tt-ver">プロトタイプ v0.32.7 · HD-2D</span><span>1日が終わるたびに、このブラウザに自動で保存します</span><span>© Fuch.io</span></footer>
   <div class="tt-how" id="howWin" hidden>
     <div class="tt-how-box" role="dialog" aria-label="あそびかた">
       <b class="sl-name">あそびかた</b>
@@ -2011,7 +2011,7 @@ function arriveNode(S,a){
   const o=a.out;
   if(o.mode==='go'&&DEPTH[o.at]>DEPTH[a.rep.reach||'gate'])a.rep.reach=o.at;
   if(o.at==='gate'&&o.mode!=='go'){comeBack(S,a); return;}
-  if(o.mode==='go'&&o.field!=null&&!S.found[o.field]&&o.at===AREAS[o.field].door){for(const x of mates(S,a)){x.rep.found=o.field; ev(S,x,'dk',{ar:o.field});} goHome(S,a,`${AREAS[o.field].name}の入口を見つけたので、知らせに戻った`); return;} // 入口を見つけたら、まず知らせに帰る
+  if(o.mode!=='ko'&&o.field!=null&&!S.found[o.field]&&a.rep.found==null&&o.at===AREAS[o.field].door){for(const x of mates(S,a)){x.rep.found=o.field; ev(S,x,'dk',{ar:o.field});} goHome(S,a,`${AREAS[o.field].name}の入口を見つけたので、知らせに戻った`); return;} // 入口を見つけたら、まず知らせに帰る
   if(o.mode==='go'&&NODES[o.at].boss&&!S.bossDown){const F=S.fights.find(f=>f.key==='n:'+o.at); if(F&&!PP(a).solo){joinFight(S,F,a); return;} startFight(S,a,NODES[o.at].mon,'n:'+o.at,o.at); return;}
   if(o.mode==='go'&&masterAlive(S,o.at)){
     const F=S.fights.find(f=>f.key==='n:'+o.at); if(F&&!PP(a).solo){joinFight(S,F,a); return;}
@@ -4014,7 +4014,7 @@ function secTypeOrders(){
 }
 // 昼の知らせ
 const secQ=[]; let secShow=null, secNext=0, secSeen=null;
-function secSay(text,o={}){ if(secQ.length>=4){const i=secQ.findIndex(x=>(x.pri||0)<(o.pri||0)); if(i<0)return; secQ.splice(i,1);} secQ.push({text,...o}); }
+function secSay(text,o={}){ if(DEV)(window.__secLog=window.__secLog||[]).push(`${S.t} ${text}`); if(secQ.length>=4){const i=secQ.findIndex(x=>(x.pri||0)<(o.pri||0)); if(i<0)return; secQ.splice(i,1);} secQ.push({text,...o}); }
 function secDayStart(){ showBanner(`${S.day}日目`,openAreas(S).length?`${AREAS[S.area].name}へ`:'城の外へ'); secQ.length=0; secSeen={day:S.day,found:0,fights:new Set(),ko:new Set(),masters:Object.keys(S.world.master).filter(k=>S.world.master[k]).length,noon:false,eve:false,boss:S.bossDown}; hideSecBub();
   if(S.day===1){S.tips=S.tips||{}; }
 }
@@ -4050,6 +4050,32 @@ function secAnswer(k){
   dlgShow({text:t},now,false);
 }
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-ask]'); if(b){e.stopPropagation(); secAnswer(b.dataset.ask);}});
+// 冒険のようす：初めての道や部屋、苦戦、宝箱、そしてちょっとしたサボりまで
+const SABORI={forest:['{a}が森で木の実をつまんでいます。……お仕事中なのですが','{a}がリスを追いかけています','{a}が切り株に腰かけて、空を見上げています','{a}が小川で顔を洗っています。気持ちよさそうです'],
+  cave:['{a}が洞窟の壁の模様に見とれています','{a}がこっそり昼寝をしているようです','{a}がきのこの数をかぞえています。何をしているのでしょう'],
+  marsh:['{a}がカエルとにらめっこをしています','{a}が葦の笛を作って遊んでいます','{a}が泥だんごを作っています……']};
+const DIG={mine:['{a}が{n}で、夢中で時のかけらを掘っています'],treasure:['{a}が{n}で宝探しに夢中です','{a}が{n}の床をひっくり返して、お宝を探しています']};
+function secAdventure(){
+  const Z=secSeen; Z.ev=Z.ev||{}; Z.said=Z.said||{}; Z.fl=Z.fl||{}; Z.hard=Z.hard||new Set();
+  const once=k=>{if(Z.said[k])return false; Z.said[k]=1; return true;}, pick=L=>L[Math.floor(Math.random()*L.length)];
+  const flav=a=>{if(secQ.length>=2||S.t-(Z.fl[a.id]??-999)<100)return false; Z.fl[a.id]=S.t; return true;}; // 小ネタは、ひとりにつき100分に1度まで
+  const who=a=>a.out&&mates(S,a).length>1?names(mates(S,a).map(x=>x.name)):a.name;
+  for(const a of S.advs){ const L=a.rep&&a.rep.ev; if(!L)continue; let i=Z.ev[a.id]||0;
+    for(;i<L.length;i++){ const e=L[i];
+      if(e.k==='n'){const E=EDGES.find(x=>x.id===e.e); if(!E||!once('n'+e.e))continue; const to=(DEPTH[E.a]??0)>(DEPTH[E.b]??0)?E.a:E.b, N=NODES[to];
+        secSay(N.room||N.boss?`${who(a)}が新しい部屋「${N.n}」を見つけました！`:`${who(a)}が${E.n}を抜けて、${N.n}にたどり着きました`,{pri:2,adv:a.id});}
+      else if(e.k==='dk'){if(once('dk'+e.ar))secSay(`${who(a)}が${AREAS[e.ar].name}の入口を見つけました！ まずは知らせに戻ってきます`,{pri:3,adv:a.id});}
+      else if(e.k==='o'){if(once('o'))secSay(`${a.name}が近道を切り開きました！`,{pri:3,adv:a.id});}
+      else if(e.k==='u'){secSay(`${a.name}のレベルが上がりました。たのもしくなってきましたね`,{pri:1,adv:a.id});}
+      else if(e.k==='s'&&e.chest){if(once('c'+e.n))secSay(`${a.name}が${NODES[e.n].n}で宝箱を開けました。${e.chest}ゴールド！`,{pri:1,adv:a.id});}
+      else if(e.k==='s'&&(e.mine||e.treasure)){if(flav(a))secSay(pick(DIG[e.mine?'mine':'treasure']).replace('{a}',a.name).replace('{n}',NODES[e.n].n),{pri:0,adv:a.id});}
+      else if(e.k==='d'){if(flav(a)){const ar=(NODES[e.n]||{}).ar??0, z=ar===1?'marsh':e.z==='forest'?'forest':'cave'; secSay(pick(SABORI[z]).replace('{a}',a.name),{pri:0,adv:a.id});}}
+      else if(e.k==='l'&&!e.late){if(flav(a))secSay(`${a.name}が${(MON[e.m]||{}).n||'魔物'}に押されて、逃げ出しました`,{pri:1,adv:a.id});}
+    }
+    Z.ev[a.id]=i; }
+  for(const Fi of S.fights){ if(Z.hard.has(Fi)||Fi.round<4)continue; const low=Fi.members.find(m=>m.hp<m.hpMax*.45); if(!low)continue; Z.hard.add(Fi);
+    secSay(`${names(Fi.members.map(x=>x.name))}が${Fi.m.n}との戦いに苦戦しています……`,{pri:2,adv:low.id}); }
+}
 function secWatch(now){
   if(!secSeen||secSeen.day!==S.day||S.phase!=='day')return;
   const F=S.foundToday||[];
@@ -4062,8 +4088,7 @@ function secWatch(now){
   const mk=Object.keys(S.world.master).filter(k=>S.world.master[k]); if(mk.length>secSeen.masters){secSeen.masters=mk.length; secSay(`${NODES[mk[mk.length-1]].n}の主を倒しました！`,{pri:3});}
   if(S.bossDown&&!secSeen.boss){secSeen.boss=true; secSay(`親玉を討ち取りました！ 王様、おめでとうございます`,{pri:4});}
   for(const a of S.advs){ if(a.rep&&a.rep.ko&&!secSeen.ko.has(a.id)){secSeen.ko.add(a.id); secSay(`${a.name}がやられました。城門へ逃げ帰っています`,{pri:2,adv:a.id});} }
-  if(!secSeen.noon&&S.t>=720){secSeen.noon=true; const out=S.advs.filter(a=>a.state==='away').length; if(out)secSay(`正午です。外にいるのは${out}人です`,{pri:0});}
-  if(!secSeen.eve&&S.t>=990){secSeen.eve=true; const out=S.advs.filter(a=>a.state==='away').length; if(out)secSay(`そろそろ帰り支度の時刻です。まだ${out}人が外にいます`,{pri:0});}
+  secAdventure();
   if(S.day===1){ const T=S.tips; // 1日目だけの案内
     if(!T.walk&&S.t>=450){T.walk=1; secSay('冒険者が家を出ました。公園、立て札、店と回ってから城門へ向かいます。建物の置き場所で、出発の時刻が変わります',{pri:5});}
     if(!T.lot&&S.t>=570){T.lot=1; secSay('空き地や荒れ地を押すと、大工におふれを出せます。',{pri:5});}
@@ -4138,7 +4163,7 @@ $('ch2Btn').addEventListener('click',()=>{S=autoCh1(CH2_SEED); saveGame(); sel=n
 // 開発用：コンソールやテストから日を早送りする  __tct.skip(3) で3日進めて報告書を開く
 if(DEV)window.__sel=v=>{sel=v; renderPanel();};
 if(DEV)window.__orders=()=>openOrders();
-if(DEV)window.__tct={rep:()=>openReport(),stone:r=>showStoneCard(r||S.lastReport),dusk:()=>showDuskCard(),dawn:()=>showDayCard(),map:r=>mapHTML(r),say:(t,o)=>secSay(t,o||{pri:3}),menu:()=>secMenu(),ask:k=>secAnswer(k),get S(){return S;},skip(n=1){for(let i=0;i<n;i++){if(S.phase!=='day')startDay(S); tick(S,2000);} wasPhase=S.phase; $('titleModal').hidden=true; $('dayCard').hidden=true; $('duskCard').hidden=true; openReport({instant:true});}};
+if(DEV)window.__tct={sds:()=>secDayStart(),rep:()=>openReport(),stone:r=>showStoneCard(r||S.lastReport),dusk:()=>showDuskCard(),dawn:()=>showDayCard(),map:r=>mapHTML(r),say:(t,o)=>secSay(t,o||{pri:3}),menu:()=>secMenu(),ask:k=>secAnswer(k),get S(){return S;},skip(n=1){for(let i=0;i<n;i++){if(S.phase!=='day')startDay(S); tick(S,2000);} wasPhase=S.phase; $('titleModal').hidden=true; $('dayCard').hidden=true; $('duskCard').hidden=true; openReport({instant:true});}};
 updateHud(); renderPanel(); requestAnimationFrame(loop);
 initGfx().then(g=>{GFX=g; if(DEV)window.__gfx=g;}).catch(e=>{console.error(e); $('glfail').hidden=false;});
 </script>
