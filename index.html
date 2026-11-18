@@ -5,7 +5,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@600;800&family=Zen+Kaku+Gothic+New:wght@500;700&family=Klee+One:wght@600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@600;800&family=Zen+Kaku+Gothic+New:wght@500;700&family=Klee+One:wght@600&family=Noto+Serif+JP:wght@900&display=swap">
 <style>
 /* Layout: one column. Torn-paper HUD tags on top, the walled town in an inked frame, a ledger sheet below.
    Look: hand-inked parchment boards laid over a dark painted ground; teal-green accent, gold for treasure. */
@@ -776,7 +776,7 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
 .daycard .orn{display:block;width:clamp(36px,10vw,90px);height:9px;background:linear-gradient(90deg,transparent,var(--trim)) center/100% 1.5px no-repeat;position:relative}
 .daycard .orn::after{content:"";position:absolute;right:-3px;top:50%;width:7px;height:7px;margin-top:-3.5px;background:var(--trim);transform:rotate(45deg)}
 .daycard .orn.r{transform:scaleX(-1)}
-.daycard .ln.big{background:linear-gradient(180deg,#fff6d2 0%,#f1d68a 45%,#c9a84c 60%,#9a7428 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 3px 0 #120a05) drop-shadow(0 0 18px #c9a84c66);padding:0 .1em}
+.daycard .ln.big{font-family:'Noto Serif JP','Noto Serif CJK JP','Hiragino Mincho ProN','Yu Mincho',serif;font-weight:900;background:linear-gradient(180deg,#fff6d2 0%,#f1d68a 45%,#c9a84c 60%,#9a7428 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 3px 0 #120a05) drop-shadow(0 0 18px #c9a84c66);padding:0 .1em}
 .daycard.dusk .ln.big{font-size:clamp(36px,9vw,64px)}
 .daycard .ln.sub{color:var(--hud-ink);text-shadow:0 1px 0 #000}
 .dc-tally{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;animation-delay:1.2s!important}
@@ -851,7 +851,7 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.29.0 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.29.1 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 広場の立て札 → 店 → 城門 の順に歩いて出発します。</li>
