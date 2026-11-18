@@ -949,7 +949,7 @@ body:has(#titleModal:not([hidden])) .wrap>:not(.screen),body:has(#titleModal:not
     </nav>
     <p class="tt-note" id="saveNote" hidden></p>
   </div>
-  <footer class="tt-foot"><span class="tt-ver">プロトタイプ v0.32.0 · HD-2D</span><span>1日が終わるたびに、このブラウザに自動で保存します</span><span>© Fuch.io</span></footer>
+  <footer class="tt-foot"><span class="tt-ver">プロトタイプ v0.32.1 · HD-2D</span><span>1日が終わるたびに、このブラウザに自動で保存します</span><span>© Fuch.io</span></footer>
   <div class="tt-how" id="howWin" hidden>
     <div class="tt-how-box" role="dialog" aria-label="あそびかた">
       <b class="sl-name">あそびかた</b>
@@ -3764,6 +3764,13 @@ function openReport(opts={}){
     $('next1').addEventListener('click',()=>{repTok++; openOrders(!opts.back);});
   });
 }
+// カードが画面に入ったら（または、もう通り過ぎていたら）進む。スクロールは読む人にまかせる
+function inView(el,alive){return new Promise(res=>{const box=$('reportModal'), row=el.parentElement;
+  const ok=()=>el.getBoundingClientRect().top<innerHeight*.88; // PCの横並びは、列が見えたら順に（横には送らない）
+  if(ok())return res();
+  const done=()=>{box.removeEventListener('scroll',chk); row.removeEventListener('scroll',chk); removeEventListener('resize',chk); clearInterval(iv); res();};
+  const chk=()=>{if(!alive()||repFast||ok())done();}, iv=setInterval(chk,250);
+  box.addEventListener('scroll',chk,{passive:true}); row.addEventListener('scroll',chk,{passive:true}); addEventListener('resize',chk);});}
 async function playReport(rep,tok,res0,ex0,total){
   const q=(el,sel)=>el.querySelector(sel), alive=()=>tok===repTok;
   let res=res0, ex=ex0, sum=0;
@@ -3775,8 +3782,9 @@ async function playReport(rep,tok,res0,ex0,total){
   await wait(wideMQ.matches?900:300);
   for(const r of rep.advs){
     if(!alive())return;
-    const el=document.querySelector(`.rc[data-id="${r.id}"]`); if(!el)return; el.classList.add('in'); // 途中で画面が切りかわったら止める
-    if(!repFast&&!RM){ if(wideMQ.matches){const row=el.parentElement; if(el.offsetLeft+el.offsetWidth>row.scrollLeft+row.clientWidth)row.scrollTo({left:el.offsetLeft-20,behavior:'smooth'});} else el.scrollIntoView({block:'nearest',behavior:'smooth'}); } // PCでは横に並んだカードだけを送る
+    const el=document.querySelector(`.rc[data-id="${r.id}"]`); if(!el)return; // 途中で画面が切りかわったら止める
+    if(!repFast&&!RM){await inView(el,alive); if(!alive())return;} // 画面を勝手に動かさず、プレイヤーがそのカードまで来たら始める
+    el.classList.add('in');
     await wait(320); if(!alive())return;
     if(!r.rested&&r.dep!==null){
       // かけら・ゴールド・探索が数え上がり、上の集計も一緒に増える
@@ -3919,7 +3927,7 @@ function boardEditHTML(){
   const line=q=>`<em>${rewardOf(q)}G</em>${q.party?'・3人で組む':''}`;
   const qAr=q=>q.ar??(q.n?NODES[q.n].ar:null), top=Math.max(1,...S.advs.map(a=>a.lv));
   const risk=q=>{const ar=qAr(q); return ar==null||q.k==='field'||!S.found[ar]?0:dangerOf(S,ar);};
-  const qTitle=q=>{const ar=qAr(q), d=risk(q); return QK[q.k].name(q).replace(/【(.+?)】$/,'<i class="q-ar">$1</i>')+(d?`<i class="q-warn${d>1?' hi':''}">⚠ 適正Lv${AREAS[ar].min}〜（いまの最高Lv${top}）</i>`:'');};
+  const qTitle=q=>{const ar=qAr(q), d=risk(q); return QK[q.k].name(q).replace(/【(.+?)】$/,'<i class="q-ar">$1</i>')+(d?`<i class="q-warn${d>1?' hi':''}">⚠ ${d>1?'かなり危険':'ちょっと危険'}</i>`:'');};
   const row=(q,i)=>`<div class="qrow on${risk(q)?' risky':''}"><span class="qn">${i+1}</span><b>${qTitle(q)}</b><small>${line(q)}</small>
       <span class="qa"><button data-qbon="${q.id}" aria-pressed="${!!q.bonus}" title="特別手当（${RES}${BONUS_COST}。だれかが受けたときだけ払う）">手当</button>${i?`<button data-qup="${q.id}" aria-label="上へ">↑</button>`:''}<button data-qdel="${q.id}" aria-label="はがす">×</button></span></div>`;
   const cand=q=>`<div class="qrow${risk(q)?' risky':''}"><span class="qn off">＋</span><b>${qTitle(q)}</b><small>${line(q)}</small><span class="qa"><button data-qadd="${q.id}" ${full?'disabled':''}>貼る</button></span></div>`;
@@ -4111,7 +4119,7 @@ $('ch2Btn').addEventListener('click',()=>{S=autoCh1(CH2_SEED); saveGame(); sel=n
 // 開発用：コンソールやテストから日を早送りする  __tct.skip(3) で3日進めて報告書を開く
 if(DEV)window.__sel=v=>{sel=v; renderPanel();};
 if(DEV)window.__orders=()=>openOrders();
-if(DEV)window.__tct={stone:r=>showStoneCard(r||S.lastReport),dusk:()=>showDuskCard(),dawn:()=>showDayCard(),map:r=>mapHTML(r),say:(t,o)=>secSay(t,o||{pri:3}),menu:()=>secMenu(),ask:k=>secAnswer(k),get S(){return S;},skip(n=1){for(let i=0;i<n;i++){if(S.phase!=='day')startDay(S); tick(S,2000);} wasPhase=S.phase; $('titleModal').hidden=true; $('dayCard').hidden=true; $('duskCard').hidden=true; openReport({instant:true});}};
+if(DEV)window.__tct={rep:()=>openReport(),stone:r=>showStoneCard(r||S.lastReport),dusk:()=>showDuskCard(),dawn:()=>showDayCard(),map:r=>mapHTML(r),say:(t,o)=>secSay(t,o||{pri:3}),menu:()=>secMenu(),ask:k=>secAnswer(k),get S(){return S;},skip(n=1){for(let i=0;i<n;i++){if(S.phase!=='day')startDay(S); tick(S,2000);} wasPhase=S.phase; $('titleModal').hidden=true; $('dayCard').hidden=true; $('duskCard').hidden=true; openReport({instant:true});}};
 updateHud(); renderPanel(); requestAnimationFrame(loop);
 initGfx().then(g=>{GFX=g; if(DEV)window.__gfx=g;}).catch(e=>{console.error(e); $('glfail').hidden=false;});
 </script>
