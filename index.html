@@ -966,7 +966,7 @@ body:has(#titleModal:not([hidden])) .wrap>:not(.screen),body:has(#titleModal:not
     </nav>
     <p class="tt-note" id="saveNote" hidden></p>
   </div>
-  <footer class="tt-foot"><span class="tt-ver">プロトタイプ v0.32.5 · HD-2D</span><span>1日が終わるたびに、このブラウザに自動で保存します</span><span>© Fuch.io</span></footer>
+  <footer class="tt-foot"><span class="tt-ver">プロトタイプ v0.32.6 · HD-2D</span><span>1日が終わるたびに、このブラウザに自動で保存します</span><span>© Fuch.io</span></footer>
   <div class="tt-how" id="howWin" hidden>
     <div class="tt-how-box" role="dialog" aria-label="あそびかた">
       <b class="sl-name">あそびかた</b>
@@ -3688,6 +3688,8 @@ const MAPXY={fork:[92,66],spring:[84,136],mouth:[150,48],r1:[200,78],r2:[236,128
   sfork:[78,104],hut:[92,44],s1:[150,140],s2:[206,86],s3:[262,126],sboss:[314,74],
   reed:[100,160],kura:[34,30],smithy:[216,170],inner:[214,26],deepnest:[300,170]};
 const GATEXY=[[30,36],[22,100]];
+// 地図の城門は、小さな城の絵で
+const castleIcon=(x,y,k=1)=>`<svg class="castle-ic" x="${x-14*k}" y="${y-19*k}" width="${28*k}" height="${30*k}" viewBox="-14 -22 28 30" overflow="visible"><path d="M0 -15 V-21" stroke="#120a05" stroke-width="1.2"/><path d="M0 -21 l5 1.8 -5 1.8z" fill="#c9a84c" stroke="#120a05" stroke-width=".8"/><rect x="-12" y="-5" width="6" height="11" fill="#efe4c8" stroke="#120a05" stroke-width="1.3"/><rect x="6" y="-5" width="6" height="11" fill="#efe4c8" stroke="#120a05" stroke-width="1.3"/><rect x="-6" y="-8" width="12" height="14" fill="#f6eedb" stroke="#120a05" stroke-width="1.3"/><path d="M-13 -5 L-9 -12 L-5 -5Z M5 -5 L9 -12 L13 -5Z" fill="#1b4332" stroke="#120a05" stroke-width="1.2" stroke-linejoin="round"/><path d="M-7 -8 L0 -16 L7 -8Z" fill="#1b4332" stroke="#120a05" stroke-width="1.2" stroke-linejoin="round"/><path d="M-2.2 6 V2 a2.2 2.2 0 0 1 4.4 0 V6Z" fill="#3a2616"/><path d="M-7 -8 h14" stroke="#c9a84c" stroke-width="1"/></svg>`;
 const MAP_ABOVE=new Set(['gate','fork','mouth','r1','hall','nest','drip','hut','kura','inner','sboss','s2','smithy','deepnest']), MAP_SIDE=new Set(['spring','boss','r2','hall','hut','sboss','s2','s3','lodge','drip','forge','nest','reed','kura','smithy','inner','deepnest']);
 function mapHTML(rep){
   const W=rep.world, W0=rep.worldFrom; if(!W)return '';
@@ -3709,12 +3711,13 @@ function mapHTML(rep){
     if(!known[id]){ if(near)marks+=`<circle cx="${x}" cy="${y}" r="5" class="nd unk"/><text x="${x}" y="${y+3}" class="qm">?</text>`; continue; }
     const alive=n.master&&!W.master[id], bossAlive=n.boss&&!rep.bossDown;
     if(n.room||n.boss)marks+=`<rect x="${x-7}" y="${y-7}" width="14" height="14" rx="2" class="nd ${alive||bossAlive?'foe':W.searched[id]||n.boss?'done':''}"/>`;
-    else marks+=`<circle cx="${x}" cy="${y}" r="${id==='gate'?7:5}" class="nd ${n.rest?'rest':''}"/>`;
+    else if(id==='gate')marks+=castleIcon(x,y,1.15);
+    else marks+=`<circle cx="${x}" cy="${y}" r="5" class="nd ${n.rest?'rest':''}"/>`;
     if(alive||bossAlive)marks+=`<text x="${x}" y="${y+3.5}" class="foe-t">${n.boss?'親':'主'}</text>`;
     else if(n.keys&&(n.keys.length-((W.keysTaken||{})[id]||0))>0)marks+=`<text x="${x}" y="${y+3.5}" class="key-t">品</text>`;
     else if((n.master&&W.master[id])||(n.boss&&rep.bossDown))marks+=`<path d="M${x-3.5} ${y} l2.5 3 l4.5 -6" class="chk"/>`;
     const below=!MAP_ABOVE.has(id);
-    labels+=`<text x="${x}" y="${below?y+19:y-12}" class="lb">${n.n}</text>`;
+    labels+=`<text x="${x}" y="${id==='gate'?y+22:below?y+19:y-12}" class="lb">${n.n}</text>`;
   }
   // きょう、それぞれがいちばん奥まで行った場所に顔を置く
   const at={}; for(const r of rep.advs){ if(!r.reach||r.reach==='gate'||(NODES[r.reach].ar??0)!==ar)continue; (at[r.reach]=at[r.reach]||[]).push(r); }
@@ -4081,7 +4084,7 @@ function renderMini(now){
   for(const e of EDGES){ if(e.ar!==cur||(e.cut&&!W_.cut))continue; if(!known[e.a]&&!known[e.b])continue; const a=P(e.a,cur), b=P(e.b,cur); h+=`<path d="M${a[0]} ${a[1]} L${b[0]} ${b[1]}" class="mr ${W_.trips[e.id]?'on':''}"/>`; }
   for(const id in NODES){ const n=NODES[id]; if((n.ar??0)!==cur||!known[id])continue; const [x,y]=P(id,cur);
     h+=n.boss?`<rect x="${x-7}" y="${y-7}" width="14" height="14" class="mn boss"/>`:n.room?`<rect x="${x-5}" y="${y-5}" width="10" height="10" class="mn ${n.master&&!W_.master[id]?'foe':''}"/>`:`<circle cx="${x}" cy="${y}" r="${id==='gate'?6:4}" class="mn"/>`; }
-  { const [x,y]=GATEXY[cur]; h+=`<circle cx="${x}" cy="${y}" r="6" class="mn"/>`; }
+  { const [x,y]=GATEXY[cur]; h+=castleIcon(Math.max(x,26),y,1.7); }
   for(const a of S.advs){ if(a.state!=='away'||!a.out||(a.out.ar??cur)!==cur)continue; const o=a.out; let x,y;
     if(o.edge){ const e=o.edge.e, to=P(o.edge.to,cur), fr=P(other(e,o.edge.to),cur), L=Math.max(1,elen(S,e)), k=Math.max(0,Math.min(1,1-o.edge.left/L)); x=fr[0]+(to[0]-fr[0])*k; y=fr[1]+(to[1]-fr[1])*k; }
     else { const q=P(o.at,cur); if(!q)continue; [x,y]=q; }
