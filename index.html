@@ -978,7 +978,7 @@ body:has(#titleModal:not([hidden])) .wrap>:not(.screen),body:has(#titleModal:not
     </nav>
     <p class="tt-note" id="saveNote" hidden></p>
   </div>
-  <footer class="tt-foot"><span class="tt-ver">プロトタイプ v0.32.10 · HD-2D</span><span>1日が終わるたびに、このブラウザに自動で保存します</span><span>© Fuch.io</span></footer>
+  <footer class="tt-foot"><span class="tt-ver">プロトタイプ v0.32.11 · HD-2D</span><span>1日が終わるたびに、このブラウザに自動で保存します</span><span>© Fuch.io</span></footer>
   <div class="tt-how" id="howWin" hidden>
     <div class="tt-how-box" role="dialog" aria-label="あそびかた">
       <b class="sl-name">あそびかた</b>
@@ -2959,6 +2959,8 @@ async function initGfx(){
       let hit=null, hd=Math.max(18,tile*.75);
       for(const a of S.advs){if(a.hidden)continue; const w=walkers.get(a.id); if(!w||!w.mesh.visible)continue; pv.copy(w.mesh.position); pv.y+=.5; pv.project(cam); const d=Math.hypot((pv.x+1)/2*r.width-mx,(1-pv.y)/2*r.height-my); if(d<hd){hd=d; hit=a;}}
       if(hit)return {adv:hit};
+      for(const c of S.carps){if(c.hidden)continue; const w=walkers.get(c.id); if(!w||!w.mesh.visible)continue; pv.copy(w.mesh.position); pv.y+=.5; pv.project(cam); const d=Math.hypot((pv.x+1)/2*r.width-mx,(1-pv.y)/2*r.height-my); if(d<hd){hd=d; hit=c;}}
+      if(hit)return {carp:hit};
     }
     ndc.set(mx/r.width*2-1,1-my/r.height*2); ray.setFromCamera(ndc,cam);
     // 窓あかりの光だまり（地面の板）や影だけの板は、隣の空き地のタップを奪うので当たり判定から外す
@@ -3214,6 +3216,27 @@ function sayLine(a,now){
   const el=$('voice'); el.innerHTML=`<b>${a.name}</b>${line}`; el.hidden=false; el.style.setProperty('--tc',a.tunic);
   voiceOn={a,until:now+2600};
 }
+// 大工のひとこと：いまやっている仕事に合わせて
+let carpTalkN=0;
+function carpLine(c,now){
+  const s=S.sites.find(x=>x.id===c.site)||null, pct=s?Math.floor(s.done/s.need*100):0, pk=L=>L[(carpTalkN++)%L.length];
+  let L;
+  if(c.state==='work'&&s){
+    if(s.kind==='build')L=pct>=80?[`${BUILD[s.type].name}、もうひと息で完成だ！`,`あと少し！ ${BUILD[s.type].name}が建つぞ`]:pct>=40?[`${BUILD[s.type].name}は${pct}%ってとこだな`,`柱が立ってきた。いい${BUILD[s.type].name}になるぞ`]:[`${BUILD[s.type].name}の土台づくりだ`,`さあ、${BUILD[s.type].name}を建てるぞ。腕が鳴る！`];
+    else if(s.kind==='clear')L=s.type==='grass'?['草むしりは腰にくるねえ……','この草、根っこが深いんだ']:s.type==='rubble'?['がれきの下から、何か出てこないかな','よいしょっと。がれきは重いなあ']:['この大岩、なかなか手ごわいぞ','岩を割るのはコツがいるんだ。……まだ割れないけど'];
+    else if(s.kind==='repair')L=['道がきれいになれば、冒険者の足も速くなる','でこぼこ道は、つまずきのもとだからね'];
+    else if(s.kind==='demolish')L=['壊すのはあっという間さ。……ちょっと寂しいけど'];
+    else L=['よいしょ、お引っ越しだ','建物ごと運ぶのは骨が折れるよ'];
+    if(s.auto)L=L.concat(['手が空いたから、自分で片づけてるんだ']);
+  } else if(c.state==='walk'&&s)L=[`${s.kind==='build'?BUILD[s.type].name:s.kind==='clear'?WASTE[s.type].n:s.kind==='repair'?'荒れた道':BUILD[s.type].name}の現場へ向かうところだ`,'さあ、次の現場だ'];
+  else if(c.state==='walk'&&c.wander)L=['仕事がないから、町を見回り中','時のかけらが落ちてないかなあ','見回りも大事な仕事さ'];
+  else if(S.t>=CARP_END-40)L=['きょうの仕事はおしまい。また明日！','腹が減ったなあ'];
+  else if(c.pause>0)L=['おっ、時のかけらを拾ったぞ','ひと休み、ひと休み'];
+  else L=S.sites.length?['次はどこへ行こうかな']:['王様、何か建てるものはありませんか？','腕がなまっちまうよ'];
+  const el=$('voice'), nm=S.carps.length>1?`大工${S.carps.indexOf(c)+1}`:'大工';
+  el.innerHTML=`<b>${nm}</b>${pk(L)}`; el.hidden=false; el.style.setProperty('--tc',c.tunic);
+  voiceOn={a:c,until:now+2600};
+}
 function updVoice(now){
   const el=$('voice'); if(!voiceOn)return;
   if(now>voiceOn.until||S.phase!=='day'||voiceOn.a.hidden){el.hidden=true; voiceOn=null; return;}
@@ -3434,6 +3457,7 @@ function tapAt(e){
     // 冒険者をタップすると声が聞ける（効果はなし）
     const a=hit.adv; sayLine(a,now); return;
   }
+  if(hit&&hit.carp){carpLine(hit.carp,now); return;} // 大工をタップすると、いまの仕事に合わせてひとこと
   if(sel&&sel.kind==='building'&&sel.moving&&hit&&isLot(S.g,hit.x,hit.y)&&!at(S,hit.x,hit.y)){
     const b=at(S,sel.x,sel.y), err=b?orderMove(S,b,hit.x,hit.y):'建物がない';
     if(err){$('msg').textContent=err; return;} baseDirty=true; sel={kind:'building',x:sel.x,y:sel.y}; renderPanel(); updateHud(); return;
@@ -4184,7 +4208,7 @@ $('ch2Btn').addEventListener('click',()=>{transit(()=>{S=autoCh1(CH2_SEED); save
 // 開発用：コンソールやテストから日を早送りする  __tct.skip(3) で3日進めて報告書を開く
 if(DEV)window.__sel=v=>{sel=v; renderPanel();};
 if(DEV)window.__orders=()=>openOrders();
-if(DEV)window.__tct={sds:()=>secDayStart(),rep:()=>openReport(),stone:r=>showStoneCard(r||S.lastReport),dusk:()=>showDuskCard(),dawn:()=>showDayCard(),map:r=>mapHTML(r),say:(t,o)=>secSay(t,o||{pri:3}),menu:()=>secMenu(),ask:k=>secAnswer(k),get S(){return S;},skip(n=1){for(let i=0;i<n;i++){if(S.phase!=='day')startDay(S); tick(S,2000);} wasPhase=S.phase; $('titleModal').hidden=true; $('dayCard').hidden=true; $('duskCard').hidden=true; openReport({instant:true});}};
+if(DEV)window.__tct={carp:i=>{carpLine(S.carps[i||0],performance.now()); return $("voice").textContent;},sds:()=>secDayStart(),rep:()=>openReport(),stone:r=>showStoneCard(r||S.lastReport),dusk:()=>showDuskCard(),dawn:()=>showDayCard(),map:r=>mapHTML(r),say:(t,o)=>secSay(t,o||{pri:3}),menu:()=>secMenu(),ask:k=>secAnswer(k),get S(){return S;},skip(n=1){for(let i=0;i<n;i++){if(S.phase!=='day')startDay(S); tick(S,2000);} wasPhase=S.phase; $('titleModal').hidden=true; $('dayCard').hidden=true; $('duskCard').hidden=true; openReport({instant:true});}};
 updateHud(); renderPanel(); requestAnimationFrame(loop);
 initGfx().then(g=>{GFX=g; if(DEV)window.__gfx=g;}).catch(e=>{console.error(e); $('glfail').hidden=false;});
 </script>
