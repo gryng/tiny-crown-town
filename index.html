@@ -795,7 +795,8 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
 #reportModal>.actions .primary{flex:1 1 auto;max-width:420px;min-width:0}
 #reportModal>.actions .toggle{flex:0 0 auto;white-space:nowrap}
 @media (max-width:520px){#reportModal>.actions{gap:8px}#reportModal>.actions .toggle{padding:9px 10px;font-size:12px}#reportModal>.actions .primary{font-size:15px;letter-spacing:.02em;padding:12px 12px;gap:8px}}
-#reportModal{padding-bottom:0}
+#reportModal,#reportModal.paper{padding-bottom:0}
+@media (min-width:1180px) and (min-height:520px){#reportModal.paper>.actions{width:calc(100% + 44px);margin:0 -22px}}
 #reportModal>.actions>*{pointer-events:auto}
 #reportModal>.actions:empty{display:none}
 /* ===== タイトル画面（v0.30.0） ===== */
@@ -957,7 +958,7 @@ body:has(#titleModal:not([hidden])) .wrap>:not(.screen),body:has(#titleModal:not
     </nav>
     <p class="tt-note" id="saveNote" hidden></p>
   </div>
-  <footer class="tt-foot"><span class="tt-ver">プロトタイプ v0.32.3 · HD-2D</span><span>1日が終わるたびに、このブラウザに自動で保存します</span><span>© Fuch.io</span></footer>
+  <footer class="tt-foot"><span class="tt-ver">プロトタイプ v0.32.4 · HD-2D</span><span>1日が終わるたびに、このブラウザに自動で保存します</span><span>© Fuch.io</span></footer>
   <div class="tt-how" id="howWin" hidden>
     <div class="tt-how-box" role="dialog" aria-label="あそびかた">
       <b class="sl-name">あそびかた</b>
