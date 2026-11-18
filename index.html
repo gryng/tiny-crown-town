@@ -5,7 +5,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@600;800&family=Zen+Kaku+Gothic+New:wght@500;700&family=Klee+One:wght@600&family=Noto+Serif+JP:wght@900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@600;800&family=Zen+Kaku+Gothic+New:wght@500;700&family=Klee+One:wght@600&family=Noto+Serif+JP:wght@900&family=Cinzel:wght@900&display=swap">
 <style>
 /* Layout: one column. Torn-paper HUD tags on top, the walled town in an inked frame, a ledger sheet below.
    Look: hand-inked parchment boards laid over a dark painted ground; teal-green accent, gold for treasure. */
@@ -237,10 +237,8 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
 .actions .toggle{padding:10px 16px}
 .actions:empty{display:none}
-#titleModal .actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
 .cb{display:grid;line-height:1.25;text-align:left}.cb small{font-size:12px;font-family:var(--f-body);font-weight:700;letter-spacing:.04em;color:var(--muted)}
 .ch2-note{font-size:12px;opacity:.75;text-align:center;margin-top:6px}
-#titleModal{background:linear-gradient(180deg,#08120f40 0%,#08120fcc 75%)}
 #lineModal{z-index:30}
 .sheet{max-width:580px;width:100%;min-width:0;box-sizing:border-box;padding:24px 22px 22px;display:flex;flex-direction:column;gap:14px;transform:rotate(-.3deg)}
 .sheet h2{margin:0;font-family:var(--f-head);font-weight:800;font-size:28px;line-height:1.25;color:var(--accent);text-wrap:balance;letter-spacing:.03em}
@@ -754,6 +752,51 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
 .sec-say .lines{flex:1;min-width:0;display:grid;gap:6px}
 .sec-say p{margin:0;font-family:var(--f-hand);font-weight:600;font-size:14px;line-height:1.6;color:var(--ink);background:#fffaf0;border:1.5px solid var(--ink);border-radius:4px 14px 13px 12px;padding:8px 12px;box-shadow:2px 2px 0 #241c141f}
 @media (max-width:1179.98px),(max-height:519.98px){.sec-dock{bottom:auto;top:calc(env(safe-area-inset-top,0px) + 112px);left:max(8px,env(safe-area-inset-left,0px));align-items:flex-start}.sec-bub{margin:6px 0 0;border-radius:4px 14px 13px 12px}body.planning .sec-dock{display:none}}
+/* ===== タイトル画面（v0.30.0） ===== */
+.title-screen{position:fixed;inset:0;z-index:25;display:flex;flex-direction:column;align-items:center;overflow:hidden;line-height:1.5;color:var(--hud-ink);background:radial-gradient(120% 80% at 50% 58%,transparent 20%,#05080cd0 78%),linear-gradient(180deg,#0a1124f2 0%,#141a3acc 22%,#1a1a3a55 46%,#0000 62%,#05080ce0 100%)}
+.title-screen[hidden]{display:none}
+body:has(#titleModal:not([hidden])) .wrap>:not(.screen),body:has(#titleModal:not([hidden])) .screen>:not(canvas){visibility:hidden}
+.tt-sky{position:absolute;inset:0 0 50% 0;background:radial-gradient(1.4px 1.4px at 12% 18%,#fff9 50%,transparent 51%),radial-gradient(1.2px 1.2px at 27% 32%,#fff7 50%,transparent 51%),radial-gradient(1.6px 1.6px at 41% 10%,#fffa 50%,transparent 51%),radial-gradient(1.2px 1.2px at 63% 24%,#fff7 50%,transparent 51%),radial-gradient(1.5px 1.5px at 76% 8%,#fff9 50%,transparent 51%),radial-gradient(1.2px 1.2px at 88% 30%,#fff7 50%,transparent 51%),radial-gradient(1px 1px at 6% 40%,#fff6 50%,transparent 51%),radial-gradient(1.3px 1.3px at 52% 38%,#fff5 50%,transparent 51%);animation:twinkle 3.4s ease-in-out infinite alternate;pointer-events:none}
+.tt-dust{position:absolute;inset:0;pointer-events:none}
+.tt-dust i{position:absolute;bottom:-10px;width:4px;height:4px;border-radius:50%;background:#ffe9a8;box-shadow:0 0 8px 2px #c9a84c99;opacity:0;animation:dustUp linear infinite}
+@keyframes dustUp{0%{opacity:0;transform:translate(0,0)}15%{opacity:.9}80%{opacity:.6}100%{opacity:0;transform:translate(var(--dx,20px),-70vh)}}
+.tt-main{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(22px,5vh,46px);width:100%;box-sizing:border-box;padding:max(24px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px))}
+.tt-logo{display:flex;flex-direction:column;align-items:center;text-align:center}
+.tt-crown{width:clamp(74px,12vw,118px);height:auto;filter:drop-shadow(0 4px 0 #120a05) drop-shadow(0 0 22px #c9a84c88);animation:crownIn .9s cubic-bezier(.2,1.4,.4,1) both,crownBob 4s ease-in-out 1.2s infinite}
+@keyframes crownIn{from{opacity:0;transform:translateY(-40px) rotate(-8deg) scale(.8)}to{opacity:1;transform:none}}
+@keyframes crownBob{50%{transform:translateY(-4px)}}
+.tt-name{margin:4px 0 0;font-family:'Cinzel','Noto Serif JP','Noto Serif CJK JP','Hiragino Mincho ProN',serif;font-weight:900;font-size:clamp(40px,8.4vw,104px);line-height:1;letter-spacing:.04em;white-space:nowrap;background:linear-gradient(180deg,#fff8dc 0%,#f3d98c 42%,#c9a84c 58%,#8a6420 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 3px 0 #2a1608) drop-shadow(0 0 3px #120a05) drop-shadow(0 0 28px #c9a84c55);animation:nameIn 1s ease-out .35s both}
+.tt-name{display:grid;justify-items:center;font-size:clamp(38px,10.4vw,116px)}.tt-name .t1{font-size:.4em;letter-spacing:.6em;margin:0 0 .12em .6em}.tt-name .t2{display:block}
+@keyframes nameIn{from{opacity:0;letter-spacing:.3em}to{opacity:1;letter-spacing:.04em}}
+.tt-tag{display:flex;align-items:center;gap:12px;margin:16px 0 0;font:700 clamp(12px,1.7vw,15px) var(--f-body);letter-spacing:.2em;color:var(--hud-ink);text-shadow:0 1px 2px #000;animation:pop .6s ease-out 1s both}
+.tt-tag .orn,.tt-how .orn{display:block;width:clamp(28px,7vw,80px);height:9px;background:linear-gradient(90deg,transparent,var(--trim)) center/100% 1.5px no-repeat;position:relative}
+.tt-tag .orn::after{content:"";position:absolute;right:-3px;top:50%;width:7px;height:7px;margin-top:-3.5px;background:var(--trim);transform:rotate(45deg)}
+.tt-tag .orn.r{transform:scaleX(-1)}
+.title-screen .tt-menu{display:flex;flex-direction:column;align-items:stretch;gap:10px;width:min(320px,100%)}
+.tm-btn{position:relative;display:grid;justify-items:center;gap:1px;padding:11px 36px;font:800 18px/1.3 var(--f-head);letter-spacing:.12em;color:var(--hud-ink);background:linear-gradient(180deg,var(--wood-hi),var(--wood) 50%,var(--wood-2));border:1.5px solid #120a05;border-radius:10px;box-shadow:inset 0 0 0 1px var(--trim-dk),inset 0 1px 0 #ffffff1f,0 4px 12px #0009;cursor:pointer;animation:pop .5s ease-out both;transition:transform .12s,box-shadow .12s,color .12s}
+.tm-btn small{font:700 10.5px var(--f-body);letter-spacing:.02em;color:#bfae88}
+.tt-menu .tm-btn:nth-child(1){animation-delay:1.2s}.tt-menu .tm-btn:nth-child(2){animation-delay:1.3s}.tt-menu .tm-btn:nth-child(3){animation-delay:1.4s}.tt-menu .tm-btn:nth-child(4){animation-delay:1.5s}
+.tm-btn::before{content:"▶";position:absolute;left:14px;top:50%;margin-top:-.65em;font-size:13px;line-height:1.3;color:var(--trim);opacity:0;transform:translateX(-6px);transition:.15s}
+.tm-btn:hover,.tm-btn:focus-visible{outline:none;color:#fff3d0;transform:translateX(3px);box-shadow:inset 0 0 0 1.5px var(--trim),inset 0 1px 0 #ffffff26,0 0 0 2px #120a05,0 0 18px #c9a84c66}
+.tm-btn:hover::before,.tm-btn:focus-visible::before{opacity:1;transform:none;animation:nextBobX .8s ease-in-out infinite}
+@keyframes nextBobX{50%{transform:translateX(3px)}}
+.tm-btn.main{color:var(--wood-2);background:linear-gradient(180deg,#fff0bf,#e8c766 45%,var(--trim) 60%,#9a7428);border-color:#2a1608;box-shadow:inset 0 1px 0 #fff8,0 0 0 1.5px #120a05,0 4px 14px #0009,0 0 22px #c9a84c55}
+.tm-btn.main small{color:#5a3a22}
+.tm-btn.main::before{color:var(--wood-2)}
+.tm-btn.main:hover,.tm-btn.main:focus-visible{color:#24160d;box-shadow:inset 0 1px 0 #fff8,0 0 0 2px #120a05,0 0 26px #ffe9a8aa}
+.tm-btn.sm{padding:8px 26px;font-size:15px;justify-self:center}
+.tt-note{max-width:320px;margin:-14px 0 0;text-align:center;font:700 11px/1.5 var(--f-body);color:#d8c79c;text-shadow:0 1px 2px #000;animation:pop .5s ease-out 1.6s both}
+.tt-foot{position:relative;z-index:1;display:flex;flex-wrap:wrap;justify-content:center;gap:4px 18px;width:100%;box-sizing:border-box;padding:10px max(16px,env(safe-area-inset-right,0px)) max(14px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));font:700 11px var(--f-body);color:#bfae88;text-shadow:0 1px 2px #000}
+.tt-foot .tt-ver{color:var(--trim)}
+.tt-how{position:absolute;inset:0;z-index:3;display:grid;place-items:center;padding:16px;background:#05080cb0}
+.tt-how[hidden]{display:none}
+.tt-how-box{box-sizing:border-box;display:grid;gap:10px;width:min(560px,100%);max-height:calc(100% - 32px);overflow:auto;padding:18px 22px;color:#fff3d0;background:linear-gradient(180deg,#2a1a10f6,#1a100af6);border:2px solid #120a05;border-radius:12px;box-shadow:inset 0 0 0 1.5px var(--trim),inset 0 0 0 4px #2a1a10,inset 0 0 0 5px #c9a84c66,0 10px 26px #000b;font:600 14.5px/1.7 var(--f-body);animation:pop .25s ease-out}
+.tt-how-box p{margin:0}
+.tt-how-box .how{color:#f1e2bd;font-size:13.5px}
+@media (max-height:620px){.tt-crown{width:64px}.tt-name{font-size:clamp(36px,8vw,72px)}.tm-btn{padding:8px 30px;font-size:16px}.title-screen .tt-menu{gap:7px}}
+.tm-btn.sm::before{display:none}
+@media (max-width:520px){.tt-tag{letter-spacing:.08em;gap:8px}.tt-tag .orn{width:18px}}
+@media (prefers-reduced-motion:reduce){.title-screen *{animation:none!important}}
 /* ===== 日の出・日暮れのカード（v0.29.0：木と金の窓にそろえる） ===== */
 .daycard{justify-content:flex-start;gap:0;line-height:1.5}
 .daycard .dc-mid{position:relative;z-index:3;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;width:100%;padding:0 16px 22vh}
@@ -847,22 +890,40 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
   </div>
 </div>
 
-<div class="modal" id="titleModal">
-  <div class="sheet">
-    <div class="title-art">Tiny Crown Town</div>
-    <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.29.1 · HD-2D</p>
-    <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
-    <ol class="how">
-      <li>冒険者は 家 → 公園 → 広場の立て札 → 店 → 城門 の順に歩いて出発します。</li>
-      <li>建物の置き場所が、そのまま出発時刻になります。遅いと洞窟を探索できません。</li>
-      <li>毎朝、立て札に貼る依頼を選びます。冒険者は自分に合う依頼を取って出かけ、翌朝の報告書で結果を知ります。</li>
-    </ol>
+<div class="title-screen" id="titleModal" role="dialog" aria-label="タイトル">
+  <div class="tt-sky"></div><div class="tt-dust" id="ttDust" aria-hidden="true"></div>
+  <div class="tt-main">
+    <div class="tt-logo">
+      <svg class="tt-crown" viewBox="0 0 120 84" aria-hidden="true"><defs><linearGradient id="tgGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3c4"/><stop offset=".45" stop-color="#e8c766"/><stop offset=".7" stop-color="#c9a84c"/><stop offset="1" stop-color="#8a6420"/></linearGradient></defs>
+<path d="M14 64 L8 22 L36 44 L60 8 L84 44 L112 22 L106 64 Z" fill="url(#tgGold)" stroke="#2a1608" stroke-width="3" stroke-linejoin="round"/>
+<rect x="12" y="62" width="96" height="14" rx="3" fill="url(#tgGold)" stroke="#2a1608" stroke-width="3"/>
+<circle cx="8" cy="20" r="5" fill="#fff3c4" stroke="#2a1608" stroke-width="2.5"/><circle cx="60" cy="7" r="6" fill="#fff3c4" stroke="#2a1608" stroke-width="2.5"/><circle cx="112" cy="20" r="5" fill="#fff3c4" stroke="#2a1608" stroke-width="2.5"/>
+<path d="M60 34 l7 10 -7 10 -7 -10z" fill="#3fa36b" stroke="#2a1608" stroke-width="2"/><circle cx="34" cy="69" r="3.6" fill="#c0392b" stroke="#2a1608" stroke-width="1.6"/><circle cx="60" cy="69" r="4" fill="#2e6fb5" stroke="#2a1608" stroke-width="1.6"/><circle cx="86" cy="69" r="3.6" fill="#c0392b" stroke="#2a1608" stroke-width="1.6"/>
+<path d="M22 58 L18 32" stroke="#fff8" stroke-width="2.5" stroke-linecap="round"/></svg>
+      <h1 class="tt-name"><span class="t1">Tiny</span><span class="t2">Crown Town</span></h1>
+      <p class="tt-tag"><i class="orn"></i><span>王様は戦わない。街を建て、冒険者を待つ。</span><i class="orn r"></i></p>
+    </div>
+    <nav class="tt-menu" aria-label="タイトルメニュー">
+      <button class="tm-btn" id="contBtn" hidden>続きから</button>
+      <button class="tm-btn" id="startBtn">はじめる</button>
+      <button class="tm-btn" id="ch2Btn">2章から始める<small>1章を終えたところから（冒険者3人・Lv6〜7）</small></button>
+      <button class="tm-btn" id="howBtn">あそびかた</button>
+    </nav>
+    <p class="tt-note" id="saveNote" hidden></p>
   </div>
-  <div class="actions"><button class="primary" id="contBtn" hidden>続きから</button><button class="primary" id="startBtn">はじめる</button><button id="ch2Btn">2章から始める</button></div>
-    <p class="ch2-note" id="saveNote" hidden></p>
-    <p class="ch2-note">2章からは、1章をよくある建て方で14日かけて終えたところから始まります（冒険者3人・Lv6〜7）。</p>
-    <p class="ch2-note">1日が終わるたびに、このブラウザに自動で保存します。</p>
+  <footer class="tt-foot"><span class="tt-ver">プロトタイプ v0.30.0 · HD-2D</span><span>1日が終わるたびに、このブラウザに自動で保存します</span><span>© Fuch.io</span></footer>
+  <div class="tt-how" id="howWin" hidden>
+    <div class="tt-how-box" role="dialog" aria-label="あそびかた">
+      <b class="sl-name">あそびかた</b>
+      <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
+      <ol class="how">
+        <li>冒険者は 家 → 公園 → 広場の立て札 → 店 → 城門 の順に歩いて出発します。</li>
+        <li>建物の置き場所が、そのまま出発時刻になります。遅いと洞窟を探索できません。</li>
+        <li>毎朝、立て札に貼る依頼を選びます。冒険者は自分に合う依頼を取って出かけ、翌朝の報告書で結果を知ります。</li>
+      </ol>
+      <button class="tm-btn sm" id="howClose">とじる</button>
+    </div>
+  </div>
 </div>
 
 <div class="modal" id="reportModal" hidden>
@@ -3921,10 +3982,20 @@ function loadGame(d){
   for(const a of L.advs){ if(!a.own){a.own={sword:a.wlv||0,axe:0,dagger:0,mail:a.alv||0,cloth:0}; a.wl='sword'; a.al='mail'; a.tags={};} }
   return L;
 }
-{const d=readSave(); if(d){$('contBtn').hidden=false; $('contBtn').innerHTML=`<span class="cb">続きから<small>${d.ch}章・${d.day}日目</small></span>`; $('startBtn').textContent='はじめから'; $('startBtn').classList.remove('primary');
+{const d=readSave(); $('startBtn').classList.toggle('main',!d); if(d){$('contBtn').hidden=false; $('contBtn').classList.add('main'); $('contBtn').innerHTML=`続きから<small>${d.ch}章・${d.day}日目</small>`; $('startBtn').textContent='はじめから';
   $('saveNote').hidden=false; $('saveNote').textContent='「はじめから」や「2章から始める」を選ぶと、いまの保存は上書きされます。';}}
 $('contBtn').addEventListener('click',()=>{const d=readSave(); if(!d)return; S=loadGame(d); sel=null; planning=false; baseDirty=true; wasPhase=S.phase; $('titleModal').hidden=true; updateHud(); renderPanel(); openReport();});
 addEventListener('pagehide',saveGame); document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')saveGame();});
+// タイトル画面：金の粉・あそびかた・矢印キーで選ぶ
+{const box=$('ttDust'); if(!RM){let h=''; for(let i=0;i<18;i++){h+=`<i style="left:${(Math.random()*100).toFixed(1)}%;animation-duration:${(7+Math.random()*7).toFixed(1)}s;animation-delay:${(-Math.random()*12).toFixed(1)}s;--dx:${(Math.random()*60-30)|0}px;transform:scale(${(.5+Math.random()*.8).toFixed(2)})"></i>`;} box.innerHTML=h;}
+ $('howBtn').addEventListener('click',()=>{$('howWin').hidden=false; $('howClose').focus();});
+ $('howClose').addEventListener('click',()=>{$('howWin').hidden=true; $('howBtn').focus();});
+ $('howWin').addEventListener('click',e=>{if(e.target.id==='howWin'){$('howWin').hidden=true;}});
+ document.addEventListener('keydown',e=>{if($('titleModal').hidden)return;
+   if(!$('howWin').hidden){if(e.key==='Escape'){$('howWin').hidden=true; $('howBtn').focus();} return;}
+   if(e.key!=='ArrowDown'&&e.key!=='ArrowUp')return; e.preventDefault();
+   const L=[...document.querySelectorAll('#titleModal .tt-menu .tm-btn')].filter(b=>!b.hidden), i=L.indexOf(document.activeElement);
+   L[(i<0?0:i+(e.key==='ArrowDown'?1:L.length-1))%L.length].focus();});}
 $('startBtn').addEventListener('click',()=>{$('titleModal').hidden=true; openReport();});
 $('ch2Btn').addEventListener('click',()=>{S=autoCh1(CH2_SEED); saveGame(); sel=null; planning=false; baseDirty=true; wasPhase=S.phase; $('titleModal').hidden=true; updateHud(); renderPanel(); openReport();});
 // 開発用：コンソールやテストから日を早送りする  __tct.skip(3) で3日進めて報告書を開く
