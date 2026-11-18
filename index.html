@@ -748,13 +748,54 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
 .sec-bub{pointer-events:auto;position:relative;max-width:min(270px,64vw);text-align:left;font:600 13.5px/1.55 var(--f-hand);color:var(--ink);background:#fffaf0;border:1.5px solid var(--ink);border-radius:12px 14px 13px 4px;padding:8px 12px;margin-bottom:18px;box-shadow:2px 3px 0 #0005;animation:bubIn .25s ease-out}
 .sec-bub small{display:block;margin-top:2px;font:700 10.5px var(--f-body);color:var(--muted)}
 @keyframes bubIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.daycard .secline{display:flex;align-items:center;gap:10px;width:min(520px,88vw);min-height:58px;font-family:var(--f-hand);font-weight:600;font-size:15px;line-height:1.5;color:var(--ink);background:#fffaf0;border:1.5px solid var(--ink);border-radius:14px;padding:8px 14px 8px 8px;text-shadow:none;animation-delay:.4s}
 .sec-face{flex:0 0 auto;width:38px;height:42px}
 .sec-say{display:flex;gap:10px;align-items:flex-start;margin:0 0 12px}
 .sec-say .sec-face{width:42px;height:46px}
 .sec-say .lines{flex:1;min-width:0;display:grid;gap:6px}
 .sec-say p{margin:0;font-family:var(--f-hand);font-weight:600;font-size:14px;line-height:1.6;color:var(--ink);background:#fffaf0;border:1.5px solid var(--ink);border-radius:4px 14px 13px 12px;padding:8px 12px;box-shadow:2px 2px 0 #241c141f}
 @media (max-width:1179.98px),(max-height:519.98px){.sec-dock{bottom:auto;top:calc(env(safe-area-inset-top,0px) + 112px);left:max(8px,env(safe-area-inset-left,0px));align-items:flex-start}.sec-bub{margin:6px 0 0;border-radius:4px 14px 13px 12px}body.planning .sec-dock{display:none}}
+/* ===== 日の出・日暮れのカード（v0.29.0：木と金の窓にそろえる） ===== */
+.daycard{justify-content:flex-start;gap:0;line-height:1.5}
+.daycard .dc-mid{position:relative;z-index:3;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;width:100%;padding:0 16px 22vh}
+.daycard .stars{position:absolute;inset:0 0 30% 0;background:radial-gradient(1.4px 1.4px at 12% 18%,#fff8 50%,transparent 51%),radial-gradient(1.2px 1.2px at 27% 42%,#fff7 50%,transparent 51%),radial-gradient(1.6px 1.6px at 41% 12%,#fffa 50%,transparent 51%),radial-gradient(1.2px 1.2px at 58% 30%,#fff7 50%,transparent 51%),radial-gradient(1.5px 1.5px at 72% 9%,#fff9 50%,transparent 51%),radial-gradient(1.2px 1.2px at 84% 36%,#fff7 50%,transparent 51%),radial-gradient(1.4px 1.4px at 93% 16%,#fff8 50%,transparent 51%),radial-gradient(1px 1px at 6% 52%,#fff6 50%,transparent 51%),radial-gradient(1px 1px at 66% 54%,#fff5 50%,transparent 51%),radial-gradient(1.3px 1.3px at 35% 64%,#fff5 50%,transparent 51%);opacity:0}
+.daycard.dusk .stars{animation:starsIn 2.4s ease-out .6s forwards,twinkle 3.2s ease-in-out 3s infinite alternate}
+.daycard:not(.dusk) .stars{opacity:.9;animation:starsOut 1.8s ease-out .2s forwards}
+@keyframes starsIn{to{opacity:1}}@keyframes starsOut{to{opacity:0}}@keyframes twinkle{from{opacity:1}to{opacity:.55}}
+.daycard .sun{z-index:1}
+.daycard .town{position:absolute;z-index:2;left:0;right:0;bottom:0;width:100%;height:clamp(110px,24vh,210px);color:#120a10}
+.daycard .town .hills{fill:#2a1a26;opacity:.75}
+.daycard .town .roofs{fill:#140b10}
+.daycard .town .clock{fill:var(--trim);opacity:.9}
+.daycard .town .wins rect{fill:#ffcf7a;opacity:0}
+.daycard.dusk .town .wins rect{animation:lampOn .5s ease-out forwards;animation-delay:inherit}
+.daycard.dusk .town .wins{filter:drop-shadow(0 0 3px #ffb44d)}
+@keyframes lampOn{to{opacity:.95}}
+.daycard:not(.dusk) .town .hills{fill:#16302a}
+.daycard:not(.dusk) .town .roofs{fill:#0c1a14}
+.daycard .ln.small{display:flex;align-items:center;gap:12px;font-size:14px;letter-spacing:.32em;color:var(--trim)}
+.daycard .orn{display:block;width:clamp(36px,10vw,90px);height:9px;background:linear-gradient(90deg,transparent,var(--trim)) center/100% 1.5px no-repeat;position:relative}
+.daycard .orn::after{content:"";position:absolute;right:-3px;top:50%;width:7px;height:7px;margin-top:-3.5px;background:var(--trim);transform:rotate(45deg)}
+.daycard .orn.r{transform:scaleX(-1)}
+.daycard .ln.big{background:linear-gradient(180deg,#fff6d2 0%,#f1d68a 45%,#c9a84c 60%,#9a7428 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 3px 0 #120a05) drop-shadow(0 0 18px #c9a84c66);padding:0 .1em}
+.daycard.dusk .ln.big{font-size:clamp(36px,9vw,64px)}
+.daycard .ln.sub{color:var(--hud-ink);text-shadow:0 1px 0 #000}
+.dc-tally{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;animation-delay:1.2s!important}
+.dc-tally:empty{display:none}
+.dc-tally span{display:inline-flex;align-items:baseline;gap:6px;padding:5px 12px 5px 10px;font:700 12px var(--f-body);letter-spacing:.06em;color:var(--hud-ink);background:linear-gradient(180deg,var(--wood-hi),var(--wood) 50%,var(--wood-2));border:1.5px solid #120a05;border-radius:999px;box-shadow:inset 0 0 0 1px var(--trim-dk),0 3px 8px #0007;text-shadow:none}
+.dc-tally b{font:800 16px var(--f-head);color:#ffe9a8;letter-spacing:0}
+.dc-tally .shard{display:inline-block;width:9px;height:12px;background:linear-gradient(160deg,#c8f0ff,#5fb8d6 60%,#2a6f8f);clip-path:polygon(50% 0,100% 40%,50% 100%,0 40%);align-self:center}
+.daycard .secline{box-sizing:border-box;position:relative;display:grid;grid-template-columns:56px minmax(0,1fr);gap:12px;align-items:start;width:min(560px,calc(100vw - 32px));margin-top:6px;padding:12px 18px 14px 12px;text-align:left;color:#fff3d0;text-shadow:none;background:linear-gradient(180deg,#2a1a10f2,#1a100af2);border:2px solid #120a05;border-radius:12px;box-shadow:inset 0 0 0 1.5px var(--trim),inset 0 0 0 4px #2a1a10,inset 0 0 0 5px #c9a84c66,0 10px 26px #000b;animation-delay:.4s}
+.sl-face{box-sizing:border-box;display:block;width:56px;height:60px;padding:4px;background:radial-gradient(circle at 50% 40%,#5a3a22,#2a1a10);border-radius:8px;box-shadow:0 0 0 1.5px var(--trim-dk)}
+.sl-body{min-width:0}
+.sl-name{display:block;font:800 13px var(--f-head);letter-spacing:.1em;color:var(--trim)}
+.sl-name small{margin-left:8px;font:700 10.5px var(--f-body);letter-spacing:0;color:#bfae88}
+.sl-body p{margin:2px 0 0;font:600 16px/1.65 var(--f-hand);min-height:3.3em;color:#fff3d0}
+.sl-next{position:absolute;right:14px;bottom:6px;font-style:normal;font-size:12px;color:var(--trim);animation:nextBob .8s ease-in-out infinite}
+.daycard .ln.tap{z-index:3;color:var(--hud-ink);text-shadow:0 1px 2px #000}
+.daycard .ln.tap span{display:inline-block;padding:5px 16px;border-radius:999px;background:#0008;box-shadow:inset 0 0 0 1px #c9a84c66;animation:tapPulse 1.6s ease-in-out 2.4s infinite}
+@keyframes tapPulse{50%{opacity:.55}}
+@media (max-width:520px){.daycard .secline{grid-template-columns:44px minmax(0,1fr);gap:10px;padding:10px 14px 12px 10px}.sl-face{width:44px;height:48px}.sl-body p{font-size:14.5px;min-height:3.1em}.daycard .ln.small{font-size:12px;letter-spacing:.24em}.daycard .dc-mid{padding-bottom:18vh}}
+@media (prefers-reduced-motion:reduce){.daycard .stars,.daycard .town .wins rect,.sl-next,.daycard .ln.tap span{animation:none!important}.daycard.dusk .stars{opacity:1}.daycard.dusk .town .wins rect{opacity:.95}.daycard:not(.dusk) .stars{opacity:0}}
 @media (prefers-reduced-motion:reduce){.primary:active,.primary:hover{transform:none}.daycard .sky,.daycard .sun,.daycard .ln,.daycard .letter{animation:none;opacity:1}.daycard .sun{bottom:calc(14% - 40px)}.daycard.dusk .sun{bottom:-160px}}
 </style>
 
@@ -810,7 +851,7 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
   <div class="sheet">
     <div class="title-art">Tiny Crown Town</div>
     <div class="title-rule"></div>
-    <p class="lead">プロトタイプ v0.28.0 · HD-2D</p>
+    <p class="lead">プロトタイプ v0.29.0 · HD-2D</p>
     <p>王様は戦いません。街を建て、冒険者を送り出し、帰りを待つだけ。冒険者は毎朝、自分の足で街を歩いて準備をします。</p>
     <ol class="how">
       <li>冒険者は 家 → 公園 → 広場の立て札 → 店 → 城門 の順に歩いて出発します。</li>
@@ -830,20 +871,25 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
 </div>
 
 <div class="daycard dusk" id="duskCard" hidden role="dialog" aria-live="assertive" aria-label="一日の終わり">
-  <div class="sky"></div><div class="sun"></div>
-  <div class="ln small" id="ddSmall">日が暮れた</div>
+  <div class="sky"></div><div class="stars"></div><div class="sun"></div><svg class="town" viewBox="0 0 1200 170" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><path class="hills" d="M0 170 L0 120 C150 92 300 112 450 104 C620 94 760 116 900 102 C1020 92 1120 108 1200 100 L1200 170Z"/><path class="roofs" d="M0 170 L0 97 L19 81 L38 97 L38 170 L44 170 L44 106 L69 84 L94 106 L94 170 L94 97 L129 80 L163 97 L163 170 L163 124 L183 104 L203 124 L203 170 L203 97 L234 77 L264 97 L264 170 L264 126 L293 101 L323 126 L323 170 L323 106 L348 90 L374 106 L374 170 L380 170 L380 132 L413 115 L446 132 L446 170 L452 170 L452 129 L478 111 L505 129 L505 170 L505 170 L505 96 L515 96 L515 88 L523 88 L523 96 L531 96 L531 88 L539 88 L539 96 L539 52 L536 52 L550 22 L564 52 L561 52 L561 70 L575 70 L575 40 L571 40 L600 0 L629 40 L625 40 L625 70 L639 70 L639 52 L636 52 L650 22 L664 52 L661 52 L661 96 L669 96 L669 88 L677 88 L677 96 L685 96 L685 88 L693 88 L693 96 L695 96 L695 170 L702 170 L702 58 L698 58 L713 30 L728 58 L724 58 L724 170 L732 170 L732 98 L779 98 L779 84 L787 84 L787 98 L800 98 L800 170 L800 104 L823 86 L846 104 L846 170 L852 170 L852 98 L877 84 L902 98 L902 170 L902 135 L937 110 L972 135 L972 170 L972 115 L1003 102 L1034 115 L1034 170 L1034 95 L1070 73 L1106 95 L1106 170 L1106 126 L1142 126 L1142 112 L1150 112 L1150 126 L1157 126 L1157 170 L1157 122 L1187 122 L1187 108 L1195 108 L1195 122 L1200 122 L1200 170 L1206 170 L1200 170Z"/><circle class="clock" cx="713" cy="72" r="6"/><g class="wins"><rect x="9" y="116" width="6" height="8" style="animation-delay:2.27s"/><rect x="26" y="114" width="6" height="8" style="animation-delay:2.45s"/><rect x="55" y="125" width="6" height="8" style="animation-delay:0.37s"/><rect x="84" y="124" width="6" height="8" style="animation-delay:1.93s"/><rect x="103" y="111" width="6" height="8" style="animation-delay:1.29s"/><rect x="153" y="114" width="6" height="8" style="animation-delay:2.19s"/><rect x="175" y="135" width="6" height="8" style="animation-delay:1.10s"/><rect x="213" y="112" width="6" height="8" style="animation-delay:1.00s"/><rect x="274" y="142" width="6" height="8" style="animation-delay:1.51s"/><rect x="332" y="125" width="6" height="8" style="animation-delay:2.63s"/><rect x="740" y="109" width="6" height="8" style="animation-delay:0.00s"/><rect x="913" y="148" width="6" height="8" style="animation-delay:0.67s"/><rect x="960" y="145" width="6" height="8" style="animation-delay:2.31s"/><rect x="982" y="135" width="6" height="8" style="animation-delay:0.11s"/><rect x="1116" y="144" width="6" height="8" style="animation-delay:1.01s"/><rect x="596" y="48" width="8" height="12" rx="4"/><rect x="546" y="60" width="7" height="10" rx="3"/><rect x="647" y="60" width="7" height="10" rx="3"/><rect x="560" y="110" width="8" height="12"/><rect x="632" y="110" width="8" height="12"/></g></svg>
+  <div class="dc-mid">
+  <div class="ln small"><i class="orn"></i><span id="ddSmall">日が暮れた</span><i class="orn r"></i></div>
   <div class="ln big">今日の活動終了</div>
-  <div class="ln secline"><span class="sec-face"><svg class="cuckoo" viewBox="0 0 44 48" aria-hidden="true"><path d="M3 18 L22 4 L41 18 Z" fill="#5b3a22" stroke="#241c14" stroke-width="2" stroke-linejoin="round"/><rect x="7" y="17" width="30" height="26" rx="2" fill="#a8743f" stroke="#241c14" stroke-width="2"/><rect x="13" y="20" width="18" height="16" rx="8" fill="#2a2018"/><g class="bird"><ellipse cx="22" cy="31" rx="8" ry="6" fill="#c9c6bd" stroke="#241c14" stroke-width="1.5"/><circle cx="22" cy="24" r="5.5" fill="#dedad0" stroke="#241c14" stroke-width="1.5"/><path d="M26.5 24.5 l4 1.2 -4 1.2z" fill="#e0a040" stroke="#241c14" stroke-width="1"/><circle cx="23.6" cy="23.4" r="1" fill="#241c14"/><path d="M21.6 21.6 l3.4 -.8" stroke="#241c14" stroke-width="1.2" stroke-linecap="round"/><path d="M17.5 20 h9 l-1 -4 h-7z" fill="#1b4332" stroke="#241c14" stroke-width="1.2" stroke-linejoin="round"/><path d="M17 20.4 h10" stroke="#c9a84c" stroke-width="1.4"/></g><path d="M22 43 v4" stroke="#241c14" stroke-width="2"/><circle cx="22" cy="47" r="1.6" fill="#c9a84c"/></svg></span><span id="ddSay">王様、本日の報告書をお持ちしました</span></div>
-  <div class="ln tap">タップで報告書を読む</div>
+  <div class="ln dc-tally" id="ddTally"></div>
+  <div class="ln secline"><span class="sl-face"><svg class="cuckoo" viewBox="0 0 44 48" aria-hidden="true"><path d="M3 18 L22 4 L41 18 Z" fill="#5b3a22" stroke="#241c14" stroke-width="2" stroke-linejoin="round"/><rect x="7" y="17" width="30" height="26" rx="2" fill="#a8743f" stroke="#241c14" stroke-width="2"/><rect x="13" y="20" width="18" height="16" rx="8" fill="#2a2018"/><g class="bird"><ellipse cx="22" cy="31" rx="8" ry="6" fill="#c9c6bd" stroke="#241c14" stroke-width="1.5"/><circle cx="22" cy="24" r="5.5" fill="#dedad0" stroke="#241c14" stroke-width="1.5"/><path d="M26.5 24.5 l4 1.2 -4 1.2z" fill="#e0a040" stroke="#241c14" stroke-width="1"/><circle cx="23.6" cy="23.4" r="1" fill="#241c14"/><path d="M21.6 21.6 l3.4 -.8" stroke="#241c14" stroke-width="1.2" stroke-linecap="round"/><path d="M17.5 20 h9 l-1 -4 h-7z" fill="#1b4332" stroke="#241c14" stroke-width="1.2" stroke-linejoin="round"/><path d="M17 20.4 h10" stroke="#c9a84c" stroke-width="1.4"/></g><path d="M22 43 v4" stroke="#241c14" stroke-width="2"/><circle cx="22" cy="47" r="1.6" fill="#c9a84c"/></svg></span><div class="sl-body"><b class="sl-name">秘書<small>時報係の鳩</small></b><p id="ddSay"></p></div><em class="sl-next">▼</em></div>
+  </div>
+  <div class="ln tap"><span>タップで報告書を読む</span></div>
 </div>
 
 <div class="daycard" id="dayCard" hidden role="dialog" aria-live="assertive" aria-label="日付の切り替わり">
-  <div class="sky"></div><div class="sun"></div>
-  <div class="ln small" id="dcSmall">夜が明けた</div>
+  <div class="sky"></div><div class="stars"></div><div class="sun"></div><svg class="town" viewBox="0 0 1200 170" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><path class="hills" d="M0 170 L0 120 C150 92 300 112 450 104 C620 94 760 116 900 102 C1020 92 1120 108 1200 100 L1200 170Z"/><path class="roofs" d="M0 170 L0 97 L19 81 L38 97 L38 170 L44 170 L44 106 L69 84 L94 106 L94 170 L94 97 L129 80 L163 97 L163 170 L163 124 L183 104 L203 124 L203 170 L203 97 L234 77 L264 97 L264 170 L264 126 L293 101 L323 126 L323 170 L323 106 L348 90 L374 106 L374 170 L380 170 L380 132 L413 115 L446 132 L446 170 L452 170 L452 129 L478 111 L505 129 L505 170 L505 170 L505 96 L515 96 L515 88 L523 88 L523 96 L531 96 L531 88 L539 88 L539 96 L539 52 L536 52 L550 22 L564 52 L561 52 L561 70 L575 70 L575 40 L571 40 L600 0 L629 40 L625 40 L625 70 L639 70 L639 52 L636 52 L650 22 L664 52 L661 52 L661 96 L669 96 L669 88 L677 88 L677 96 L685 96 L685 88 L693 88 L693 96 L695 96 L695 170 L702 170 L702 58 L698 58 L713 30 L728 58 L724 58 L724 170 L732 170 L732 98 L779 98 L779 84 L787 84 L787 98 L800 98 L800 170 L800 104 L823 86 L846 104 L846 170 L852 170 L852 98 L877 84 L902 98 L902 170 L902 135 L937 110 L972 135 L972 170 L972 115 L1003 102 L1034 115 L1034 170 L1034 95 L1070 73 L1106 95 L1106 170 L1106 126 L1142 126 L1142 112 L1150 112 L1150 126 L1157 126 L1157 170 L1157 122 L1187 122 L1187 108 L1195 108 L1195 122 L1200 122 L1200 170 L1206 170 L1200 170Z"/><circle class="clock" cx="713" cy="72" r="6"/><g class="wins"><rect x="9" y="116" width="6" height="8" style="animation-delay:2.27s"/><rect x="26" y="114" width="6" height="8" style="animation-delay:2.45s"/><rect x="55" y="125" width="6" height="8" style="animation-delay:0.37s"/><rect x="84" y="124" width="6" height="8" style="animation-delay:1.93s"/><rect x="103" y="111" width="6" height="8" style="animation-delay:1.29s"/><rect x="153" y="114" width="6" height="8" style="animation-delay:2.19s"/><rect x="175" y="135" width="6" height="8" style="animation-delay:1.10s"/><rect x="213" y="112" width="6" height="8" style="animation-delay:1.00s"/><rect x="274" y="142" width="6" height="8" style="animation-delay:1.51s"/><rect x="332" y="125" width="6" height="8" style="animation-delay:2.63s"/><rect x="740" y="109" width="6" height="8" style="animation-delay:0.00s"/><rect x="913" y="148" width="6" height="8" style="animation-delay:0.67s"/><rect x="960" y="145" width="6" height="8" style="animation-delay:2.31s"/><rect x="982" y="135" width="6" height="8" style="animation-delay:0.11s"/><rect x="1116" y="144" width="6" height="8" style="animation-delay:1.01s"/><rect x="596" y="48" width="8" height="12" rx="4"/><rect x="546" y="60" width="7" height="10" rx="3"/><rect x="647" y="60" width="7" height="10" rx="3"/><rect x="560" y="110" width="8" height="12"/><rect x="632" y="110" width="8" height="12"/></g></svg>
+  <div class="dc-mid">
+  <div class="ln small"><i class="orn"></i><span id="dcSmall">夜が明けた</span><i class="orn r"></i></div>
   <div class="ln big" id="dcBig">2日目</div>
   <div class="ln sub" id="dcSub"></div>
-  <div class="ln secline"><span class="sec-face"><svg class="cuckoo" viewBox="0 0 44 48" aria-hidden="true"><path d="M3 18 L22 4 L41 18 Z" fill="#5b3a22" stroke="#241c14" stroke-width="2" stroke-linejoin="round"/><rect x="7" y="17" width="30" height="26" rx="2" fill="#a8743f" stroke="#241c14" stroke-width="2"/><rect x="13" y="20" width="18" height="16" rx="8" fill="#2a2018"/><g class="bird"><ellipse cx="22" cy="31" rx="8" ry="6" fill="#c9c6bd" stroke="#241c14" stroke-width="1.5"/><circle cx="22" cy="24" r="5.5" fill="#dedad0" stroke="#241c14" stroke-width="1.5"/><path d="M26.5 24.5 l4 1.2 -4 1.2z" fill="#e0a040" stroke="#241c14" stroke-width="1"/><circle cx="23.6" cy="23.4" r="1" fill="#241c14"/><path d="M21.6 21.6 l3.4 -.8" stroke="#241c14" stroke-width="1.2" stroke-linecap="round"/><path d="M17.5 20 h9 l-1 -4 h-7z" fill="#1b4332" stroke="#241c14" stroke-width="1.2" stroke-linejoin="round"/><path d="M17 20.4 h10" stroke="#c9a84c" stroke-width="1.4"/></g><path d="M22 43 v4" stroke="#241c14" stroke-width="2"/><circle cx="22" cy="47" r="1.6" fill="#c9a84c"/></svg></span><span id="dcSay"></span></div>
-  <div class="ln tap">タップで進む</div>
+  <div class="ln secline"><span class="sl-face"><svg class="cuckoo" viewBox="0 0 44 48" aria-hidden="true"><path d="M3 18 L22 4 L41 18 Z" fill="#5b3a22" stroke="#241c14" stroke-width="2" stroke-linejoin="round"/><rect x="7" y="17" width="30" height="26" rx="2" fill="#a8743f" stroke="#241c14" stroke-width="2"/><rect x="13" y="20" width="18" height="16" rx="8" fill="#2a2018"/><g class="bird"><ellipse cx="22" cy="31" rx="8" ry="6" fill="#c9c6bd" stroke="#241c14" stroke-width="1.5"/><circle cx="22" cy="24" r="5.5" fill="#dedad0" stroke="#241c14" stroke-width="1.5"/><path d="M26.5 24.5 l4 1.2 -4 1.2z" fill="#e0a040" stroke="#241c14" stroke-width="1"/><circle cx="23.6" cy="23.4" r="1" fill="#241c14"/><path d="M21.6 21.6 l3.4 -.8" stroke="#241c14" stroke-width="1.2" stroke-linecap="round"/><path d="M17.5 20 h9 l-1 -4 h-7z" fill="#1b4332" stroke="#241c14" stroke-width="1.2" stroke-linejoin="round"/><path d="M17 20.4 h10" stroke="#c9a84c" stroke-width="1.4"/></g><path d="M22 43 v4" stroke="#241c14" stroke-width="2"/><circle cx="22" cy="47" r="1.6" fill="#c9a84c"/></svg></span><div class="sl-body"><b class="sl-name">秘書<small>時報係の鳩</small></b><p id="dcSay"></p></div><em class="sl-next">▼</em></div>
+  </div>
+  <div class="ln tap"><span>タップで進む</span></div>
 </div>
 
 <div class="modal" id="bookModal" hidden>
@@ -3630,7 +3676,7 @@ function secReportLine(rep){
 // 全画面カード：タップ・キー・時間経過のどれかで次へ
 let cardTimer=null;
 function playCard(c,ms,next,say){
-  c.querySelectorAll('.sky,.sun,.ln,.letter').forEach(el=>{el.style.animation='none'; void el.offsetWidth; el.style.animation='';});
+  c.querySelectorAll('.sky,.sun,.ln,.letter,.stars').forEach(el=>{el.style.animation='none'; void el.offsetWidth; el.style.animation='';});
   c.hidden=false;
   const el=say&&c.querySelector(say[0]); let pending=false;
   if(el){el.textContent=''; el._done=false; pending=true; clearTimeout(c._st); c._st=setTimeout(()=>{pending=false; typeInto(el,say[1]);},RM?0:700);}
@@ -3654,6 +3700,8 @@ function typeFinish(el){ if(el&&el._typ){clearInterval(el._typ); el._typ=null; e
 function showDuskCard(){
   const rep=S.lastReport; $('ddSmall').textContent=`${rep?rep.day:S.day}日目 · 日が暮れた`;
   const say=rep&&rep.cleared?`王様、${rep.cleared.name}の親玉を討ち取りました！ 報告書をどうぞ`:rep&&rep.hl&&rep.hl[0]&&rep.hl[0].big?`王様、きょうは良い知らせがございます。報告書をどうぞ`:(rep&&rep.day===1)?'王様、はじめての報告書です。冒険者ひとりずつの一日が書いてあります':'王様、本日の報告書をお持ちしました';
+  const tl=$('ddTally'); if(rep&&rep.advs){const g=rep.advs.reduce((m,a)=>m+(a.elem||0),0), k=rep.advs.reduce((m,a)=>m+(a.wins||0),0), ex=Math.floor(rep.explore||0), ex0=Math.floor(rep.exploreFrom??ex);
+    tl.innerHTML=`<span><i class="shard"></i>${RES}<b>+${g}</b></span><span>討伐<b>${k}</b></span><span>${AREAS[rep.area||0].short}の探索<b>${ex}%</b>${ex>ex0?`<small>（+${ex-ex0}）</small>`:''}</span>`;} else tl.innerHTML='';
   playCard($('duskCard'),null,()=>openReport(),['#ddSay',say]); // タップで進む
 }
 function showDayCard(){
@@ -3882,7 +3930,7 @@ $('ch2Btn').addEventListener('click',()=>{S=autoCh1(CH2_SEED); saveGame(); sel=n
 // 開発用：コンソールやテストから日を早送りする  __tct.skip(3) で3日進めて報告書を開く
 if(DEV)window.__sel=v=>{sel=v; renderPanel();};
 if(DEV)window.__orders=()=>openOrders();
-if(DEV)window.__tct={map:r=>mapHTML(r),say:(t,o)=>secSay(t,o||{pri:3}),menu:()=>secMenu(),ask:k=>secAnswer(k),get S(){return S;},skip(n=1){for(let i=0;i<n;i++){if(S.phase!=='day')startDay(S); tick(S,2000);} wasPhase=S.phase; $('titleModal').hidden=true; $('dayCard').hidden=true; $('duskCard').hidden=true; openReport({instant:true});}};
+if(DEV)window.__tct={dusk:()=>showDuskCard(),dawn:()=>showDayCard(),map:r=>mapHTML(r),say:(t,o)=>secSay(t,o||{pri:3}),menu:()=>secMenu(),ask:k=>secAnswer(k),get S(){return S;},skip(n=1){for(let i=0;i<n;i++){if(S.phase!=='day')startDay(S); tick(S,2000);} wasPhase=S.phase; $('titleModal').hidden=true; $('dayCard').hidden=true; $('duskCard').hidden=true; openReport({instant:true});}};
 updateHud(); renderPanel(); requestAnimationFrame(loop);
 initGfx().then(g=>{GFX=g; if(DEV)window.__gfx=g;}).catch(e=>{console.error(e); $('glfail').hidden=false;});
 </script>
