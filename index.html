@@ -807,6 +807,14 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
   #reportModal:not(.paper) #reportSheet .sec-say p{border-radius:4px 14px 13px 12px;font-size:14px}
 }
 @keyframes secSide{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:none}}
+.veil{position:fixed;inset:0;z-index:60;display:grid;place-items:center;background:radial-gradient(circle at 50% 50%,#2a1a10 0%,#120a05 60%,#05030a 100%);clip-path:circle(0% at 50% 50%);pointer-events:all}
+.veil[hidden]{display:none}
+.veil.in{animation:veilIn .3s cubic-bezier(.6,0,.4,1) forwards}
+.veil.out{clip-path:circle(80% at 50% 50%);animation:veilOut .42s cubic-bezier(.6,0,.4,1) forwards}
+@keyframes veilIn{from{clip-path:circle(0% at 50% 50%)}to{clip-path:circle(80% at 50% 50%)}}
+@keyframes veilOut{from{clip-path:circle(80% at 50% 50%)}to{clip-path:circle(0% at 50% 50%)}}
+.veil-crown{display:grid;place-items:center;width:64px;height:64px;border-radius:50%;font-size:34px;color:var(--wood-2);background:radial-gradient(circle at 35% 30%,#fff0bf,var(--trim) 55%,var(--trim-dk));box-shadow:0 0 0 2px #120a05,0 0 0 5px var(--trim-dk),0 0 30px #c9a84c88;animation:veilCrown .7s ease-out}
+@keyframes veilCrown{from{transform:scale(.4) rotate(-20deg);opacity:0}60%{transform:scale(1.08)}to{transform:none;opacity:1}}
 /* ===== タイトル画面（v0.30.0） ===== */
 .title-screen{position:fixed;inset:0;z-index:25;display:flex;flex-direction:column;align-items:center;overflow:hidden;line-height:1.5;color:var(--hud-ink);background:radial-gradient(120% 80% at 50% 58%,transparent 20%,#05080cd0 78%),linear-gradient(180deg,#0a1124f2 0%,#141a3acc 22%,#1a1a3a55 46%,#0000 62%,#05080ce0 100%)}
 .title-screen[hidden]{display:none}
@@ -966,7 +974,7 @@ body:has(#titleModal:not([hidden])) .wrap>:not(.screen),body:has(#titleModal:not
     </nav>
     <p class="tt-note" id="saveNote" hidden></p>
   </div>
-  <footer class="tt-foot"><span class="tt-ver">プロトタイプ v0.32.7 · HD-2D</span><span>1日が終わるたびに、このブラウザに自動で保存します</span><span>© Fuch.io</span></footer>
+  <footer class="tt-foot"><span class="tt-ver">プロトタイプ v0.32.9 · HD-2D</span><span>1日が終わるたびに、このブラウザに自動で保存します</span><span>© Fuch.io</span></footer>
   <div class="tt-how" id="howWin" hidden>
     <div class="tt-how-box" role="dialog" aria-label="あそびかた">
       <b class="sl-name">あそびかた</b>
@@ -997,6 +1005,7 @@ body:has(#titleModal:not([hidden])) .wrap>:not(.screen),body:has(#titleModal:not
   <div class="ln tap"><span>タップで報告書を読む</span></div>
 </div>
 
+<div class="veil" id="veil" hidden aria-hidden="true"><span class="veil-crown">♛</span></div>
 <div class="daycard stonecard" id="stoneCard" hidden role="dialog" aria-live="assertive" aria-label="精霊石を手に入れた">
   <div class="sky st-sky"></div><div class="st-rays"></div><div class="st-spark" id="stSpark" aria-hidden="true"></div>
   <div class="dc-mid st-mid">
@@ -3780,7 +3789,7 @@ function openReport(opts={}){
   playReport(rep,tok,res0,ex0,total).then(()=>{
     if(tok!==repTok)return; sheet.onclick=null;
     $('reportActions').innerHTML=`<button class="primary" id="next1">${opts.back?'指示にもどる':'あすの指示へ'}</button>`;
-    $('next1').addEventListener('click',()=>{repTok++; openOrders(!opts.back);});
+    $('next1').addEventListener('click',()=>{repTok++; transit(()=>openOrders(!opts.back));});
   });
 }
 // カードが画面に入ったら（または、もう通り過ぎていたら）進む。スクロールは読む人にまかせる
@@ -3853,6 +3862,13 @@ function secReportLine(rep){
   if(ups.length)return `${names(ups)}が腕を上げました。あすも頼もしいですね`;
   return 'きょうの報告は以上です。あすの立て札を決めましょう';
 }
+// 画面の切りかえ：金の王冠の幕がさっと閉じて、開く
+let veilBusy=false;
+function transit(fn){
+  const v=$('veil'); if(RM||!v||veilBusy){fn(); return;}
+  veilBusy=true; v.hidden=false; v.className='veil in';
+  setTimeout(()=>{try{fn();}finally{v.className='veil out'; setTimeout(()=>{v.hidden=true; v.className='veil'; veilBusy=false;},420);}},300);
+}
 // 全画面カード：タップ・キー・時間経過のどれかで次へ
 let cardTimer=null;
 function playCard(c,ms,next,say){
@@ -3863,7 +3879,7 @@ function playCard(c,ms,next,say){
   let done=false; const go=()=>{if(done)return;
     if(el&&pending){clearTimeout(c._st); pending=false; el.textContent=say[1]; el._full=say[1]; el._done=true; return;} // まだ話し始める前：全文を出すだけ
     if(el&&typeFinish(el))return; // 話している途中：全文を出すだけ
-    done=true; clearTimeout(cardTimer); clearTimeout(c._st); c.hidden=true; c.removeEventListener('click',go); document.removeEventListener('keydown',key); next();};
+    done=true; clearTimeout(cardTimer); clearTimeout(c._st); c.removeEventListener('click',go); document.removeEventListener('keydown',key); transit(()=>{c.hidden=true; next();});};
   const key=e=>{if(e.key==='Enter'||e.key===' '||e.key==='Escape'){e.preventDefault(); go();}};
   c.addEventListener('click',go); document.addEventListener('keydown',key);
   if(ms)cardTimer=setTimeout(go,ms);
@@ -3937,7 +3953,7 @@ function openOrders(dawn){
   $('reportSheet').querySelectorAll('[data-cancel]').forEach(el=>el.addEventListener('click',()=>{const st=S.sites.find(x=>x.id===+el.dataset.cancel); if(st&&!cancelOrder(S,st)){baseDirty=true; updateHud(); const y=$('reportModal').scrollTop; openOrders(); $('reportModal').scrollTop=y;}}));
   $('planBtn').addEventListener('click',()=>{planning=true; $('reportModal').hidden=true; $('planBar').hidden=false; sel=null; renderPanel(); updateHud();});
   if(rep)$('back3').addEventListener('click',()=>{openReportOnly();});
-  $('go').addEventListener('click',()=>{ if(first(S,'board')&&!S.board.length)return; $('reportModal').hidden=true; startDay(S); secDayStart(); if(speed===0)setSpeed(1); renderPanel(); updateHud(); });
+  $('go').addEventListener('click',()=>{ if(first(S,'board')&&!S.board.length)return; transit(()=>{$('reportModal').hidden=true; startDay(S); secDayStart(); if(speed===0)setSpeed(1); renderPanel(); updateHud();}); });
 }
 // 立て札に貼る依頼を選ぶ（指示画面）。貼った順が立て札の上からの順
 function boardEditHTML(){
@@ -3964,7 +3980,7 @@ function townHidden(){for(const e of _cover)if(e&&!e.hidden)return true;return f
 function loop(now){
   const dt=Math.min(.1,(now-lastT)/1000); lastT=now;
   if(S.phase==='day'&&speed>0){acc+=dt*speed*RATE; const whole=Math.floor(acc); if(whole>0){acc-=whole; tick(S,whole);}}
-  if(S.phase==='report'&&wasPhase==='day'){acc=0; showDuskCard(); saveGame();}
+  if(S.phase==='report'&&wasPhase==='day'){acc=0; saveGame(); transit(()=>showDuskCard());}
   wasPhase=S.phase;
   if(GFX&&!townHidden())GFX.draw(now,dt);
   if(!townHidden()){secWatch(now); secMarkPos(); if(S.phase==='day')renderMini(now);}
@@ -4120,7 +4136,7 @@ function renderMini(now){
 // 大事なときの帯（地名表示ふう）
 function showBanner(main,sub){ const b=$('banner'); $('bannerMain').textContent=main; $('bannerSub').textContent=sub||''; b.hidden=false; b.classList.remove('go'); void b.offsetWidth; b.classList.add('go'); clearTimeout(b._t); b._t=setTimeout(()=>{b.hidden=true;},3400); }
 function secMarkPos(){ const m=$('towerMark'); if(m.hidden||!GFX||!GFX.towerScreen)return; const p=GFX.towerScreen(); m.style.left=`${p.x}px`; m.style.top=`${p.y}px`; }
-$('dlg').addEventListener('click',e=>{ if(e.target.closest('[data-ask]'))return; const t=$('dlgText'); if(typeFinish(t)){if(secShow&&secShow.until!==Infinity)secShow.until=performance.now()+3500; return;} if(secShow&&secShow.until===Infinity)return; const m=secShow; hideSecBub(); if(m&&m.adv!=null){sel=null; pickAdv=m.adv; advWin=true; renderPanel(); renderParty(); setDrawer(true);} });
+$('dlg').addEventListener('click',e=>{ if(e.target.closest('[data-ask]'))return; const t=$('dlgText'); if(typeFinish(t)){if(secShow&&secShow.until!==Infinity)secShow.until=performance.now()+3500; return;} if(secShow&&secShow.until===Infinity)return; hideSecBub(); }); // せりふを閉じるだけ（冒険者の窓は開かない）
 $('secBtn').addEventListener('click',()=>{ // 押すと、いまのようすをひとこと
   if(S.phase!=='day'){secQ.length=0; return;}
   const out=S.advs.filter(a=>a.state==='away'), home=S.advs.filter(a=>a.rep&&a.rep.back!=null);
@@ -4146,7 +4162,7 @@ function loadGame(d){
 }
 {const d=readSave(); $('startBtn').classList.toggle('main',!d); if(d){$('contBtn').hidden=false; $('contBtn').classList.add('main'); $('contBtn').innerHTML=`続きから<small>${d.day}日目・精霊石${Math.max(0,(d.ch||1)-1)}つ</small>`; $('startBtn').textContent='はじめから';
   $('saveNote').hidden=false; $('saveNote').textContent='「はじめから」や「南の洞窟を攻略したところから」を選ぶと、いまの保存は上書きされます。';}}
-$('contBtn').addEventListener('click',()=>{const d=readSave(); if(!d)return; S=loadGame(d); sel=null; planning=false; baseDirty=true; wasPhase=S.phase; $('titleModal').hidden=true; updateHud(); renderPanel(); openReport();});
+$('contBtn').addEventListener('click',()=>{transit(()=>{const d=readSave(); if(!d)return; S=loadGame(d); sel=null; planning=false; baseDirty=true; wasPhase=S.phase; $('titleModal').hidden=true; updateHud(); renderPanel(); openReport();});});
 addEventListener('pagehide',saveGame); document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')saveGame();});
 // タイトル画面：金の粉・あそびかた・矢印キーで選ぶ
 {const box=$('ttDust'); if(!RM){let h=''; for(let i=0;i<18;i++){h+=`<i style="left:${(Math.random()*100).toFixed(1)}%;animation-duration:${(7+Math.random()*7).toFixed(1)}s;animation-delay:${(-Math.random()*12).toFixed(1)}s;--dx:${(Math.random()*60-30)|0}px;transform:scale(${(.5+Math.random()*.8).toFixed(2)})"></i>`;} box.innerHTML=h;}
@@ -4158,8 +4174,8 @@ addEventListener('pagehide',saveGame); document.addEventListener('visibilitychan
    if(e.key!=='ArrowDown'&&e.key!=='ArrowUp')return; e.preventDefault();
    const L=[...document.querySelectorAll('#titleModal .tt-menu .tm-btn')].filter(b=>!b.hidden), i=L.indexOf(document.activeElement);
    L[(i<0?0:i+(e.key==='ArrowDown'?1:L.length-1))%L.length].focus();});}
-$('startBtn').addEventListener('click',()=>{$('titleModal').hidden=true; openReport();});
-$('ch2Btn').addEventListener('click',()=>{S=autoCh1(CH2_SEED); saveGame(); sel=null; planning=false; baseDirty=true; wasPhase=S.phase; $('titleModal').hidden=true; updateHud(); renderPanel(); openReport();});
+$('startBtn').addEventListener('click',()=>{transit(()=>{$('titleModal').hidden=true; openReport();});});
+$('ch2Btn').addEventListener('click',()=>{transit(()=>{S=autoCh1(CH2_SEED); saveGame(); sel=null; planning=false; baseDirty=true; wasPhase=S.phase; $('titleModal').hidden=true; updateHud(); renderPanel(); openReport();});});
 // 開発用：コンソールやテストから日を早送りする  __tct.skip(3) で3日進めて報告書を開く
 if(DEV)window.__sel=v=>{sel=v; renderPanel();};
 if(DEV)window.__orders=()=>openOrders();
