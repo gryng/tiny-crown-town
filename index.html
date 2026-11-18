@@ -949,7 +949,7 @@ body:has(#titleModal:not([hidden])) .wrap>:not(.screen),body:has(#titleModal:not
     </nav>
     <p class="tt-note" id="saveNote" hidden></p>
   </div>
-  <footer class="tt-foot"><span class="tt-ver">プロトタイプ v0.32.1 · HD-2D</span><span>1日が終わるたびに、このブラウザに自動で保存します</span><span>© Fuch.io</span></footer>
+  <footer class="tt-foot"><span class="tt-ver">プロトタイプ v0.32.2 · HD-2D</span><span>1日が終わるたびに、このブラウザに自動で保存します</span><span>© Fuch.io</span></footer>
   <div class="tt-how" id="howWin" hidden>
     <div class="tt-how-box" role="dialog" aria-label="あそびかた">
       <b class="sl-name">あそびかた</b>
@@ -2222,7 +2222,6 @@ function goalsFor(S,ch,ar){
   if(ch===1){ // 章をまたいで続く小目標は、1章にだけ置く（終わった章のぶんも残るので）
   g('q3','1日に依頼を3つ達成する',10,()=>A2().filter(a=>a.rep.questDone).length>=3);
   g('qall','全員が自主練せず依頼を受ける（3人以上）',10,()=>{const L=A2(); return L.length>=3&&L.every(a=>a.rep.quest.k!=='self');});
-  g('qbonus','手当をつけた依頼が達成される',10,()=>A2().some(a=>a.rep.quest.bonus&&a.rep.questDone));
   g('qhelp','手伝いの冒険者がいる日に、建物が完成する',10,()=>A2().some(a=>a.rep.helpBuilt&&a.rep.helpBuilt.length));
   }
   if(ch===1){
@@ -3924,12 +3923,12 @@ function openOrders(dawn){
 function boardEditHTML(){
   if(!first(S,'board'))return '<div class="blk"><h4 class="sec">立て札に貼る依頼</h4><p class="rc-note">立て札がない。</p></div>';
   const av=questsAvail(S), on=S.board, off=av.filter(q=>!on.some(b=>b.id===q.id)), full=on.length>=boardMax(S);
-  const line=q=>`<em>${rewardOf(q)}G</em>${q.party?'・3人で組む':''}`;
+  const line=q=>`報酬：<em>${rewardOf(q)}G</em>${q.party?'・3人で組む':''}`;
   const qAr=q=>q.ar??(q.n?NODES[q.n].ar:null), top=Math.max(1,...S.advs.map(a=>a.lv));
   const risk=q=>{const ar=qAr(q); return ar==null||q.k==='field'||!S.found[ar]?0:dangerOf(S,ar);};
   const qTitle=q=>{const ar=qAr(q), d=risk(q); return QK[q.k].name(q).replace(/【(.+?)】$/,'<i class="q-ar">$1</i>')+(d?`<i class="q-warn${d>1?' hi':''}">⚠ ${d>1?'かなり危険':'ちょっと危険'}</i>`:'');};
   const row=(q,i)=>`<div class="qrow on${risk(q)?' risky':''}"><span class="qn">${i+1}</span><b>${qTitle(q)}</b><small>${line(q)}</small>
-      <span class="qa"><button data-qbon="${q.id}" aria-pressed="${!!q.bonus}" title="特別手当（${RES}${BONUS_COST}。だれかが受けたときだけ払う）">手当</button>${i?`<button data-qup="${q.id}" aria-label="上へ">↑</button>`:''}<button data-qdel="${q.id}" aria-label="はがす">×</button></span></div>`;
+      <span class="qa">${i?`<button data-qup="${q.id}" aria-label="上へ">↑</button>`:''}<button data-qdel="${q.id}" aria-label="はがす">×</button></span></div>`;
   const cand=q=>`<div class="qrow${risk(q)?' risky':''}"><span class="qn off">＋</span><b>${qTitle(q)}</b><small>${line(q)}</small><span class="qa"><button data-qadd="${q.id}" ${full?'disabled':''}>貼る</button></span></div>`;
   return `<div class="blk"><div class="qhead"><h4 class="sec">立て札に貼る依頼 ${on.length}/${boardMax(S)}</h4></div>
         <div class="qboard">${on.map(row).join('')||'<p class="rc-note">まだ何も貼っていない。</p>'}</div>
