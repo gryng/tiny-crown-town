@@ -819,6 +819,25 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
 #bookModal .x.xicon.book-x{position:absolute;top:10px;right:12px;z-index:2;width:36px;height:36px;border-radius:50%;color:var(--wood-2);background:radial-gradient(circle at 35% 30%,#fff0bf,var(--trim) 60%,var(--trim-dk));border:1.5px solid #120a05;box-shadow:0 2px 6px #0008;cursor:pointer}
 #bookModal .x.xicon.book-x:hover{filter:brightness(1.1)}
 #bookModal .x.xicon.book-x::before{display:none}
+/* ===== 新しい冒険者を迎える演出（v0.34.0） ===== */
+.daycard.joincard{--tc:#c0392b}
+.daycard.joincard .jn-sky{background:radial-gradient(70% 60% at 50% 36%,color-mix(in srgb,var(--tc) 40%,#3a2616) 0%,#1e130c 58%,#0a0604 100%);opacity:0;animation:dawn .8s ease-out forwards}
+.daycard.joincard .jn-rays{--glow:#ffd87a;top:34%;opacity:0;animation:raysIn 1s ease-out .3s forwards,raysSpin 50s linear infinite}
+.daycard.joincard .jn-mid{gap:12px;padding-bottom:8vh}
+.jn-kick{animation-delay:.2s!important}
+.jn-face{width:clamp(104px,18vh,160px);aspect-ratio:1;padding:6px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff0bf,var(--trim) 55%,var(--trim-dk));box-shadow:0 0 0 3px #120a05,0 0 0 7px var(--tc),0 0 40px #ffd87a88;animation:faceIn .8s cubic-bezier(.2,1.5,.4,1) .35s both!important}
+.jn-face img{display:block;width:100%;height:100%;border-radius:50%;image-rendering:pixelated;background:#0f2219}
+@keyframes faceIn{0%{opacity:0;transform:scale(.3) rotate(-12deg)}100%{opacity:1;transform:none}}
+.daycard.joincard .jn-name{font-size:clamp(40px,7vw,68px);animation-delay:.8s}
+.jn-pers{display:flex;flex-direction:column;align-items:center;gap:6px;max-width:min(520px,calc(100vw - 32px));text-align:center;animation-delay:1.1s!important;text-shadow:none!important}
+.jn-pers b{padding:4px 16px;font:800 15px var(--f-head);letter-spacing:.14em;color:var(--hud-ink);background:linear-gradient(180deg,var(--wood-hi),var(--wood) 50%,var(--wood-2));border:1.5px solid #120a05;border-radius:999px;box-shadow:inset 0 0 0 1px var(--trim-dk),0 3px 8px #0008}
+.jn-pers span{font:700 13px/1.6 var(--f-body);color:#e8d9b4}
+.jn-say{position:relative;margin-top:8px;animation-delay:1.4s!important;text-shadow:none!important}
+.jn-say p{box-sizing:border-box;position:relative;margin:0;min-width:min(420px,calc(100vw - 48px));max-width:min(520px,calc(100vw - 48px));min-height:1.6em;padding:12px 20px;font:600 17px/1.6 var(--f-hand);color:var(--ink);background:#fffaf0;border:2px solid #120a05;border-radius:14px;box-shadow:0 4px 12px #0008;text-align:center}
+.jn-say p::before{content:"";position:absolute;left:50%;top:-11px;margin-left:-9px;border:9px solid transparent;border-top:0;border-bottom:11px solid #120a05}
+.jn-say p::after{content:"";position:absolute;left:50%;top:-8px;margin-left:-7px;border:7px solid transparent;border-top:0;border-bottom:9px solid #fffaf0}
+.daycard.joincard .ln.tap{animation-delay:1.8s}
+@media (prefers-reduced-motion:reduce){.jn-face,.jn-rays{animation:none!important;opacity:1!important}}
 /* ===== タイトル画面（v0.30.0） ===== */
 .title-screen{position:fixed;inset:0;z-index:25;display:flex;flex-direction:column;align-items:center;overflow:hidden;line-height:1.5;color:var(--hud-ink);background:radial-gradient(120% 80% at 50% 58%,transparent 20%,#05080cd0 78%),linear-gradient(180deg,#0a1124f2 0%,#141a3acc 22%,#1a1a3a55 46%,#0000 62%,#05080ce0 100%)}
 .title-screen[hidden]{display:none}
@@ -978,7 +997,7 @@ body:has(#titleModal:not([hidden])) .wrap>:not(.screen),body:has(#titleModal:not
     </nav>
     <p class="tt-note" id="saveNote" hidden></p>
   </div>
-  <footer class="tt-foot"><span class="tt-ver">プロトタイプ v0.33.1 · HD-2D</span><span>1日が終わるたびに、このブラウザに自動で保存します</span><span>© Fuch.io</span></footer>
+  <footer class="tt-foot"><span class="tt-ver">プロトタイプ v0.34.0 · HD-2D</span><span>1日が終わるたびに、このブラウザに自動で保存します</span><span>© Fuch.io</span></footer>
   <div class="tt-how" id="howWin" hidden>
     <div class="tt-how-box" role="dialog" aria-label="あそびかた">
       <b class="sl-name">あそびかた</b>
@@ -1009,6 +1028,17 @@ body:has(#titleModal:not([hidden])) .wrap>:not(.screen),body:has(#titleModal:not
   <div class="ln tap"><span>タップで報告書を読む</span></div>
 </div>
 
+<div class="daycard joincard" id="joinCard" hidden role="dialog" aria-live="assertive" aria-label="新しい冒険者">
+  <div class="sky jn-sky"></div><div class="st-rays jn-rays"></div><div class="st-spark" id="jnSpark" aria-hidden="true"></div>
+  <div class="dc-mid jn-mid">
+    <div class="ln small jn-kick"><i class="orn"></i><span id="jnKick">新しい冒険者がやってきた</span><i class="orn r"></i></div>
+    <div class="ln jn-face"><img id="jnFace" alt=""></div>
+    <div class="ln big jn-name" id="jnName">アルト</div>
+    <div class="ln jn-pers"><b id="jnPers">のんびり屋</b><span id="jnDesc"></span></div>
+    <div class="ln jn-say"><p id="jnSay"></p></div>
+  </div>
+  <div class="ln tap"><span id="jnTap">タップで進む</span></div>
+</div>
 <div class="veil" id="veil" hidden aria-hidden="true"><span class="veil-crown">♛</span></div>
 <div class="daycard stonecard" id="stoneCard" hidden role="dialog" aria-live="assertive" aria-label="精霊石を手に入れた">
   <div class="sky st-sky"></div><div class="st-rays"></div><div class="st-spark" id="stSpark" aria-hidden="true"></div>
@@ -1116,6 +1146,17 @@ const PERSONAS={
   sewazuki:{style:'mine',name:'世話好き',leave:-15,k:['みんな無事でよかった','無理しちゃだめだよ','わたしに任せて']},
   ippiki:{style:'train',name:'一匹狼',skipPark:true,atk:1,solo:true,k:['……ひとりで行く','群れるのは苦手だ','……別に']},
 };
+// はじめて町に来たときの紹介（ひとことの説明と、王様へのあいさつ）
+const INTRO={
+  nonbiri:['マイペース。公園でゆっくりしてから出かけ、帰り道の寄り道も大好き。','あ、王様。のんびりやらせてもらいますね。……ふぁ'],
+  sekkachi:['何でも急ぐ。公園には寄らず、店も一軒だけ。いつも真っ先に門を出る。','王様、さっそく行っていいですか！ 早く冒険に出たいんです！'],
+  okubyo:['こわがり。防具を先に買い、危なくなると早めに引き返す。','ぼ、ぼくでいいのかな……。で、でも、がんばります'],
+  makezu:['勝ち気。強い相手にもひるまず、負けた次の日はかえって燃える。','王様、見ててください。だれよりも強くなってみせます'],
+  kuishinbo:['公園とごはんが大好き。宝探しが得意で、ゴールドに目がない。','王様、この町のごはんはおいしいですか？ ……あ、冒険もがんばります！'],
+  yumemi:['物語にあこがれる冒険好き。まだだれも行っていない道や部屋に目がない。','ずっと夢見てたんです。王様の物語の、冒険者になるのを'],
+  sewazuki:['面倒見がよく早起き。仲間と組むのが得意で、町の手伝いも好き。','みんなの面倒は、わたしに任せて。王様も無理しないでくださいね'],
+  ippiki:['ひとりが好き。人とは組まないが、腕は確か。主の討伐を好む。','……ひとりで行く。それでいいなら、手を貸す'],
+};
 const PIDS=Object.keys(PERSONAS);
 const PP=a=>PERSONAS[a.pid];
 const stepTicks=a=>a.carp||a.doc?WALK:a.slow?SLOW:(PP(a).walk||WALK);
@@ -1156,7 +1197,7 @@ function bfs(g,a,b){
 }
 
 function newState(rng){
-  const S={g:makeMap(),day:1,t:DAY_START,elem:START_ELEM,justWon:false,area:0,ex:[0,0,0],down:[false,false,false],go:[false,false,false],found:[false,false,false],stones:0,nom:{},board:null,parkUse:{},chapter:1,b:[],advs:[],sites:[],carps:[newCarp(0)],docs:[],builtToday:[],stock:{sword:1,axe:0,dagger:0,mail:1,cloth:0},keys:{sword:0,axe:0,dagger:0,mail:0,cloth:0},items:{},know:{},used:{weapon:[],armor:[]},refund:0,phase:'report',parkUsed:0,demolished:0,rng:rng||Math.random,nextId:1,lastReport:null,fx:[],world:newWorld(),fights:[]}; areaAcc(S);
+  const S={g:makeMap(),day:1,t:DAY_START,elem:START_ELEM,justWon:false,area:0,ex:[0,0,0],down:[false,false,false],go:[false,false,false],found:[false,false,false],stones:0,nom:{},board:null,parkUse:{},chapter:1,b:[],advs:[],sites:[],carps:[newCarp(0)],docs:[],builtToday:[],stock:{sword:1,axe:0,dagger:0,mail:1,cloth:0},keys:{sword:0,axe:0,dagger:0,mail:0,cloth:0},items:{},know:{},used:{weapon:[],armor:[]},refund:0,phase:'report',parkUsed:0,demolished:0,rng:rng||Math.random,nextId:1,lastReport:null,fx:[],world:newWorld(),fights:[],welcomed:[]}; areaAcc(S);
   // 性格の出てくる順番はプレイごとに変わる
   S.pOrder=PIDS.slice(); for(let i=S.pOrder.length-1;i>0;i--){const j=Math.floor(S.rng()*(i+1)); [S.pOrder[i],S.pOrder[j]]=[S.pOrder[j],S.pOrder[i]];}
   build(S,'house',2,4,true); build(S,'house',20,11,true); build(S,'board',PLAZA.x,PLAZA.y,true); // 立て札は広場のまん中
@@ -3580,7 +3621,7 @@ $('trails').addEventListener('click',()=>{showTrails=!showTrails; $('trails').se
 $('lite').setAttribute('aria-pressed',String(lite));
 $('planDone').addEventListener('click',endPlanning);
 document.addEventListener('keydown',e=>{
-  if(e.key!=='Escape')return; if(document.querySelector('.modal:not([hidden])')||!$('dayCard').hidden||!$('duskCard').hidden||!$('stoneCard').hidden)return; // 報告書や指示の画面のときは何もしない
+  if(e.key!=='Escape')return; if(document.querySelector('.modal:not([hidden])')||!$('dayCard').hidden||!$('duskCard').hidden||!$('stoneCard').hidden||!$('joinCard').hidden)return; // 報告書や指示の画面のときは何もしない
   if(!$('menu').hidden){$('menu').hidden=true; $('menuBtn').setAttribute('aria-expanded','false'); return;}
   if(!$('dlg').hidden){hideSecBub(); return;}
   if(sel||advWin){sel=null; advWin=false; renderPanel(); renderParty(); setDrawer(false);}
@@ -3970,7 +4011,19 @@ function showDuskCard(){
   const say=rep&&rep.cleared?`王様、${rep.cleared.name}の親玉を討ち取りました！ 報告書をどうぞ`:rep&&rep.hl&&rep.hl[0]&&rep.hl[0].big?`王様、きょうは良い知らせがございます。報告書をどうぞ`:(rep&&rep.day===1)?'王様、はじめての報告書です。冒険者ひとりずつの一日が書いてあります':'王様、本日の報告書をお持ちしました';
   const tl=$('ddTally'); if(rep&&rep.advs){const g=rep.advs.reduce((m,a)=>m+(a.elem||0),0), k=rep.advs.reduce((m,a)=>m+(a.wins||0),0), ex=Math.floor(rep.explore||0), ex0=Math.floor(rep.exploreFrom??ex);
     tl.innerHTML=`<span><i class="shard"></i>${RES}<b>+${g}</b></span><span>討伐<b>${k}</b></span><span>${AREAS[rep.area||0].short}の探索<b>${ex}%</b>${ex>ex0?`<small>（+${ex-ex0}）</small>`:''}</span>`;} else tl.innerHTML='';
-  playCard($('duskCard'),null,()=>rep&&rep.cleared&&rep.cleared.stone?showStoneCard(rep):openReport(),['#ddSay',say]); // タップで進む（精霊石の日は、その演出をはさむ）
+  playCard($('duskCard'),null,()=>rep&&rep.cleared&&rep.cleared.stone?showStoneCard(rep):showJoins(()=>openReport()),['#ddSay',say]); // タップで進む（精霊石の日は、その演出をはさむ）
+}
+// 新しい冒険者を迎える：まだ紹介していない子を、ひとりずつ
+function showJoins(next){
+  S.welcomed=S.welcomed||[]; const L=S.advs.filter(a=>!S.welcomed.includes(a.id)); if(!L.length)return next();
+  const a=L[0], c=$('joinCard'), I=INTRO[a.pid]||['',a.k], first=S.advs.length<=2&&S.day===1;
+  S.welcomed.push(a.id); c.style.setProperty('--tc',a.tunic);
+  $('jnKick').textContent=first?(a===S.advs[0]?'最初の冒険者':'ふたり目の冒険者'):'新しい冒険者がやってきた';
+  $('jnFace').src=faceURL(a); $('jnName').textContent=a.name; $('jnPers').textContent=PP(a).name; $('jnDesc').textContent=I[0];
+  $('jnTap').textContent=L.length>1?'タップで次の冒険者へ':S.phase==='report'&&S.lastReport?'タップで報告書を読む':'タップで進む';
+  let h=''; if(!RM)for(let i=0;i<20;i++){const t=i/20*Math.PI*2, d=110+Math.random()*180; h+=`<i style="--x:${Math.cos(t)*d|0}px;--y:${Math.sin(t)*d|0}px;animation-delay:${(.5+Math.random()*.3).toFixed(2)}s"></i>`;} $('jnSpark').innerHTML=h;
+  c.querySelectorAll('.jn-rays,.jn-face,.st-spark i').forEach(el=>{el.style.animation='none'; void el.offsetWidth; el.style.animation='';});
+  playCard(c,null,()=>showJoins(next),['#jnSay',`「${I[1]}」`]);
 }
 const STONE_COL=[['#ffd2c8','#e0503c','#5a0f0a','#ff6a4d'],['#d2ecff','#3d86d6','#0c2a52','#5aa8ff'],['#d4ffdc','#3cb46a','#0d3d22','#5ae08a']];
 function showStoneCard(rep){
@@ -3980,7 +4033,7 @@ function showStoneCard(rep){
   $('stUnl').innerHTML=rankUnlocks(to).map((t,i)=>`<li style="--i:${i}"><i>開放</i>${t}</li>`).join('');
   let h=''; if(!RM)for(let i=0;i<26;i++){const a=i/26*Math.PI*2, d=120+Math.random()*220; h+=`<i style="--x:${Math.cos(a)*d|0}px;--y:${Math.sin(a)*d|0}px;animation-delay:${(.9+Math.random()*.3).toFixed(2)}s"></i>`;} $('stSpark').innerHTML=h;
   c.querySelectorAll('.st-rays,.st-gem,.st-unl li,.st-spark i').forEach(el=>{el.style.animation='none'; void el.offsetWidth; el.style.animation='';});
-  playCard(c,null,()=>openReport(),['#stSay',`王様、おめでとうございます！ 精霊石の力で位が上がり、町でできることが増えました。お城もひと回り立派になりますよ。${Object.keys(BUILD).some(t=>(BUILD[t].ch||1)===to)?'新しく建てられる施設もございます':'立て札にも、もう1枚貼れます'}`]);
+  playCard(c,null,()=>showJoins(()=>openReport()),['#stSay',`王様、おめでとうございます！ 精霊石の力で位が上がり、町でできることが増えました。お城もひと回り立派になりますよ。${Object.keys(BUILD).some(t=>(BUILD[t].ch||1)===to)?'新しく建てられる施設もございます':'立て札にも、もう1枚貼れます'}`]);
 }
 function showDayCard(){
   const c=$('dayCard');
@@ -4048,7 +4101,7 @@ function openReportOnly(){openReport({instant:true,back:true});}
 
 /* ---------- ループ ---------- */
 let GFX=null, panelClock=0, wasPhase=S.phase;
-const _cover=['reportModal','dayCard','duskCard','stoneCard','lineModal','bookModal'].map(id=>document.getElementById(id));
+const _cover=['reportModal','dayCard','duskCard','stoneCard','joinCard','lineModal','bookModal'].map(id=>document.getElementById(id));
 function townHidden(){for(const e of _cover)if(e&&!e.hidden)return true;return false;}
 function loop(now){
   const dt=Math.min(.1,(now-lastT)/1000); lastT=now;
@@ -4226,6 +4279,7 @@ function saveGame(){
 function readSave(){try{const t=localStorage.getItem(SAVE_KEY); if(!t)return null; const d=JSON.parse(t); return d&&d.v===1&&d.S?d:null;}catch(e){return null;}}
 function loadGame(d){
   const base=newState(Math.random), L=d.S;
+  if(!L.welcomed)L.welcomed=L.advs.map(a=>a.id); // 前からいる冒険者は紹介ずみ
   if(!L.ex){const ch=L.chapter||1; // 章で進んでいたころの保存：南を攻略済みなら東の湿地は見つけたことにする
     L.found=[true,ch>=2,false]; L.ex=ch>=2?[100,L.explore||0,0]:[L.explore||0,0,0]; L.down=ch>=2?[true,!!L.bossDown,false]:[!!L.bossDown,false,false]; L.go=[false,false,false]; L.stones=ch-1; L.area=ch>=2?1:0; delete L.explore; delete L.bossDown; delete L.bossGo;}
   for(const k in base)if(L[k]===undefined)L[k]=base[k]; // 古い保存にない項目は、はじめの値で埋める
@@ -4247,12 +4301,12 @@ addEventListener('pagehide',saveGame); document.addEventListener('visibilitychan
    if(e.key!=='ArrowDown'&&e.key!=='ArrowUp')return; e.preventDefault();
    const L=[...document.querySelectorAll('#titleModal .tt-menu .tm-btn')].filter(b=>!b.hidden), i=L.indexOf(document.activeElement);
    L[(i<0?0:i+(e.key==='ArrowDown'?1:L.length-1))%L.length].focus();});}
-$('startBtn').addEventListener('click',()=>{transit(()=>{$('titleModal').hidden=true; openReport();});});
-$('ch2Btn').addEventListener('click',()=>{transit(()=>{S=autoCh1(CH2_SEED); saveGame(); sel=null; planning=false; baseDirty=true; wasPhase=S.phase; $('titleModal').hidden=true; updateHud(); renderPanel(); openReport();});});
+$('startBtn').addEventListener('click',()=>{transit(()=>{$('titleModal').hidden=true; showJoins(()=>openReport());});});
+$('ch2Btn').addEventListener('click',()=>{transit(()=>{S=autoCh1(CH2_SEED); S.welcomed=S.advs.map(a=>a.id); saveGame(); sel=null; planning=false; baseDirty=true; wasPhase=S.phase; $('titleModal').hidden=true; updateHud(); renderPanel(); openReport();});});
 // 開発用：コンソールやテストから日を早送りする  __tct.skip(3) で3日進めて報告書を開く
 if(DEV)window.__sel=v=>{sel=v; renderPanel();};
 if(DEV)window.__orders=()=>openOrders();
-if(DEV)window.__tct={carp:i=>{carpLine(S.carps[i||0],performance.now()); return $("voice").textContent;},sds:()=>secDayStart(),rep:()=>openReport(),stone:r=>showStoneCard(r||S.lastReport),dusk:()=>showDuskCard(),dawn:()=>showDayCard(),map:r=>mapHTML(r),say:(t,o)=>secSay(t,o||{pri:3}),menu:()=>secMenu(),ask:k=>secAnswer(k),get S(){return S;},skip(n=1){for(let i=0;i<n;i++){if(S.phase!=='day')startDay(S); tick(S,2000);} wasPhase=S.phase; $('titleModal').hidden=true; $('dayCard').hidden=true; $('duskCard').hidden=true; openReport({instant:true});}};
+if(DEV)window.__tct={joins:n=>showJoins(n||(()=>{})),carp:i=>{carpLine(S.carps[i||0],performance.now()); return $("voice").textContent;},sds:()=>secDayStart(),rep:()=>openReport(),stone:r=>showStoneCard(r||S.lastReport),dusk:()=>showDuskCard(),dawn:()=>showDayCard(),map:r=>mapHTML(r),say:(t,o)=>secSay(t,o||{pri:3}),menu:()=>secMenu(),ask:k=>secAnswer(k),get S(){return S;},skip(n=1){for(let i=0;i<n;i++){if(S.phase!=='day')startDay(S); tick(S,2000);} wasPhase=S.phase; $('titleModal').hidden=true; $('dayCard').hidden=true; $('duskCard').hidden=true; openReport({instant:true});}};
 updateHud(); renderPanel(); requestAnimationFrame(loop);
 initGfx().then(g=>{GFX=g; if(DEV)window.__gfx=g;}).catch(e=>{console.error(e); $('glfail').hidden=false;});
 </script>
