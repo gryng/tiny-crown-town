@@ -997,7 +997,7 @@ body:has(#titleModal:not([hidden])) .wrap>:not(.screen),body:has(#titleModal:not
     </nav>
     <p class="tt-note" id="saveNote" hidden></p>
   </div>
-  <footer class="tt-foot"><span class="tt-ver">プロトタイプ v0.35.1 · HD-2D</span><span>1日が終わるたびに、このブラウザに自動で保存します</span><span>© Fuch.io</span></footer>
+  <footer class="tt-foot"><span class="tt-ver">プロトタイプ v0.36.0 · HD-2D</span><span>1日が終わるたびに、このブラウザに自動で保存します</span><span>© Fuch.io</span></footer>
   <div class="tt-how" id="howWin" hidden>
     <div class="tt-how-box" role="dialog" aria-label="あそびかた">
       <b class="sl-name">あそびかた</b>
@@ -1825,7 +1825,11 @@ const NODES={
   r1:{n:'第一の部屋',room:true,rich:.6,master:'bigrat',chest:30}, r2:{n:'第二の部屋',room:true,rich:1,chest:40,clue:true},
   hall:{n:'奥の広間',room:true,rich:1.8,master:'king',chest:60}, boss:{n:'親玉の間',boss:true,mon:'boss'},
   // エリア2：東の湿地（ar:1）。ぬかるみ(mud)の道は、誰かが歩くまで1.3倍かかる
-  sfork:{ar:1,n:'湿地の入口',app:true}, k0:{ar:2,n:'街道の入口',app:true}, hut:{ar:1,n:'渡し守の小屋',rest:true},
+  sfork:{ar:1,n:'湿地の入口',app:true}, k0:{ar:2,n:'街道の入口',app:true},
+  // エリア3：西の古い街道（ar:2）。追いはぎ・野犬・石像の出る、崩れかけた昔の街道
+  kinn:{ar:2,n:'宿場の跡',rest:true}, k1:{ar:2,n:'見張り台',room:true,rich:.8,master:'wstatue',chest:160}, k2:{ar:2,n:'石の橋',room:true,rich:1,chest:120},
+  k3:{ar:2,n:'野営地',room:true,rich:1.4,master:'dogking',chest:180}, k4:{ar:2,n:'関所の跡',room:true,rich:1.8,chest:200}, kboss:{ar:2,n:'盗賊のねぐら',boss:true,mon:'bandk'},
+  kruin:{ar:2,side:true,n:'崩れた宿',room:true,rich:1.2,chest:150}, kshrine:{ar:2,side:true,n:'道祖神の祠',room:true,rich:1.6,chest:190}, hut:{ar:1,n:'渡し守の小屋',rest:true},
   s1:{ar:1,n:'葦の原',room:true,rich:.7,master:'bigfrog',chest:80}, s2:{ar:1,n:'沈んだ祠',room:true,rich:1,chest:100},
   s3:{ar:1,n:'ヒルの巣',room:true,rich:1.7,master:'leechq',chest:140}, sboss:{ar:1,n:'沼の主の間',boss:true,mon:'catfish'},
   // 脇道の部屋（side）。探索の割合には数えない。keys：詳しく調べると見つかる鍵の品（系統と名前） info：わかる魔物の特徴
@@ -1843,7 +1847,7 @@ NODES.hall.keys=[['sword','古い剣の柄']]; // 本道の部屋にも、主を
 const STUDY_NEED=12; // 鍵の品ひとつを見つけるのにかかる手間（人数×ターン）
 for(const id of ['fork','spring','mouth','r1','r2','hall','boss'])NODES[id].ar=0; NODES.fork.app=NODES.mouth.app=true; // app：入口までの野道（見つける前から歩ける）
 // エリア（章ごとに1つずつ進む）。いま挑んでいるのは S.area
-const AREAS=[{name:'南の洞窟',bossNode:'boss',short:'洞窟',min:1,dir:'南',door:'mouth',stone:'赤の精霊石'},{name:'東の湿地',bossNode:'sboss',short:'湿地',min:5,dir:'東',door:'sfork',stone:'青の精霊石'},{name:'西の古い街道',bossNode:null,short:'街道',min:10,dir:'西',door:'k0',stone:'緑の精霊石',stub:true}]; // min：ここで戦える目安のレベル door：入口 stub：まだ中を作っていない
+const AREAS=[{name:'南の洞窟',bossNode:'boss',short:'洞窟',min:1,dir:'南',door:'mouth',stone:'赤の精霊石'},{name:'東の湿地',bossNode:'sboss',short:'湿地',min:5,dir:'東',door:'sfork',stone:'青の精霊石'},{name:'西の古い街道',bossNode:'kboss',short:'街道',min:10,dir:'西',door:'k0',stone:'緑の精霊石'}]; // min：ここで戦える目安のレベル door：入口 stub：まだ中を作っていない
 // いま考えているエリア：外で動いている冒険者の向かったエリア（S._ar）、ふだんは画面で見ているエリア（S.area）
 const CA=S=>S._ar??S.area;
 // 探索の割合・親玉を倒したか・親玉に挑むかは、エリアごと。S.explore などは「いま考えているエリア」のぶんを指す
@@ -1869,7 +1873,16 @@ const EDGES=[
   {id:'e7',a:'hall',b:'boss',len:3,risk:0,zone:'deep',n:'親玉の間への道',bossWay:true},
   {id:'cut',a:'spring',b:'r2',len:2,risk:.2,zone:'cave',n:'泉の裏の近道',cut:true},
   {id:'m1',ar:1,a:'gate',b:'sfork',len:12,risk:.16,zone:'forest',n:'湿地への道',app:true,find:150},
-  {id:'w1',ar:2,a:'gate',b:'k0',len:14,risk:.14,zone:'forest',n:'西の野道',app:true,find:220}, // find：はじめて入口を見つけるまでの手間（人×ターン、何日かに分けてもよい）
+  {id:'w1',ar:2,a:'gate',b:'k0',len:10,risk:.14,zone:'forest',n:'西の野道',app:true,find:220},
+  {id:'w2',ar:2,a:'k0',b:'kinn',len:4,risk:.12,zone:'road',n:'宿場への脇道'},
+  {id:'w3',ar:2,a:'k0',b:'k1',len:6,risk:.24,zone:'road',n:'石畳の街道'},
+  {id:'w4',ar:2,a:'k1',b:'k2',len:7,risk:.26,zone:'road',n:'ひび割れた街道'},
+  {id:'w5',ar:2,a:'kinn',b:'k2',len:7,risk:.2,zone:'road',n:'宿場の裏道'},
+  {id:'w6',ar:2,a:'k2',b:'k3',len:6,risk:.28,zone:'ruins',n:'草に埋もれた道'},
+  {id:'w7',ar:2,a:'k3',b:'k4',len:6,risk:.3,zone:'ruins',n:'崩れた石垣の道'},
+  {id:'w8',ar:2,a:'k4',b:'kboss',len:4,risk:0,zone:'ruins',n:'ねぐらへの坂',bossWay:true},
+  {id:'z1',ar:2,a:'k1',b:'kruin',len:5,risk:.26,zone:'road',n:'宿への小道',side:true},
+  {id:'z2',ar:2,a:'k4',b:'kshrine',len:4,risk:.3,zone:'ruins',n:'祠への石段',side:true}, // find：はじめて入口を見つけるまでの手間（人×ターン、何日かに分けてもよい）
   {id:'m2',ar:1,a:'sfork',b:'hut',len:4,risk:.12,zone:'marsh',n:'小屋への木道'},
   {id:'m3',ar:1,a:'sfork',b:'s1',len:6,risk:.22,zone:'marsh',mud:true,n:'葦のあいだの道'},
   {id:'m4',ar:1,a:'s1',b:'s2',len:6,risk:.27,zone:'bog',mud:true,n:'沈みかけた石畳'},
@@ -1905,11 +1918,19 @@ const MON={
   mudhand:{n:'泥の手',hp:44,atk:11,def:5,hard:true,xp:24,elem:[10,14],gold:12},
   bigfrog:{n:'沼の大ガエル',hp:100,atk:13,def:4,hard:true,master:true,xp:60,elem:[30,36],gold:40},
   leechq:{n:'ヒルの女王',hp:95,atk:14,def:3,leech:true,poison:true,master:true,xp:70,elem:[34,40],gold:50},
+  // 西の古い街道。hits：1ラウンドに何回かみつくか steal：かみついたときにゴールドを盗む（盗賊は盗まれない）
+  wdog:{n:'野犬',hp:32,atk:14,def:2,swift:true,hits:2,xp:18,elem:[8,12],gold:10},
+  bandit:{n:'追いはぎ',hp:54,atk:18,def:5,steal:true,xp:20,elem:[9,13],gold:16},
+  crow:{n:'大ガラス',hp:38,atk:18,def:3,swift:true,steal:true,xp:20,elem:[8,12],gold:12},
+  statue:{n:'石像',hp:64,atk:17,def:11,hard:true,xp:22,elem:[10,14],gold:12},
+  wstatue:{n:'見張りの石像',hp:270,atk:25,def:12,hard:true,master:true,xp:100,elem:[40,50],gold:60},
+  dogking:{n:'野犬の頭',hp:190,atk:20,def:4,swift:true,hits:2,master:true,xp:90,elem:[40,50],gold:60},
+  bandk:{n:'盗賊の頭',hp:470,atk:27,def:7,hits:2,steal:true,boss:true,xp:200,elem:[260,260],gold:0},
   catfish:{n:'沼の主',hp:180,atk:15,def:6,swift:true,leech:true,boss:true,aura:4,xp:120,elem:[200,200],gold:0},
 };
-for(const id of ['rat','bat','shroom','lizard','golem','bigrat','king','boss'])MON[id].ar=0; for(const id of ['frog','leech','snake','mudhand','bigfrog','leechq','catfish'])MON[id].ar=1;
-const ZONE={forest:[['rat',1]],cave:[['bat',.45],['shroom',.35],['rat',.2]],deep:[['lizard',.45],['golem',.25],['bat',.15],['shroom',.15]],marsh:[['frog',.45],['leech',.3],['snake',.25]],bog:[['leech',.35],['snake',.25],['mudhand',.25],['frog',.15]]};
-const DEPTH={k0:1,gate:0,fork:1,spring:2,mouth:2,r1:3,r2:4,hall:5,boss:6,sfork:1,hut:2,s1:2,s2:3,s3:4,sboss:5,lodge:2,drip:4,forge:5,nest:6,reed:2,kura:3,smithy:3,inner:4,deepnest:5};
+for(const id of ['rat','bat','shroom','lizard','golem','bigrat','king','boss'])MON[id].ar=0; for(const id of ['frog','leech','snake','mudhand','bigfrog','leechq','catfish'])MON[id].ar=1; for(const id of ['wdog','bandit','crow','statue','wstatue','dogking','bandk'])MON[id].ar=2;
+const ZONE={forest:[['rat',1]],cave:[['bat',.45],['shroom',.35],['rat',.2]],deep:[['lizard',.45],['golem',.25],['bat',.15],['shroom',.15]],marsh:[['frog',.45],['leech',.3],['snake',.25]],bog:[['leech',.35],['snake',.25],['mudhand',.25],['frog',.15]],road:[['wdog',.4],['bandit',.35],['crow',.25]],ruins:[['bandit',.3],['statue',.3],['crow',.2],['wdog',.2]]};
+const DEPTH={k0:1,kinn:2,k1:2,k2:3,k3:4,k4:5,kboss:6,kruin:3,kshrine:6,gate:0,fork:1,spring:2,mouth:2,r1:3,r2:4,hall:5,boss:6,sfork:1,hut:2,s1:2,s2:3,s3:4,sboss:5,lodge:2,drip:4,forge:5,nest:6,reed:2,kura:3,smithy:3,inner:4,deepnest:5};
 const inA=(S,x)=>x.ar===undefined||x.ar===CA(S);
 const units=S=>EDGES.filter(e=>inA(S,e)&&!e.bossWay&&!e.side).length+Object.values(NODES).filter(n=>inA(S,n)&&n.room&&!n.side).length+Object.values(NODES).filter(n=>inA(S,n)&&n.master).length;
 function newWorld(){return {trips:{},searched:{},searchDay:{},master:{},chest:{},clue:false,cut:false,vein:{},veinG:{},study:{},keysTaken:{},fieldLeft:{}};}
@@ -1987,7 +2008,7 @@ function comeBack(S,a){
 }
 // ================= 魔物の記録帳 =================
 // 一度戦えば名前と強さがわかる。特徴（硬い・すばやい・毒…）は戦うたびに少しずつわかる。主と親玉は戦うたびに必ずひとつ
-const TRAITS=[['hard','硬い'],['swift','すばやい'],['poison','毒を持つ'],['leech','血を吸う'],['aura','毒の沼をまく']];
+const TRAITS=[['hard','硬い'],['swift','すばやい'],['poison','毒を持つ'],['leech','血を吸う'],['aura','毒の沼をまく'],['hits','何度もかみつく'],['steal','ゴールドを盗む']];
 function meet(S,mid,a){const K=S.know[mid]||(S.know[mid]={seen:0}); if(!K.seen){(S.foundToday=S.foundToday||[]).push({mid,first:true,by:a&&a.name});} K.seen++;}
 function learn(S,mid,a){
   const m=MON[mid], K=S.know[mid]||(S.know[mid]={seen:1}), left=TRAITS.filter(([t])=>m[t]&&!K[t]); if(!left.length)return null;
@@ -2017,8 +2038,10 @@ function fightRound(S,F){
       if(!crit&&a.wlv&&a.wl==='axe'&&m.hard)d+=m.def;   // 斧は硬い守りを割る
       if(!crit&&a.wlv&&a.wl==='dagger'){ if(m.hard)d=Math.max(1,d-1); if(m.swift)d=Math.ceil(d*1.3)+1; } // 短剣は硬い相手が苦手、すばやい相手に強い
       if(crit)F.crit[a.id]=(F.crit[a.id]||0)+1; F.hp-=d; } };
-  const bite=()=>{ if(F.hp<=0||!F.members.length)return; const wt=x=>caster(x)&&F.members.length>1?.43:1; let pick=r()*F.members.reduce((t,x)=>t+wt(x),0), a=F.members[0]; for(const x of F.members){pick-=wt(x); if(pick<0){a=x;break;}} // 魔物は前の子を狙いやすい（白魔道士は後ろ）
-      const d=Math.max(1,Math.round(Math.max(1,m.atk-a.def+Math.floor(r()*3)-1)*(PP(a).dmg||1)*(a.job==='knight'?.85:1))); a.hp-=d; F.hit[a.id]=(F.hit[a.id]||0)+1; if(m.leech)F.hp=Math.min(m.hp,F.hp+Math.ceil(d/2)); };
+  const bite=()=>{ for(let h=0;h<(m.hits||1);h++)bite1(); };
+  const bite1=()=>{ if(F.hp<=0||!F.members.length)return; const wt=x=>caster(x)&&F.members.length>1?.43:1; let pick=r()*F.members.reduce((t,x)=>t+wt(x),0), a=F.members[0]; for(const x of F.members){pick-=wt(x); if(pick<0){a=x;break;}} // 魔物は前の子を狙いやすい（白魔道士は後ろ）
+      const d=Math.max(1,Math.round(Math.max(1,m.atk-a.def+Math.floor(r()*3)-1)*(PP(a).dmg||1)*(a.job==='knight'?.85:1))); a.hp-=d; F.hit[a.id]=(F.hit[a.id]||0)+1; if(m.leech)F.hp=Math.min(m.hp,F.hp+Math.ceil(d/2));
+      if(m.steal&&a.job!=='thief'&&a.gold>0&&r()<.25){const g=Math.min(a.gold,5+Math.floor(r()*11)); a.gold-=g; a.rep.gold-=g; a.rep.stolen=(a.rep.stolen||0)+g; if(!F.stole)F.stole={}; F.stole[a.id]=(F.stole[a.id]||0)+g;} };
   const quick=a=>(a.wl==='dagger'&&a.wlv>0)||a.job==='thief'; // 短剣の子と盗賊は、すばやい魔物より先に斬りこむ
   if(m.swift){strike(quick); bite(); strike(a=>!quick(a));} else {strike(); bite();}
   // 親玉の毒の沼など：戦っている全員が毎ラウンド受ける。毒消しを覚えた白魔道士（Lv8〜）がいれば防げる
@@ -2030,7 +2053,7 @@ function fightRound(S,F){
     for(const a of F.members.slice()){
       const share=a.out.party?F.members.filter(x=>x.out.party===a.out.party).length:1, got=Math.ceil(pot/share), gg=Math.ceil(m.gold/share); // 経験値は全員が満額、時のかけらとゴールドは山分け
       a.rep.elem+=got; a.gold+=gg; a.rep.gold+=gg; a.rep.wins++; tire(a,3);
-      ev(S,a,m.boss?'B':'w',{m:F.mid,r:F.round,c:F.crit[a.id]||0,mi:(F.miss||{})[a.id]||0,co:names(a),e:got,h:(F.heal||{})[a.id]||0,hb:(F.healed||{})[a.id]||null,sp:(F.spell||{})[a.id]||0,sk:(F.skill||{})[a.id]||0});
+      ev(S,a,m.boss?'B':'w',{m:F.mid,r:F.round,c:F.crit[a.id]||0,mi:(F.miss||{})[a.id]||0,co:names(a),e:got,h:(F.heal||{})[a.id]||0,hb:(F.healed||{})[a.id]||null,sp:(F.spell||{})[a.id]||0,sk:(F.skill||{})[a.id]||0,st:(F.stole||{})[a.id]||0});
       if(m.poison&&F.hit[a.id]){ if(F.members.some(x=>healer(x)&&x.lv>=8))ev(S,a,'pc',{}); else {a.out.poison=6; ev(S,a,'p',{});} }
       gainExp(S,a,styleOf(a)==='train'?Math.round(m.xp*1.25):m.xp);
       if(m.master)a.rep.masterAt=F.atNode;
@@ -2303,6 +2326,7 @@ function goalsOf(S){
   g('world','dirs','3つの方角をすべて探る',20,()=>S.found.every(Boolean));
   g('world','stone1','精霊石を手に入れる',30,()=>(S.stones||0)>=1);
   g('world','stone2','精霊石を2つ集める',40,()=>(S.stones||0)>=2,{rank:2});
+  g('world','stone3','精霊石を3つ集める',50,()=>(S.stones||0)>=3,{rank:3});
   // ダンジョンごと（見つけたところだけ）
   AREAS.forEach((Ar,ar)=>{ if(!S.found[ar]||Ar.stub)return;
     const past=!!S.down[ar], d=(id,name,reward,test,o={})=>g('d'+ar,id,name,reward,test,{ar,old:[`${ar+1}:${id}`],...o});
@@ -3655,7 +3679,7 @@ document.addEventListener('keydown',e=>{
   if(sel||advWin){sel=null; advWin=false; renderPanel(); renderParty(); setDrawer(false);}
 });
 function renderBook(){
-  const tip={hard:'斧が効く',swift:'短剣が先に斬れる。旅装束なら逃げやすい',poison:'白魔道士の毒消しが効く',leech:'長引かせない',aura:'白魔道士の毒消しが効く'};
+  const tip={hard:'斧が効く',swift:'短剣が先に斬れる。旅装束なら逃げやすい',poison:'白魔道士の毒消しが効く',leech:'長引かせない',aura:'白魔道士の毒消しが効く',hits:'守りを固めると、かみつきの傷が減る',steal:'盗賊は盗まれない'};
   $('bookBody').innerHTML=AREAS.map((A,ar)=>{ if(!(S.found[ar]||ar===0)||A.stub)return '';
     const ms=Object.keys(MON).filter(m=>MON[m].ar===ar).sort((x,y)=>(MON[x].boss?2:MON[x].master?1:0)-(MON[y].boss?2:MON[y].master?1:0));
     const known=ms.filter(m=>seenMon(S,m)).length;
@@ -3749,6 +3773,7 @@ function logHTML(r){
           continue; }
         else if(m.hard&&e.r>=5)txt=`${withCo(e)}${m.n}の硬さに手こずったが、${crit}${e.r}ラウンドかけて倒した`;
         else txt=`${withCo(e)}${heal}${crit}${m.n}を${e.r}ラウンドで倒した`;
+        if(e.st)txt+=`（${e.st}ゴールド盗まれた）`;
         break; }
       case 'l': txt=e.late?`${m.n}と戦っているうちに日が傾き、切り上げた`:m.hard&&e.r>=5?`${m.n}に${e.r}ラウンドねばったが刃が立たず、逃げ出した`:`${m.n}に押されて、逃げ出した`; break;
       case 'f': txt=`${m.n}がすばやくて、逃げそこなった`; break;
@@ -3837,11 +3862,12 @@ function cardHTML(r,day,rows){
 const MAPXY={fork:[92,66],spring:[84,136],mouth:[150,48],r1:[200,78],r2:[236,128],hall:[288,90],boss:[306,154],
   lodge:[36,98],drip:[238,32],forge:[168,162],nest:[306,42],
   sfork:[78,104],hut:[92,44],s1:[150,140],s2:[206,86],s3:[262,126],sboss:[314,74],
-  reed:[100,160],kura:[34,30],smithy:[216,170],inner:[214,26],deepnest:[300,170]};
-const GATEXY=[[30,36],[22,100]];
+  reed:[100,160],kura:[34,30],smithy:[216,170],inner:[214,26],deepnest:[300,170],
+  k0:[256,96],kinn:[262,34],k1:[204,138],k2:[160,74],k3:[110,128],k4:[70,66],kboss:[26,120],kruin:[150,170],kshrine:[40,26]};
+const GATEXY=[[30,36],[22,100],[312,98]];
 // 地図の城門は、小さな城の絵で
 const castleIcon=(x,y,k=1)=>`<svg class="castle-ic" x="${x-14*k}" y="${y-19*k}" width="${28*k}" height="${30*k}" viewBox="-14 -22 28 30" overflow="visible"><path d="M0 -15 V-21" stroke="#120a05" stroke-width="1.2"/><path d="M0 -21 l5 1.8 -5 1.8z" fill="#c9a84c" stroke="#120a05" stroke-width=".8"/><rect x="-12" y="-5" width="6" height="11" fill="#efe4c8" stroke="#120a05" stroke-width="1.3"/><rect x="6" y="-5" width="6" height="11" fill="#efe4c8" stroke="#120a05" stroke-width="1.3"/><rect x="-6" y="-8" width="12" height="14" fill="#f6eedb" stroke="#120a05" stroke-width="1.3"/><path d="M-13 -5 L-9 -12 L-5 -5Z M5 -5 L9 -12 L13 -5Z" fill="#1b4332" stroke="#120a05" stroke-width="1.2" stroke-linejoin="round"/><path d="M-7 -8 L0 -16 L7 -8Z" fill="#1b4332" stroke="#120a05" stroke-width="1.2" stroke-linejoin="round"/><path d="M-2.2 6 V2 a2.2 2.2 0 0 1 4.4 0 V6Z" fill="#3a2616"/><path d="M-7 -8 h14" stroke="#c9a84c" stroke-width="1"/></svg>`;
-const MAP_ABOVE=new Set(['gate','fork','mouth','r1','hall','nest','drip','hut','kura','inner','sboss','s2','smithy','deepnest']), MAP_SIDE=new Set(['spring','boss','r2','hall','hut','sboss','s2','s3','lodge','drip','forge','nest','reed','kura','smithy','inner','deepnest']);
+const MAP_ABOVE=new Set(['k0','kinn','k4','kshrine','gate','fork','mouth','r1','hall','nest','drip','hut','kura','inner','sboss','s2','smithy','deepnest']), MAP_SIDE=new Set(['spring','boss','r2','hall','hut','sboss','s2','s3','lodge','drip','forge','nest','reed','kura','smithy','inner','deepnest']);
 function mapHTML(rep){
   const W=rep.world, W0=rep.worldFrom; if(!W)return '';
   const ar=rep.area||0, EA=EDGES.filter(e=>e.ar===ar), NA={}; for(const id in NODES)if(NODES[id].ar===undefined||NODES[id].ar===ar)NA[id]=NODES[id];
@@ -4152,6 +4178,7 @@ let ordersDawn=-1;
 const TIPS=[ // [id, 出す条件, せりふ]。一度出したら二度は出さない
   ['field', ()=>!openAreas(S).length, 'まだダンジョンはひとつも見つかっていません。「南のほうを探索する」などを貼ると、冒険者が野原を歩いて入口を探します。見つけたら、まず知らせに戻ってきますよ。'],
   ['found', ()=>openAreas(S).length>0, 'ダンジョンの入口がわかりました。きょうから「〇〇を調べよ【南の洞窟】」のように、中の依頼を出せます。親玉を倒すと精霊石が手に入り、王様の位が上がります。'],
+  ['all3', ()=>(S.stones||0)>=3, '3つの精霊石がそろいました！ 北の山道の岩も、少しゆるんできたようです。……その先は、まだ準備中だそうです。'],
   ['north', ()=>(S.stones||0)>0, '北の山道は、まだ岩でふさがっているそうです。精霊石がもっと集まれば、道が開けるかもしれません。'],
   ['carp', ()=>S.day>=2, '大工へのおふれは「町を見て、おふれを出す」から。荒れ地を片づけると時のかけらが出てきますし、空き地には建物を建てられます。'],
   ['shop', ()=>first(S,'weapon')||first(S,'armor'), '店が建ちました。町で店を押すと、系統ごとに投資できます。どれを伸ばすかは王様しだい。冒険者は自分のお金で、相手に合う物を買って持ち替えます。'],
@@ -4223,7 +4250,7 @@ function secAnswer(k){
 }
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-ask]'); if(b){e.stopPropagation(); secAnswer(b.dataset.ask);}});
 // 冒険のようす：初めての道や部屋、苦戦、宝箱、そしてちょっとしたサボりまで
-const SABORI={forest:['{a}が森で木の実をつまんでいます。……お仕事中なのですが','{a}がリスを追いかけています','{a}が切り株に腰かけて、空を見上げています','{a}が小川で顔を洗っています。気持ちよさそうです'],
+const SABORI={road:['{a}が道ばたの花をつんでいます','{a}が古い道しるべを読もうとしています。……読めないようです','{a}が木陰で、ひと休みしています'],forest:['{a}が森で木の実をつまんでいます。……お仕事中なのですが','{a}がリスを追いかけています','{a}が切り株に腰かけて、空を見上げています','{a}が小川で顔を洗っています。気持ちよさそうです'],
   cave:['{a}が洞窟の壁の模様に見とれています','{a}がこっそり昼寝をしているようです','{a}がきのこの数をかぞえています。何をしているのでしょう'],
   marsh:['{a}がカエルとにらめっこをしています','{a}が葦の笛を作って遊んでいます','{a}が泥だんごを作っています……']};
 const DIG={mine:['{a}が{n}で、夢中で時のかけらを掘っています'],treasure:['{a}が{n}で宝探しに夢中です','{a}が{n}の床をひっくり返して、お宝を探しています']};
@@ -4241,7 +4268,7 @@ function secAdventure(){
       else if(e.k==='u'){secSay(`${a.name}のレベルが上がりました。たのもしくなってきましたね`,{pri:1,adv:a.id});}
       else if(e.k==='s'&&e.chest){if(once('c'+e.n))secSay(`${a.name}が${NODES[e.n].n}で宝箱を開けました。${e.chest}ゴールド！`,{pri:1,adv:a.id});}
       else if(e.k==='s'&&(e.mine||e.treasure)){if(flav(a))secSay(pick(DIG[e.mine?'mine':'treasure']).replace('{a}',a.name).replace('{n}',NODES[e.n].n),{pri:0,adv:a.id});}
-      else if(e.k==='d'){if(flav(a)){const ar=(NODES[e.n]||{}).ar??0, z=ar===1?'marsh':e.z==='forest'?'forest':'cave'; secSay(pick(SABORI[z]).replace('{a}',a.name),{pri:0,adv:a.id});}}
+      else if(e.k==='d'){if(flav(a)){const ar=(NODES[e.n]||{}).ar??0, z=ar===2?'road':ar===1?'marsh':e.z==='forest'?'forest':'cave'; secSay(pick(SABORI[z]).replace('{a}',a.name),{pri:0,adv:a.id});}}
       else if(e.k==='w'&&e.sk){if(once('sk'+a.id))secSay(`${a.name}の二連斬りが決まりました！ ${(MON[e.m]||{}).n||'魔物'}を斬り伏せています`,{pri:1,adv:a.id});}
       else if(e.k==='w'&&e.sp){if(once('sp'+a.id))secSay(`${a.name}の攻撃の魔法が、${(MON[e.m]||{}).n||'魔物'}に炸裂しました！`,{pri:1,adv:a.id});}
       else if(e.k==='l'&&!e.late){if(flav(a))secSay(`${a.name}が${(MON[e.m]||{}).n||'魔物'}に押されて、逃げ出しました`,{pri:1,adv:a.id});}
