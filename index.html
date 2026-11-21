@@ -997,7 +997,7 @@ body:has(#titleModal:not([hidden])) .wrap>:not(.screen),body:has(#titleModal:not
     </nav>
     <p class="tt-note" id="saveNote" hidden></p>
   </div>
-  <footer class="tt-foot"><span class="tt-ver">プロトタイプ v0.35.0 · HD-2D</span><span>1日が終わるたびに、このブラウザに自動で保存します</span><span>© Fuch.io</span></footer>
+  <footer class="tt-foot"><span class="tt-ver">プロトタイプ v0.35.1 · HD-2D</span><span>1日が終わるたびに、このブラウザに自動で保存します</span><span>© Fuch.io</span></footer>
   <div class="tt-how" id="howWin" hidden>
     <div class="tt-how-box" role="dialog" aria-label="あそびかた">
       <b class="sl-name">あそびかた</b>
@@ -1638,7 +1638,7 @@ function follow(S,L,f){
 }
 function winnableP(S,a,m,slack){
   const M=mates(S,a); if(M.length<2)return winnable(a,m,slack);
-  const dps=M.reduce((t,x)=>t+(mage(x)?Math.max(spellDmg(x)*.8,atkOf(x)-m.def):(x.job==='white'?.5:1)*Math.max(1,atkOf(x)-m.def)),0), rounds=Math.ceil(m.hp/dps);
+  const dps=M.reduce((t,x)=>t+(mage(x)?Math.max(spellDmg(x)*.8,atkOf(x)-m.def):(x.job==='white'?.5:x.job==='knight'?1.5:1)*Math.max(1,atkOf(x)-m.def)),0), rounds=Math.ceil(m.hp/dps);
   const heal=M.reduce((t,x)=>t+(healer(x)?Math.min(x.out.casts,rounds)*x.mag*3*.7:0),0), aura=m.aura&&!M.some(w=>healer(w)&&w.lv>=8)?m.aura:0;
   return M.every(x=>{const hurt=rounds*(Math.max(1,m.atk-x.def)/M.length*1.25+aura)*(PP(x).dmg||1)-heal/M.length; return x.hp-hurt>x.hpMax*slack;});
 }
@@ -1943,12 +1943,12 @@ const JOBS={
   white:{name:'白魔道士',school:'academy',minLv:3,rank:2,from:[null],up:lv=>({hp:3,atk:0,mag:1,def:lv%3===0?1:0}),desc:'いやしの光で自分や仲間を回復する'},
   black:{name:'黒魔道士',school:'academy',minLv:3,rank:2,from:[null],up:lv=>({hp:2,atk:0,mag:1}),desc:'守りを無視する攻撃の魔法。主や親玉に強い'},
   thief:{name:'盗賊',school:'dojo',minLv:4,rank:3,from:[null,'warrior'],up:lv=>({hp:3,atk:1}),desc:'すばやく先に斬りこみ、逃げ足も速い。道を早く歩き、宝探しが得意'},
-  knight:{name:'上級戦士',school:'dojo',minLv:8,rank:3,from:['warrior'],up:lv=>({hp:5,atk:2,def:lv%2===0?1:0}),desc:'戦士の上の職業。会心が出やすく、受ける傷が少ない'},
+  knight:{name:'上級戦士',school:'dojo',minLv:8,rank:3,from:['warrior'],up:lv=>({hp:5,atk:2,def:lv%2===0?1:0}),desc:'戦士の上の職業。技「二連斬り」で1ラウンドに2回斬る。会心が出やすく、受ける傷が少ない'},
   sage:{name:'大魔導士',school:'academy',minLv:8,rank:3,from:['white','black'],up:lv=>({hp:3,atk:1,mag:1}),desc:'回復と攻撃の魔法を両方使う、魔法の上の職業'},
 };
 const jobName=a=>a.job&&JOBS[a.job]?JOBS[a.job].name:'見習い';
 const healer=a=>a.job==='white'||a.job==='sage', caster=a=>a.job==='white'||a.job==='black'||a.job==='sage', mage=a=>a.job==='black'||a.job==='sage';
-const castsOf=a=>caster(a)?3+Math.floor((a.mag||0)/3)+(a.job==='sage'?2:0):0;   // 1日に魔法を使える回数
+const castsOf=a=>caster(a)?3+Math.floor((a.mag||0)/3)+(a.job==='sage'?2:0):a.job==='knight'?2+Math.floor(a.lv/4):0;   // 1日に魔法（上級戦士は技）を使える回数
 const spellDmg=a=>a.job==='sage'?(a.mag||0)*3+2:(a.mag||0)*2+2;  // 攻撃の魔法：守りを無視する
 function becomeJob(a,job){a.job=job; if(caster(a))a.mag=Math.max(a.mag||0,a.lv)+(job==='sage'?2:0); // それまでのレベルぶんの魔力を持って始める
   if(job==='warrior'){a.hpMax+=4; a.def+=1;} if(job==='knight'){a.hpMax+=8; a.atk+=2;}}
@@ -1966,7 +1966,7 @@ const styleOf=a=>(a.rep&&a.rep.style)||PP(a).style;
 const digStyle=a=>styleOf(a)==='mine'||styleOf(a)==='treasure';
 // 勝てそうかの見立て（部屋の主や親玉に挑むかどうか）
 function winnable(a,m,slack){
-  const rounds=Math.ceil(m.hp/Math.max(1,mage(a)?Math.max(spellDmg(a)*.8,atkOf(a)-m.def):atkOf(a)-m.def)), heal=healer(a)?castsOf(a)*a.mag*3*.7:0;
+  const rounds=Math.ceil(m.hp/Math.max(1,mage(a)?Math.max(spellDmg(a)*.8,atkOf(a)-m.def):(atkOf(a)-m.def)*(a.job==='knight'?1.5:1))), heal=healer(a)?castsOf(a)*a.mag*3*.7:0;
   const hurt=rounds*(Math.max(1,m.atk-a.def)+(m.aura||0))*(PP(a).dmg||1)-heal;
   return a.hp-hurt>a.hpMax*slack;
 }
@@ -2008,6 +2008,8 @@ function fightRound(S,F){
       if(healer(a)&&a.out.casts>0){const t=F.members.filter(x=>x.hp<x.hpMax*.5).sort((x,y)=>x.hp/x.hpMax-y.hp/y.hpMax)[0];
         if(t){a.out.casts--; t.hp=Math.min(t.hpMax,t.hp+a.mag*3); F.heal=F.heal||{}; F.heal[a.id]=(F.heal[a.id]||0)+1; F.healed=F.healed||{}; if(t!==a)F.healed[t.id]=a.name; continue;}}
       if(mage(a)&&a.out.casts>0&&(m.master||m.boss||F.hp>Math.max(1,atkOf(a)-m.def)*2)){a.out.casts--; F.hp-=spellDmg(a); F.spell=F.spell||{}; F.spell[a.id]=(F.spell[a.id]||0)+1; continue;} // 黒魔法：守りを無視。弱い相手には使わない
+      if(a.job==='knight'&&a.out.casts>0&&(m.master||m.boss||F.hp>Math.max(1,atkOf(a)-m.def)*2)){a.out.casts--; F.skill=F.skill||{}; F.skill[a.id]=(F.skill[a.id]||0)+1; // 技「二連斬り」：1ラウンドに2回斬る（空振りしない）
+        for(let k=0;k<2&&F.hp>0;k++){const c2=r()<(a.morale/1000+.06), b=atkOf(a); let d=c2?b*2:Math.max(1,b-m.def+Math.floor(r()*3)-1); if(c2)F.crit[a.id]=(F.crit[a.id]||0)+1; F.hp-=d;} continue;}
       if(r()<missOf(a)){F.miss=F.miss||{}; F.miss[a.id]=(F.miss[a.id]||0)+1; continue;} // 気が乗らず、空振り
       if(a.wl==='axe'&&a.wlv&&m.swift&&r()<.25){F.miss=F.miss||{}; F.miss[a.id]=(F.miss[a.id]||0)+1; continue;} // 斧はすばやい相手に空振りしやすい
       const crit=r()<(a.morale/1000+(PP(a).roll?.03:0)+(a.job==='knight'?.06:0)), base=atkOf(a);
@@ -2028,7 +2030,7 @@ function fightRound(S,F){
     for(const a of F.members.slice()){
       const share=a.out.party?F.members.filter(x=>x.out.party===a.out.party).length:1, got=Math.ceil(pot/share), gg=Math.ceil(m.gold/share); // 経験値は全員が満額、時のかけらとゴールドは山分け
       a.rep.elem+=got; a.gold+=gg; a.rep.gold+=gg; a.rep.wins++; tire(a,3);
-      ev(S,a,m.boss?'B':'w',{m:F.mid,r:F.round,c:F.crit[a.id]||0,mi:(F.miss||{})[a.id]||0,co:names(a),e:got,h:(F.heal||{})[a.id]||0,hb:(F.healed||{})[a.id]||null,sp:(F.spell||{})[a.id]||0});
+      ev(S,a,m.boss?'B':'w',{m:F.mid,r:F.round,c:F.crit[a.id]||0,mi:(F.miss||{})[a.id]||0,co:names(a),e:got,h:(F.heal||{})[a.id]||0,hb:(F.healed||{})[a.id]||null,sp:(F.spell||{})[a.id]||0,sk:(F.skill||{})[a.id]||0});
       if(m.poison&&F.hit[a.id]){ if(F.members.some(x=>healer(x)&&x.lv>=8))ev(S,a,'pc',{}); else {a.out.poison=6; ev(S,a,'p',{});} }
       gainExp(S,a,styleOf(a)==='train'?Math.round(m.xp*1.25):m.xp);
       if(m.master)a.rep.masterAt=F.atNode;
@@ -3737,7 +3739,7 @@ function logHTML(r){
       case 'n': txt=`${EDGES.find(x=>x.id===e.e).n}を初めて歩いた`; break;
       case 'w': {
         const crit=e.c?'会心の一撃が決まり、':'';
-        const heal=(e.sp?`${e.sp>1?'攻撃の魔法を重ねて':'攻撃の魔法を放ち'}、`:'')+(e.h?`いやしの光で支えながら、`:e.hb?`${e.hb}のいやしの光に助けられ、`:'')+(e.mi>=2?'空振りを重ねながらも、':'');
+        const heal=(e.sp?`${e.sp>1?'攻撃の魔法を重ねて':'攻撃の魔法を放ち'}、`:'')+(e.sk?`${e.sk>1?`二連斬りを${e.sk}度決めて`:'二連斬りを決めて'}、`:'')+(e.h?`いやしの光で支えながら、`:e.hb?`${e.hb}のいやしの光に助けられ、`:'')+(e.mi>=2?'空振りを重ねながらも、':'');
         if(m.master)txt=`${withCo(e)}${heal}${crit}部屋の主・${m.n}を${e.r}ラウンドで倒した！`;
         else if(e.r<=2){ // 楽に勝った戦いが続いたら1行にまとめる（同じ仲間との共闘どうしもまとめる）
           const key=(e.co||[]).join('と'), last=L[L.length-1];
@@ -4240,6 +4242,8 @@ function secAdventure(){
       else if(e.k==='s'&&e.chest){if(once('c'+e.n))secSay(`${a.name}が${NODES[e.n].n}で宝箱を開けました。${e.chest}ゴールド！`,{pri:1,adv:a.id});}
       else if(e.k==='s'&&(e.mine||e.treasure)){if(flav(a))secSay(pick(DIG[e.mine?'mine':'treasure']).replace('{a}',a.name).replace('{n}',NODES[e.n].n),{pri:0,adv:a.id});}
       else if(e.k==='d'){if(flav(a)){const ar=(NODES[e.n]||{}).ar??0, z=ar===1?'marsh':e.z==='forest'?'forest':'cave'; secSay(pick(SABORI[z]).replace('{a}',a.name),{pri:0,adv:a.id});}}
+      else if(e.k==='w'&&e.sk){if(once('sk'+a.id))secSay(`${a.name}の二連斬りが決まりました！ ${(MON[e.m]||{}).n||'魔物'}を斬り伏せています`,{pri:1,adv:a.id});}
+      else if(e.k==='w'&&e.sp){if(once('sp'+a.id))secSay(`${a.name}の攻撃の魔法が、${(MON[e.m]||{}).n||'魔物'}に炸裂しました！`,{pri:1,adv:a.id});}
       else if(e.k==='l'&&!e.late){if(flav(a))secSay(`${a.name}が${(MON[e.m]||{}).n||'魔物'}に押されて、逃げ出しました`,{pri:1,adv:a.id});}
     }
     Z.ev[a.id]=i; }
