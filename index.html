@@ -997,7 +997,7 @@ body:has(#titleModal:not([hidden])) .wrap>:not(.screen),body:has(#titleModal:not
     </nav>
     <p class="tt-note" id="saveNote" hidden></p>
   </div>
-  <footer class="tt-foot"><span class="tt-ver">プロトタイプ v0.36.0 · HD-2D</span><span>1日が終わるたびに、このブラウザに自動で保存します</span><span>© Fuch.io</span></footer>
+  <footer class="tt-foot"><span class="tt-ver">プロトタイプ v0.37.0 · HD-2D</span><span>1日が終わるたびに、このブラウザに自動で保存します</span><span>© Fuch.io</span></footer>
   <div class="tt-how" id="howWin" hidden>
     <div class="tt-how-box" role="dialog" aria-label="あそびかた">
       <b class="sl-name">あそびかた</b>
@@ -1115,10 +1115,11 @@ const LINES={
   sword:{shop:'weapon',n:'剣',items:WEAPONS,desc:'どんな相手にも平均的に戦える'},
   axe:{shop:'weapon',n:'斧',items:['素手','手斧','銅の斧','鉄の斧','鋼の大斧','白銀の大斧','金の大斧'],desc:'硬い相手の守りを割る。すばやい相手には空振りしやすい'},
   dagger:{shop:'weapon',n:'短剣',items:['素手','石のナイフ','銅の短剣','鉄の短剣','鋼の短剣','白銀の短剣','金の短剣'],desc:'すばやい相手より先に斬りこめて、逃げ足も速い。硬い相手は苦手'},
+  staff:{shop:'weapon',n:'杖',items:['素手','木の杖','樫の杖','銀の杖','魔石の杖','星の杖','精霊の杖'],desc:'魔法を使う職業のための武器。魔力が上がって魔法が強くなり、3段階と5段階で魔法の回数が1回ずつ増える。殴る力は弱い'},
   mail:{shop:'armor',n:'よろい',items:ARMORS,desc:'守りと体力が高い。ぬかるみでは足が重い'},
   cloth:{shop:'armor',n:'旅装束',items:['旅の服','麻の旅装束','革の旅装束','獣皮の旅装束','風切りの旅装束','白銀の旅装束','金の旅装束'],desc:'守りは低めだが、ぬかるみでも足が軽く、すばやい相手からも逃げやすい'},
 };
-const SHOP_LINES={weapon:['sword','axe','dagger'],armor:['mail','cloth']};
+const SHOP_LINES={weapon:['sword','axe','dagger','staff'],armor:['mail','cloth']};
 const LINE_IDS=Object.keys(LINES);
 // 系統と段階ごとの数字
 function gearStat(l,t){
@@ -1126,6 +1127,7 @@ function gearStat(l,t){
   if(l==='sword')return {atk:2*t,def:0,hp:0};
   if(l==='axe')return {atk:2*t-1,def:0,hp:0};
   if(l==='dagger')return {atk:2*t-1,def:0,hp:0};
+  if(l==='staff')return {atk:Math.floor(t/2),def:0,hp:0,mag:t};
   if(l==='mail')return {atk:0,def:t,hp:6*t};
   return {atk:0,def:Math.max(0,t-1),hp:5*t};
 }
@@ -1198,7 +1200,7 @@ function bfs(g,a,b){
 }
 
 function newState(rng){
-  const S={g:makeMap(),day:1,t:DAY_START,elem:START_ELEM,justWon:false,area:0,ex:[0,0,0],down:[false,false,false],go:[false,false,false],found:[false,false,false],stones:0,nom:{},board:null,parkUse:{},chapter:1,b:[],advs:[],sites:[],carps:[newCarp(0)],docs:[],builtToday:[],stock:{sword:1,axe:0,dagger:0,mail:1,cloth:0},keys:{sword:0,axe:0,dagger:0,mail:0,cloth:0},items:{},know:{},used:{weapon:[],armor:[]},refund:0,phase:'report',parkUsed:0,demolished:0,rng:rng||Math.random,nextId:1,lastReport:null,fx:[],world:newWorld(),fights:[],welcomed:[]}; areaAcc(S);
+  const S={g:makeMap(),day:1,t:DAY_START,elem:START_ELEM,justWon:false,area:0,ex:[0,0,0],down:[false,false,false],go:[false,false,false],found:[false,false,false],stones:0,nom:{},board:null,parkUse:{},chapter:1,b:[],advs:[],sites:[],carps:[newCarp(0)],docs:[],builtToday:[],stock:{sword:1,axe:0,dagger:0,staff:0,mail:1,cloth:0},keys:{sword:0,axe:0,dagger:0,staff:0,mail:0,cloth:0},items:{},know:{},used:{weapon:[],armor:[]},refund:0,phase:'report',parkUsed:0,demolished:0,rng:rng||Math.random,nextId:1,lastReport:null,fx:[],world:newWorld(),fights:[],welcomed:[]}; areaAcc(S);
   // 性格の出てくる順番はプレイごとに変わる
   S.pOrder=PIDS.slice(); for(let i=S.pOrder.length-1;i>0;i--){const j=Math.floor(S.rng()*(i+1)); [S.pOrder[i],S.pOrder[j]]=[S.pOrder[j],S.pOrder[i]];}
   build(S,'house',2,4,true); build(S,'house',20,11,true); build(S,'board',PLAZA.x,PLAZA.y,true); // 立て札は広場のまん中
@@ -1279,7 +1281,7 @@ function build(S,type,x,y,free){
 }
 function newAdv(S,b){
   const i=S.advs.length, look=LOOKS[i%LOOKS.length], pid=S.pOrder[i%S.pOrder.length], ks=PERSONAS[pid].k;
-  return {id:i,name:NAMES[i%NAMES.length],hair:look[0],tunic:look[1],pid,k:ks[Math.floor(S.rng()*ks.length)],rival:null,home:b.id,lv:1,exp:0,hp:24,hpMax:24,atk:3,def:1,wlv:0,alv:0,own:{sword:0,axe:0,dagger:0,mail:0,cloth:0},wl:'sword',al:'mail',tags:{},gold:30,morale:70,
+  return {id:i,name:NAMES[i%NAMES.length],hair:look[0],tunic:look[1],pid,k:ks[Math.floor(S.rng()*ks.length)],rival:null,home:b.id,lv:1,exp:0,hp:24,hpMax:24,atk:3,def:1,wlv:0,alv:0,own:{sword:0,axe:0,dagger:0,staff:0,mail:0,cloth:0},wl:'sword',al:'mail',tags:{},gold:30,morale:70,
     joinDay:S.phase==='report'?S.day:S.day+1,last:null,state:'idle',pos:{...b.door},hidden:true,ko:false,slow:false,rep:null,trail:[],lastTrail:[],walk:null,goal:null,bubble:null,react:null};
 }
 function demolish(S,b){
@@ -1482,6 +1484,7 @@ const REQ={
   dagger:{3:'鋭いコウモリの牙',4:'渡し守の小刀',5:'女王の針',6:'ヘビの毒牙'},
   mail:{3:'鉄の鋲',4:'岩トカゲの硬い鱗',5:'祠の鎖',6:'銀の留め金'},
   cloth:{3:'丈夫な麻布',4:'葦の編み布',5:'水をはじく油',6:'カワウソの毛皮'},
+  staff:{3:'古い魔導書の切れ端',4:'沼光りの苔',5:'宿場の銀の燭台',6:'祠の水晶'},
 };
 const needItem=(S,l)=>REQ[l][S.stock[l]+1]||null;
 const hasItem=(S,nm)=>!!(S.items&&S.items[nm]);
@@ -1497,7 +1500,7 @@ function invest(S,l){
 const tierOf=(a,type)=>type==='weapon'?a.wlv:a.alv;
 const usedPrice=tier=>Math.round(price(tier-1)*.6);
 // ---- 持ち物と装備 ----
-function applyGear(a,l,t,sg){const g=gearStat(l,t); a.atk+=sg*g.atk; a.def+=sg*g.def; a.hpMax+=sg*g.hp; a.hp=Math.max(1,Math.min(a.hpMax,a.hp+sg*g.hp));}
+function applyGear(a,l,t,sg){const g=gearStat(l,t); a.atk+=sg*g.atk; if(g.mag)a.mag=(a.mag||0)+sg*g.mag; a.def+=sg*g.def; a.hpMax+=sg*g.hp; a.hp=Math.max(1,Math.min(a.hpMax,a.hp+sg*g.hp));}
 function equipLine(a,slot,l){
   const old=slot==='weapon'?a.wl:a.al; if(old===l)return;
   applyGear(a,old,a.own[old],-1); applyGear(a,l,a.own[l],1);
@@ -1533,7 +1536,7 @@ function hitEst(S,a,l,t,mid){
 const mudKnown=(S,ar)=>EDGES.some(e=>e.ar===ar&&e.mud&&S.world.trips[e.id]); // 一度歩けば、ぬかるみだとわかる
 function lineScore(S,a,l,t,F){
   const like=((LIKE[a.pid]||{})[l]||1);
-  if(LINES[l].shop==='weapon'){let v=0; for(const m in F)v+=F[m]*hitEst(S,a,l,t,m); return v*like;}
+  if(LINES[l].shop==='weapon'){ if(l==='staff'&&!caster(a))return 0; let v=0; for(const m in F)v+=F[m]*hitEst(S,a,l,t,m); if(caster(a))v*=.5; if(l==='staff')v+=5*t+(t>=3?2:0)+(t>=5?2:0); return v*like;} // 魔法を使う子は、殴る力を半分に見る // 杖は魔法を使う子だけ。魔力と魔法の回数ぶんを足して見る
   const g=gearStat(l,t), q=a.quest||{k:'self'}, ar=destArea(S,a); let v=g.def+g.hp/6; if(!t)return v;
   let sw=0; for(const m in F)if(knows(S,m,'swift'))sw+=F[m];
   if(l==='cloth'){ if(mudKnown(S,ar))v+=3; v+=sw*1.2; if(['road','room','cut'].includes(q.k))v+=.4; }
@@ -1550,6 +1553,7 @@ function chooseGear(S,a,note){
   let why=null;
   if(w==='axe'&&top('hard'))why=`${MON[top('hard')].n}が硬いと聞いて、${itemName('axe',a.wlv)}を持った`;
   else if(w==='dagger'&&top('swift'))why=`${MON[top('swift')].n}がすばやいと聞いて、${itemName('dagger',a.wlv)}を持った`;
+  else if(w==='staff'&&w0!=='staff')why=`魔法を強くするため、${itemName('staff',a.wlv)}を持った`;
   else if(ar==='cloth'&&mudKnown(S,destArea(S,a)))why=`ぬかるみが多いので、${itemName('cloth',a.alv)}で出かけた`;
   const n=SHOP_LINES.weapon.filter(l=>a.own[l]).length+SHOP_LINES.armor.filter(l=>a.own[l]).length;
   a.rep.gear={w:itemName(w,a.wlv),a:itemName(ar,a.alv),why,switched:n>2&&(w!==w0||ar!==a0)};
@@ -1829,15 +1833,15 @@ const NODES={
   // エリア3：西の古い街道（ar:2）。追いはぎ・野犬・石像の出る、崩れかけた昔の街道
   kinn:{ar:2,n:'宿場の跡',rest:true}, k1:{ar:2,n:'見張り台',room:true,rich:.8,master:'wstatue',chest:160}, k2:{ar:2,n:'石の橋',room:true,rich:1,chest:120},
   k3:{ar:2,n:'野営地',room:true,rich:1.4,master:'dogking',chest:180}, k4:{ar:2,n:'関所の跡',room:true,rich:1.8,chest:200}, kboss:{ar:2,n:'盗賊のねぐら',boss:true,mon:'bandk'},
-  kruin:{ar:2,side:true,n:'崩れた宿',room:true,rich:1.2,chest:150}, kshrine:{ar:2,side:true,n:'道祖神の祠',room:true,rich:1.6,chest:190}, hut:{ar:1,n:'渡し守の小屋',rest:true},
+  kruin:{ar:2,side:true,n:'崩れた宿',room:true,rich:1.2,chest:150,keys:[['staff','宿場の銀の燭台']],info:[['bandk','hits']]}, kshrine:{ar:2,side:true,n:'道祖神の祠',room:true,rich:1.6,chest:190,keys:[['staff','祠の水晶']],info:[['bandk','steal']]}, hut:{ar:1,n:'渡し守の小屋',rest:true},
   s1:{ar:1,n:'葦の原',room:true,rich:.7,master:'bigfrog',chest:80}, s2:{ar:1,n:'沈んだ祠',room:true,rich:1,chest:100},
   s3:{ar:1,n:'ヒルの巣',room:true,rich:1.7,master:'leechq',chest:140}, sboss:{ar:1,n:'沼の主の間',boss:true,mon:'catfish'},
   // 脇道の部屋（side）。探索の割合には数えない。keys：詳しく調べると見つかる鍵の品（系統と名前） info：わかる魔物の特徴
   lodge:{ar:0,side:true,n:'きこりの小屋跡',room:true,rich:.5,chest:20,keys:[['axe','古い斧の刃'],['cloth','丈夫な麻布']],info:[['golem','hard']]},
-  drip:{ar:0,side:true,n:'水の滴る横穴',room:true,rich:.8,chest:25,keys:[['dagger','鋭いコウモリの牙']],info:[['bat','swift']]},
+  drip:{ar:0,side:true,n:'水の滴る横穴',room:true,rich:.8,chest:25,keys:[['dagger','鋭いコウモリの牙'],['staff','古い魔導書の切れ端']],info:[['bat','swift']]},
   forge:{ar:0,side:true,n:'崩れた鍛冶場',room:true,rich:1,chest:40,keys:[['sword','古い金床'],['mail','鉄の鋲']],info:[['boss','hard']]},
   nest:{ar:0,side:true,n:'岩トカゲの巣',room:true,rich:1.4,chest:50,keys:[['mail','岩トカゲの硬い鱗'],['axe','黒の鉄鉱石']],info:[['king','hard']]},
-  reed:{ar:1,side:true,n:'葦刈りの小屋',room:true,rich:.6,chest:60,keys:[['cloth','葦の編み布'],['cloth','水をはじく油']],info:[['snake','swift']]},
+  reed:{ar:1,side:true,n:'葦刈りの小屋',room:true,rich:.6,chest:60,keys:[['cloth','葦の編み布'],['cloth','水をはじく油'],['staff','沼光りの苔']],info:[['snake','swift']]},
   kura:{ar:1,side:true,n:'渡し守の倉',room:true,rich:.8,chest:80,keys:[['dagger','渡し守の小刀'],['sword','古い砥石'],['cloth','カワウソの毛皮']],info:[['leechq','leech']]},
   smithy:{ar:1,side:true,n:'沈んだ鍛冶小屋',room:true,rich:1,chest:90,keys:[['sword','錆びない鋼'],['axe','沼鉄の塊']],info:[['mudhand','hard']]},
   inner:{ar:1,side:true,n:'祠の奥の間',room:true,rich:1.2,chest:110,keys:[['mail','祠の鎖'],['mail','銀の留め金']],info:[['catfish','aura']]},
@@ -1969,7 +1973,7 @@ const JOBS={
 };
 const jobName=a=>a.job&&JOBS[a.job]?JOBS[a.job].name:'見習い';
 const healer=a=>a.job==='white'||a.job==='sage', caster=a=>a.job==='white'||a.job==='black'||a.job==='sage', mage=a=>a.job==='black'||a.job==='sage';
-const castsOf=a=>caster(a)?3+Math.floor((a.mag||0)/3)+(a.job==='sage'?2:0):a.job==='knight'?2+Math.floor(a.lv/4):0;   // 1日に魔法（上級戦士は技）を使える回数
+const castsOf=a=>caster(a)?3+Math.floor((a.mag||0)/3)+(a.job==='sage'?2:0)+(a.wl==='staff'?(a.wlv>=3)+(a.wlv>=5):0):a.job==='knight'?2+Math.floor(a.lv/4):0;   // 1日に魔法（上級戦士は技）を使える回数
 const spellDmg=a=>a.job==='sage'?(a.mag||0)*3+2:(a.mag||0)*2+2;  // 攻撃の魔法：守りを無視する
 function becomeJob(a,job){a.job=job; if(caster(a))a.mag=Math.max(a.mag||0,a.lv)+(job==='sage'?2:0); // それまでのレベルぶんの魔力を持って始める
   if(job==='warrior'){a.hpMax+=4; a.def+=1;} if(job==='knight'){a.hpMax+=8; a.atk+=2;}}
@@ -2377,7 +2381,7 @@ function goalsOf(S){
   const top=t=>Math.max(...SHOP_LINES[t].map(l=>S.stock[l]));
   for(const n of [4,6]){P('sw'+n,`武器屋のどれかの品を${n}段階まで入荷させる`,15,()=>top('weapon')>=n); P('sa'+n,`防具屋のどれかの品を${n}段階まで入荷させる`,15,()=>top('armor')>=n);}
   P('tier5','どれかの系統を5段階まで入荷させる',15,()=>LINE_IDS.some(l=>S.stock[l]>=5));
-  P('axe1','武器屋に斧か短剣を入荷させる',10,()=>S.stock.axe>=1||S.stock.dagger>=1); P('lines3','武器屋に剣・斧・短剣がそろう',15,()=>SHOP_LINES.weapon.every(l=>S.stock[l]>=1));
+  P('axe1','武器屋に斧か短剣を入荷させる',10,()=>S.stock.axe>=1||S.stock.dagger>=1); P('lines3','武器屋に剣・斧・短剣がそろう',15,()=>['sword','axe','dagger'].every(l=>S.stock[l]>=1)); P('staff1','武器屋に杖を入荷させる',10,()=>S.stock.staff>=1,{rank:2}); P('staff3','魔道士が3段階めの杖を持つ',15,()=>S.advs.some(a=>(a.own.staff||0)>=3),{rank:2});
   P('cloth','防具屋に旅装束を入荷させる',10,()=>S.stock.cloth>=1);
   P('key1','鍵の品を見つける',10,()=>Object.values(S.keys).some(v=>v>0));
   P('used','だれかがおさがりを買う',10,()=>S.advs.some(a=>a.rep&&a.rep.bought.some(b=>b.used)));
@@ -4343,7 +4347,8 @@ function loadGame(d){
     L.found=[true,ch>=2,false]; L.ex=ch>=2?[100,L.explore||0,0]:[L.explore||0,0,0]; L.down=ch>=2?[true,!!L.bossDown,false]:[!!L.bossDown,false,false]; L.go=[false,false,false]; L.stones=ch-1; L.area=ch>=2?1:0; delete L.explore; delete L.bossDown; delete L.bossGo;}
   for(const k in base)if(L[k]===undefined)L[k]=base[k]; // 古い保存にない項目は、はじめの値で埋める
   L.world=Object.assign(newWorld(),L.world||{}); L.rng=Math.random; L.fx=[]; L.fights=[];
-  for(const a of L.advs){ if(!a.own){a.own={sword:a.wlv||0,axe:0,dagger:0,mail:a.alv||0,cloth:0}; a.wl='sword'; a.al='mail'; a.tags={};} }
+  L.stock.staff=L.stock.staff||0; L.keys.staff=L.keys.staff||0;
+  for(const a of L.advs){ if(a.own&&a.own.staff===undefined)a.own.staff=0; if(!a.own){a.own={sword:a.wlv||0,axe:0,dagger:0,staff:0,mail:a.alv||0,cloth:0}; a.wl='sword'; a.al='mail'; a.tags={};} }
   areaAcc(L); migrateGoals(L); return L;
 }
 {const d=readSave(); $('startBtn').classList.toggle('main',!d); if(d){$('contBtn').hidden=false; $('contBtn').classList.add('main'); $('contBtn').innerHTML=`続きから<small>${d.day}日目・精霊石${Math.max(0,(d.ch||1)-1)}つ</small>`; $('startBtn').textContent='はじめから';
