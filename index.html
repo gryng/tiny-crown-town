@@ -726,6 +726,31 @@ button.primary:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}
 .daycard .ln.big{font-size:60px;letter-spacing:.1em;line-height:1.1;animation-delay:.8s}
 .daycard .ln.sub{font-family:var(--f-body);font-weight:700;font-size:13px;letter-spacing:.2em;color:var(--cream);animation-delay:1.3s}
 .daycard .ln.tap{position:absolute;bottom:max(28px,env(safe-area-inset-bottom,0px));font-family:var(--f-body);font-size:12px;color:var(--cream);letter-spacing:.2em;animation-delay:1.8s}
+.endcard{position:fixed;inset:0;z-index:31;overflow:hidden;background:#03060c;color:var(--cream);cursor:default}
+.endcard[hidden]{display:none}
+.ec-sky{position:absolute;inset:0;background:var(--grain),linear-gradient(180deg,#03060c 0%,#0a1430 40%,#1b4332 75%,#c9a84c 100%);opacity:0;animation:ecDawn 14s ease-in-out .5s forwards}
+.ec-stars{position:absolute;inset:0;background:radial-gradient(1.5px 1.5px at 12% 18%,#fff8,transparent),radial-gradient(1.5px 1.5px at 72% 12%,#fff9,transparent),radial-gradient(1px 1px at 40% 30%,#fff7,transparent),radial-gradient(1px 1px at 86% 40%,#fff6,transparent),radial-gradient(1.5px 1.5px at 24% 46%,#fff6,transparent),radial-gradient(1px 1px at 58% 8%,#fff8,transparent);animation:ecFade 12s ease-in 2s forwards}
+.ec-sun{position:absolute;left:50%;bottom:-140px;width:220px;height:220px;margin-left:-110px;border-radius:50%;background:radial-gradient(circle,#fff3c4cc 0 26%,#f6e7a844 30% 52%,transparent 62%);filter:blur(2px);opacity:0;animation:ecRise 16s ease-out 3s forwards}
+.ec-gems{position:absolute;left:50%;top:14vh;width:0;height:0}
+.ec-gems i{position:absolute;width:16px;height:20px;margin:-10px 0 0 -8px;background:linear-gradient(160deg,#fff,var(--c) 55%,#0006);clip-path:polygon(50% 0,100% 38%,78% 100%,22% 100%,0 38%);filter:drop-shadow(0 0 10px var(--c));opacity:0;animation:ecGem 3.4s cubic-bezier(.2,.9,.3,1) forwards,ecFade 2s ease-in 9s forwards}
+.ec-gems i:nth-child(1){--x:-70px;animation-delay:.6s,9s}.ec-gems i:nth-child(2){--x:-24px;animation-delay:.9s,9.2s}.ec-gems i:nth-child(3){--x:24px;animation-delay:1.2s,9.4s}.ec-gems i:nth-child(4){--x:70px;animation-delay:1.5s,9.6s}
+.ec-roll{position:absolute;left:0;right:0;top:100%;display:flex;flex-direction:column;align-items:center;gap:22px;padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px));text-align:center;text-shadow:0 2px 0 #000a;will-change:transform}
+.ec-roll p{margin:0;max-width:30em;text-shadow:0 2px 0 #000a,0 0 12px #000c;font:600 clamp(15px,2.2vw,19px)/2 var(--f-body);letter-spacing:.06em}
+.ec-roll h3{margin:28px 0 0;font:800 13px var(--f-body);letter-spacing:.4em;color:var(--gold-soft)}
+.ec-roll .ec-big{font:800 clamp(30px,6vw,52px)/1.2 var(--f-head);letter-spacing:.08em;color:var(--gold-soft);text-shadow:0 2px 0 #06100b,0 0 24px #c9a84c80}
+.ec-roll .ec-gap{height:18vh}
+.ec-cast{display:flex;flex-wrap:wrap;justify-content:center;gap:16px 22px;max-width:min(720px,100%)}
+.ec-cast figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:4px;width:92px}
+.ec-cast img{width:48px;height:52px;image-rendering:pixelated;filter:drop-shadow(0 3px 0 #0008)}
+.ec-cast b{font:800 15px var(--f-head);color:#ffe9a8}.ec-cast small{font:600 11px var(--f-body);letter-spacing:.04em;opacity:.85}
+.ec-stats{display:grid;grid-template-columns:auto auto;gap:6px 18px;font:600 14px var(--f-body);letter-spacing:.06em}
+.ec-stats dt{text-align:right;opacity:.8}.ec-stats dd{margin:0;text-align:left;font-weight:800;color:#ffe9a8}
+.ec-end{display:flex;flex-direction:column;align-items:center;gap:18px;padding-bottom:40vh}
+.ec-end .primary{font-size:16px;padding:12px 28px}
+.ec-skip{position:absolute;right:max(14px,env(safe-area-inset-right,0px));bottom:max(14px,env(safe-area-inset-bottom,0px));padding:6px 14px;font:700 12px var(--f-body);letter-spacing:.15em;color:var(--cream);background:#0006;border:1px solid #fff4;border-radius:999px;cursor:pointer}
+@keyframes ecDawn{to{opacity:1}}@keyframes ecFade{to{opacity:0}}@keyframes ecRise{to{opacity:.85;transform:translateY(-16vh)}}
+@keyframes ecGem{0%{opacity:0;transform:translate(0,40vh) scale(.4)}60%{opacity:1}100%{opacity:1;transform:translate(var(--x),0) scale(1)}}
+@media (prefers-reduced-motion:reduce){.ec-sky,.ec-sun,.ec-gems i{animation-duration:.01s!important;animation-delay:0s!important}.ec-stars{display:none}}
 @keyframes dawn{to{opacity:1}}
 @keyframes rise{to{bottom:calc(14% - 40px)}}
 @keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -997,7 +1022,7 @@ body:has(#titleModal:not([hidden])) .wrap>:not(.screen),body:has(#titleModal:not
     </nav>
     <p class="tt-note" id="saveNote" hidden></p>
   </div>
-  <footer class="tt-foot"><span class="tt-ver">プロトタイプ v0.38.0 · HD-2D</span><span>1日が終わるたびに、このブラウザに自動で保存します</span><span>© Fuch.io</span></footer>
+  <footer class="tt-foot"><span class="tt-ver">プロトタイプ v0.39.0 · HD-2D</span><span>1日が終わるたびに、このブラウザに自動で保存します</span><span>© Fuch.io</span></footer>
   <div class="tt-how" id="howWin" hidden>
     <div class="tt-how-box" role="dialog" aria-label="あそびかた">
       <b class="sl-name">あそびかた</b>
@@ -1040,6 +1065,12 @@ body:has(#titleModal:not([hidden])) .wrap>:not(.screen),body:has(#titleModal:not
   <div class="ln tap"><span id="jnTap">タップで進む</span></div>
 </div>
 <div class="veil" id="veil" hidden aria-hidden="true"><span class="veil-crown">♛</span></div>
+<div class="endcard" id="endCard" hidden role="dialog" aria-label="エンディング">
+  <div class="ec-sky"></div><div class="ec-stars" aria-hidden="true"></div><div class="ec-sun" aria-hidden="true"></div>
+  <div class="ec-gems" aria-hidden="true"><i style="--c:#e0503c"></i><i style="--c:#3d86d6"></i><i style="--c:#3cb46a"></i><i style="--c:#cfe2f5"></i></div>
+  <div class="ec-roll" id="ecRoll"></div>
+  <button class="ec-skip" id="ecSkip">とばす</button>
+</div>
 <div class="daycard stonecard" id="stoneCard" hidden role="dialog" aria-live="assertive" aria-label="精霊石を手に入れた">
   <div class="sky st-sky"></div><div class="st-rays"></div><div class="st-spark" id="stSpark" aria-hidden="true"></div>
   <div class="dc-mid st-mid">
@@ -1200,7 +1231,7 @@ function bfs(g,a,b){
 }
 
 function newState(rng){
-  const S={g:makeMap(),day:1,t:DAY_START,elem:START_ELEM,justWon:false,area:0,ex:[0,0,0,0],down:[false,false,false,false],go:[false,false,false,false],found:[false,false,false,false],stones:0,nom:{},board:null,parkUse:{},chapter:1,b:[],advs:[],sites:[],carps:[newCarp(0)],docs:[],builtToday:[],stock:{sword:1,axe:0,dagger:0,staff:0,mail:1,cloth:0},keys:{sword:0,axe:0,dagger:0,staff:0,mail:0,cloth:0},items:{},know:{},used:{weapon:[],armor:[]},refund:0,phase:'report',parkUsed:0,demolished:0,rng:rng||Math.random,nextId:1,lastReport:null,fx:[],world:newWorld(),fights:[],welcomed:[]}; areaAcc(S);
+  const S={g:makeMap(),day:1,t:DAY_START,elem:START_ELEM,justWon:false,area:0,ex:[0,0,0,0,0],down:[false,false,false,false,false],go:[false,false,false,false,false],found:[false,false,false,false,false],stones:0,nom:{},board:null,parkUse:{},chapter:1,b:[],advs:[],sites:[],carps:[newCarp(0)],docs:[],builtToday:[],stock:{sword:1,axe:0,dagger:0,staff:0,mail:1,cloth:0},keys:{sword:0,axe:0,dagger:0,staff:0,mail:0,cloth:0},items:{},know:{},used:{weapon:[],armor:[]},refund:0,phase:'report',parkUsed:0,demolished:0,rng:rng||Math.random,nextId:1,lastReport:null,fx:[],world:newWorld(),fights:[],welcomed:[]}; areaAcc(S);
   // 性格の出てくる順番はプレイごとに変わる
   S.pOrder=PIDS.slice(); for(let i=S.pOrder.length-1;i>0;i--){const j=Math.floor(S.rng()*(i+1)); [S.pOrder[i],S.pOrder[j]]=[S.pOrder[j],S.pOrder[i]];}
   build(S,'house',2,4,true); build(S,'house',20,11,true); build(S,'board',PLAZA.x,PLAZA.y,true); // 立て札は広場のまん中
@@ -1415,6 +1446,8 @@ function startDay(S){
     if(a.morale<25){a.state='rest'; a.rep.rested=true; a.rep.note='やる気が出ず休んだ'; return;}
     wake(S,a,LEAVE+i*5+(PP(a).leave||0)+(a.oversleep||0)); if(a.oversleep){a.rep.overslept=a.oversleep; a.oversleep=0;}
   });
+  // 総力戦：出かけられる全員でひとつの組。門でそろってから城の地下へ
+  if(S.board.some(q=>q.k==='final')){const M=S.advs.filter(a=>a.state==='home'&&S.nom[a.id]!=='rest').sort((x,y)=>(x.job==='white')-(y.job==='white')||atkOf(y)-atkOf(x)); if(M.length){const id=++S.partyN; S.parties[id]={ids:M.map(a=>a.id),leader:M[0].id,atGate:0,met:[],deadline:null,q:null,final:true,gone:true}; for(const a of M){a.pt=id; a.rep.party=M.filter(x=>x!==a).map(x=>x.name); a.rep.ptWhy='final';}}}
 }
 // 朝の支度を始められる状態にする
 function wake(S,a,leaveAt){const P=PP(a); a.state='home'; a.leaveAt=leaveAt; a.todo={park:!P.skipPark,board:true,shops:P.armorFirst?['armor','weapon']:['weapon','armor'],shopsVisited:0};}
@@ -1445,13 +1478,19 @@ function arrive(S,a){
     case 'dojo': a.hidden=true; a.rep.dojo=true; a.rep.dep=S.t; a.rep.dojoFrom=S.t; stopAt(S,a,Math.max(30,DOJO_END-S.t),'dojo'); break;
     case 'tavern': tavernArrive(S,a); break;
     case 'help': a.state='help'; a.hidden=false; break;
-    case 'gate': { const P=a.pt&&S.parties[a.pt]; if(!P){depart(S,a); break;}
+    case 'gate': { const P=a.pt&&S.parties[a.pt]; if(!P||P.out){depart(S,a); break;}
       P.atGate++; if(P.atGate<P.ids.length){a.state='gatewait'; break;} // 組んだ仲間がそろうまで門で待つ
-      const M=P.ids.map(id=>S.advs.find(x=>x.id===id)); for(const m of M){depart(S,m); m.out.party=a.pt; m.out.ar=m.rep.ar=destArea(S,M[0]);}
-      for(const m of M)ev(S,m,'pt',{co:M.filter(x=>x!==m).map(x=>x.name)}); break; }
+      gateGo(S,a.pt,a); break; }
     case 'castle': payQuest(S,a); a.rep.wage=true; a.last={k:'wage'}; a.hidden=true; stopAt(S,a,10,'castle'); break;
     case 'home': a.state='done'; a.hidden=true; break;
   }
+}
+// 門にそろった（総力戦で待ちきれなくなったときは、来ている顔ぶれで）出発する
+function gateGo(S,id,a){
+  const P=S.parties[id]; P.out=true; for(const i of P.ids){const x=S.advs.find(v=>v.id===i); if(x&&x.state!=='gatewait'&&x!==a){x.pt=null; x.rep.leftBehind=true;}} P.ids=P.ids.filter(i=>{const x=S.advs.find(v=>v.id===i); return x&&(x.state==='gatewait'||x===a);});
+  const M=P.ids.map(i=>S.advs.find(x=>x.id===i)); P.leader=P.ids[0];
+  for(const m of M){depart(S,m); m.out.party=id; m.out.ar=m.rep.ar=destArea(S,M[0]);}
+  for(const m of M)ev(S,m,'pt',{co:M.filter(x=>x!==m).map(x=>x.name)});
 }
 function finish(S,a){
   const w=a.stopWhat; a.hidden=false;
@@ -1598,7 +1637,7 @@ function next(S,a){
     if(PP(a).armorFirst&&opts.includes('armor'))best='armor';
     td.shops=td.shops.filter(x=>x!==best); goTo(S,a,first(S,best).door,best); return;
   }
-  if(a.pt&&!td.tavern&&first(S,'tavern')){td.tavern=true; goTo(S,a,first(S,'tavern').door,'tavern'); return;}
+  if(a.pt&&!td.tavern&&first(S,'tavern')&&!(S.parties[a.pt]||{}).final){td.tavern=true; goTo(S,a,first(S,'tavern').door,'tavern'); return;}
   goTo(S,a,GATE,'gate');
 }
 // ================= 酒場：仲間と組む =================
@@ -1617,7 +1656,8 @@ function partyReady(S,P){
   if(P.ids.some(i=>!P.met.includes(i)))return false;
   return !S.advs.some(b=>!b.pt&&b.todo&&b.todo.board&&(b.state==='home'||b.state==='walk'||b.state==='stop')&&P.q&&canTake(S,b,P.q));
 }
-function partyCheck(S){for(const P of Object.values(S.parties))if(!P.gone&&P.met.length&&partyReady(S,P))setOut(S,P);}
+function partyCheck(S){for(const P of Object.values(S.parties))if(!P.gone&&P.met.length&&partyReady(S,P))setOut(S,P);
+  for(const id in S.parties){const P=S.parties[id]; if(P.final&&!P.out&&P.atGate>0&&S.t>=MEET_AT+60)gateGo(S,id);}} // 総力戦：11時になっても来ない子は待たない
 // そろった（か、待ちきれなくなった）ので、いる顔ぶれで門へ向かう
 function setOut(S,P){
   const id=Object.keys(S.parties).find(k=>S.parties[k]===P);
@@ -1660,6 +1700,7 @@ const QK={
   train: {name:q=>'腕をみがけ', noun:q=>'腕みがき', desc:'腕前に合った場所で、手ごたえのある道を見回って戦う。経験値が1.25倍', done:'5勝する', reward:20, cap:2},
   cut:   {name:q=>'近道を切り開け'+tagA(q), noun:q=>'近道の切り開き', desc:'手がかりの場所で、近道を開く', done:'近道を開通させる', reward:80, cap:1},
   boss:  {name:q=>'親玉に挑め'+(q.party?'（3人で組んで）':'')+tagA(q), noun:q=>'親玉退治', desc:'いちばん奥の、親玉の間をめざす', done:'親玉を倒す', reward:200, cap:1},
+  final: {name:q=>'影の王を討て（総力戦）', noun:q=>'総力戦', desc:'冒険者が全員そろって城の地下へ降り、いちばん奥の約束の間で影の王に挑む。この依頼を貼った日は、ほかの依頼は受けない', done:'影の王を倒す', reward:200, cap:99},
   field: {name:q=>`${AREAS[q.ar].dir}のほうを探索する`, noun:q=>`${AREAS[q.ar].dir}の探索`, desc:'町の外の野原を歩いて、ダンジョンの入口を探す。見つけたら、まず知らせに戻る', done:'入口を探す（見つかるまで何日かかかることも）', reward:40, cap:3},
   dojo:  {name:q=>'訓練場で鍛えよ', noun:q=>'訓練場での鍛錬', desc:'外に出ずに、訓練場で夕方まで鍛える。けがの心配がなく、経験値をたっぷり得られる。時のかけらやゴールドは手に入らない', done:'夕方まで鍛える', reward:20, cap:3},
   help:  {name:q=>'大工を手伝え', noun:q=>'大工の手伝い', desc:'町に残って、片づけや建設を手伝う。けがの心配はない', done:'夕方まで働く', reward:30, cap:3},
@@ -1678,6 +1719,7 @@ function questsAvail(S){
     const add=(k,o={})=>{const q={k,ar,...o}; if(q.n)delete q.ar; q.id=qid(q); L.push(q);};
     if(!S.found[ar]){if(areaOpen(S,ar)&&EDGES.some(e=>e.ar===ar&&e.app))add('field'); continue;} // まだ見つけていない方角：野原の探索
     if(AREAS[ar].stub)continue;
+    if(AREAS[ar].final){if(!S.down[ar])add('final'); continue;} // 城の地下：総力戦のおふれだけ
     S._ar=ar;
     if(S.explore>=100&&!S.bossDown)add('boss',{party});
     {const an=anteNode(S); if(an&&!S.bossDown&&reached(S,an)&&!masterAlive(S,an)&&bossUnknown(S))add('scout');}
@@ -1729,6 +1771,7 @@ const PREF={
 };
 function canTake(S,a,q){
   const P=PP(a), brave=P.brave?-1:P.safe?.45:.15;
+  if(q.k==='final')return true;
   if(q.party&&P.solo)return false;
   const qa=qArea(S,a,q); if(['road','room','cut','master','boss','scout','study'].includes(q.k)&&qa!=null&&a.lv<AREAS[qa].min)return false; // そのエリアに力が届かない子は、探索・調査・討伐を受けない
   const m=q.k==='master'?MON[NODES[q.n].master]:q.k==='boss'?MON[NODES[AREAS[q.ar].bossNode].mon]:null; if(!m)return true;
@@ -1748,6 +1791,8 @@ function want(S,a,q,i){
   return v*(.9+S.rng()*.2);
 }
 function takeQuest(S,a){
+  const fq=S.board.find(q=>q.k==='final'); // 総力戦の日は、全員がそれを受ける
+  if(fq){const q={...fq}; a.quest=q; (S.taken[q.id]=S.taken[q.id]||[]).push(a.id); a.behest=a.rep.behest='boss'; a.rep.quest={k:q.k,n:null,name:QK[q.k].name(q),reward:rewardOf(q),bonus:false,party:false}; return;}
   let best=null, bv=0;
   S.board.forEach((q,i)=>{ if(!canTake(S,a,q))return; const v=want(S,a,q,i); if(v>bv){bv=v; best=q;} });
   const q=best?{...best}:{k:'self',id:'self'}; a.quest=q; (S.taken[q.id]=S.taken[q.id]||[]).push(a.id);
@@ -1760,8 +1805,8 @@ function takeQuest(S,a){
 }
 // よくある貼り方（自動プレイ用）：親玉 → 主 → 近道 → 部屋 → 道 → 手伝い → 腕。主と親玉は、酒場があれば組んで
 function autoBoard(S){
-  const backlog=S.sites.some(x=>x.kind==='build')&&S.sites.reduce((t,x)=>t+x.need-x.done,0)>900*S.carps.length, order=['boss','master','scout','study','cut','room','road','field','help','train','dojo'], top=Math.max(1,...S.advs.map(a=>a.lv));
-  const av=questsAvail(S).filter(q=>(q.k!=='help'||backlog)&&(q.k==='field'||qArea(S,{lv:top},q)==null||AREAS[qArea(S,{lv:top},q)].min<=top)); // まだ力の届かないエリアの依頼は貼らない
+  const backlog=S.sites.some(x=>x.kind==='build')&&S.sites.reduce((t,x)=>t+x.need-x.done,0)>900*S.carps.length, order=['final','boss','master','scout','study','cut','room','road','field','help','train','dojo'], top=Math.max(1,...S.advs.map(a=>a.lv));
+  const av=questsAvail(S).filter(q=>(q.k!=='final'||S.advs.every(a=>!a.injured&&a.morale>=25))&&(q.k!=='help'||backlog)&&(q.k==='field'||q.k==='final'||qArea(S,{lv:top},q)==null||AREAS[qArea(S,{lv:top},q)].min<=top)); // まだ力の届かないエリアの依頼は貼らない
   const qa=q=>q.ar??(q.n?NODES[q.n].ar:0), rk=q=>(q.k==='study'&&S.down[qa(q)]?order.indexOf('road')+.5:order.indexOf(q.k))+(S.down[qa(q)]?.3:0)+qa(q)*.01; // 親玉を倒したエリアの品は後回し
   let pt=0; S.board=av.slice().sort((x,y)=>rk(x)-rk(y)).filter(q=>!q.party||!pt++).slice(0,boardMax(S)).map(q=>({...q})); // 組む依頼は1枚ずつ
 }
@@ -1779,7 +1824,7 @@ function questDone(S,a){
     case 'gather': return r.elem>=25;
     case 'train': return r.wins>=5;
     case 'cut': return !!r.opened;
-    case 'boss': return !!r.boss;
+    case 'boss': case 'final': return !!r.boss;
     case 'help': return (r.helped||0)>=180||((r.helped||0)>0&&r.helpAll);
     default: return false;
   }
@@ -1836,6 +1881,8 @@ const NODES={
   // エリア4：北の雪の山（ar:3）。精霊石が3つそろうと、北の山道の岩が崩れて行けるようになる
   y0:{ar:3,n:'登山口',app:true}, yhut:{ar:3,n:'山小屋',rest:true}, y1:{ar:3,n:'氷の洞',room:true,rich:1,master:'yetik',chest:220}, y2:{ar:3,n:'凍った滝',room:true,rich:1.2,chest:200},
   y3:{ar:3,n:'見晴らしの尾根',room:true,rich:1.8,master:'iceq',chest:260}, yboss:{ar:3,n:'山頂',boss:true,mon:'snowlord'},
+  // 城の地下（ar:4）。4つの精霊石がそろうと、城の床下に眠っていた扉が開く。いちばん奥に影の王
+  z0:{ar:4,n:'地下への階段'}, z1:{ar:4,n:'忘れられた回廊',rest:true}, zboss:{ar:4,n:'約束の間',boss:true,mon:'shadowk'},
   ycave:{ar:3,side:true,n:'雪洞',room:true,rich:1.3,chest:210,info:[['snowlord','cold']]}, yshrine:{ar:3,side:true,n:'山の祠',room:true,rich:1.7,chest:240},
   kruin:{ar:2,side:true,n:'崩れた宿',room:true,rich:1.2,chest:150,keys:[['staff','宿場の銀の燭台']],info:[['bandk','hits']]}, kshrine:{ar:2,side:true,n:'道祖神の祠',room:true,rich:1.6,chest:190,keys:[['staff','祠の水晶']],info:[['bandk','steal']]}, hut:{ar:1,n:'渡し守の小屋',rest:true},
   s1:{ar:1,n:'葦の原',room:true,rich:.7,master:'bigfrog',chest:80}, s2:{ar:1,n:'沈んだ祠',room:true,rich:1,chest:100},
@@ -1855,7 +1902,7 @@ NODES.hall.keys=[['sword','古い剣の柄']]; // 本道の部屋にも、主を
 const STUDY_NEED=12; // 鍵の品ひとつを見つけるのにかかる手間（人数×ターン）
 for(const id of ['fork','spring','mouth','r1','r2','hall','boss'])NODES[id].ar=0; NODES.fork.app=NODES.mouth.app=true; // app：入口までの野道（見つける前から歩ける）
 // エリア（章ごとに1つずつ進む）。いま挑んでいるのは S.area
-const AREAS=[{name:'南の洞窟',bossNode:'boss',short:'洞窟',min:1,dir:'南',door:'mouth',stone:'赤の精霊石'},{name:'東の湿地',bossNode:'sboss',short:'湿地',min:5,dir:'東',door:'sfork',stone:'青の精霊石'},{name:'西の古い街道',bossNode:'kboss',short:'街道',min:10,dir:'西',door:'k0',stone:'緑の精霊石'},{name:'北の雪の山',bossNode:'yboss',short:'雪山',min:15,dir:'北',door:'y0',stone:'白の精霊石',lock:S=>(S.stones||0)>=3}]; // min：ここで戦える目安のレベル door：入口 stub：まだ中を作っていない
+const AREAS=[{name:'南の洞窟',bossNode:'boss',short:'洞窟',min:1,dir:'南',door:'mouth',stone:'赤の精霊石'},{name:'東の湿地',bossNode:'sboss',short:'湿地',min:5,dir:'東',door:'sfork',stone:'青の精霊石'},{name:'西の古い街道',bossNode:'kboss',short:'街道',min:10,dir:'西',door:'k0',stone:'緑の精霊石'},{name:'北の雪の山',bossNode:'yboss',short:'雪山',min:15,dir:'北',door:'y0',stone:'白の精霊石',lock:S=>(S.stones||0)>=3},{name:'城の地下',bossNode:'zboss',short:'地下',min:18,dir:'城の下',door:'z0',stone:null,final:true,lock:S=>(S.stones||0)>=4}]; // final：4つの精霊石で開く、最後の戦いの場所 // min：ここで戦える目安のレベル door：入口 stub：まだ中を作っていない
 // いま考えているエリア：外で動いている冒険者の向かったエリア（S._ar）、ふだんは画面で見ているエリア（S.area）
 const CA=S=>S._ar??S.area;
 // 探索の割合・親玉を倒したか・親玉に挑むかは、エリアごと。S.explore などは「いま考えているエリア」のぶんを指す
@@ -1870,7 +1917,7 @@ const dangerOf=(S,ar)=>{const top=Math.max(1,...S.advs.map(a=>a.lv)), d=AREAS[ar
 // 冒険者が外で動いているあいだは、その子が向かったエリア（S._ar）で考える。ふだんは、いま挑んでいるエリア
 const inArea=(S,x)=>x.ar===undefined||x.ar===CA(S)&&(S.found[x.ar]||!!x.app); // 見つける前のエリアは、入口までの野道だけ
 // 腕前に合った行き先：いま挑んでいるエリアまでのうち、目安のレベルに届いているいちばん奥
-const fitArea=(S,a)=>{const L=openAreas(S); if(!L.length)return null; let b=null; for(const i of L)if(a.lv>=AREAS[i].min&&(b===null||AREAS[i].min>AREAS[b].min))b=i; return b??L.sort((x,y)=>AREAS[x].min-AREAS[y].min)[0];};
+const fitArea=(S,a)=>{const L=openAreas(S); if(!L.length)return null; let b=null; for(const i of L)if(!AREAS[i].final&&a.lv>=AREAS[i].min&&(b===null||AREAS[i].min>AREAS[b].min))b=i; return b??L.filter(i=>!AREAS[i].final).sort((x,y)=>AREAS[x].min-AREAS[y].min)[0]??null;}; // 城の地下は、総力戦の日だけ
 const bossMon=S=>MON[NODES[AREAS[CA(S)].bossNode].mon];
 const EDGES=[
   {id:'e1',a:'gate',b:'fork',len:12,risk:.16,zone:'forest',n:'森の道',app:true},
@@ -1898,6 +1945,9 @@ const EDGES=[
   {id:'n6',ar:3,a:'y2',b:'y3',len:6,risk:.3,zone:'ice',n:'凍った尾根道'},
   {id:'n7',ar:3,a:'y3',b:'yboss',len:4,risk:0,zone:'ice',n:'山頂への道',bossWay:true},
   {id:'v1',ar:3,a:'y1',b:'ycave',len:5,risk:.26,zone:'snow',n:'雪洞への穴',side:true},
+  {id:'f1',ar:4,a:'gate',b:'z0',len:3,risk:0,zone:'under',n:'城の床下の階段'},
+  {id:'f2',ar:4,a:'z0',b:'z1',len:5,risk:.3,zone:'under',n:'影のただよう通路'},
+  {id:'f3',ar:4,a:'z1',b:'zboss',len:3,risk:0,zone:'under',n:'約束の間への道',bossWay:true},
   {id:'v2',ar:3,a:'y3',b:'yshrine',len:4,risk:.3,zone:'ice',n:'祠への氷の階段',side:true},
   {id:'z1',ar:2,a:'k1',b:'kruin',len:5,risk:.26,zone:'road',n:'宿への小道',side:true},
   {id:'z2',ar:2,a:'k4',b:'kshrine',len:4,risk:.3,zone:'ruins',n:'祠への石段',side:true}, // find：はじめて入口を見つけるまでの手間（人×ターン、何日かに分けてもよい）
@@ -1952,11 +2002,15 @@ const MON={
   yetik:{n:'雪男の長',hp:460,atk:33,def:9,regen:14,master:true,xp:130,elem:[50,60],gold:80},
   iceq:{n:'氷の女王の影',hp:360,atk:31,def:7,ghost:true,cold:5,master:true,xp:140,elem:[50,60],gold:80},
   snowlord:{n:'雪山の主',hp:880,atk:35,def:10,hits:2,cold:5,regen:12,boss:true,xp:280,elem:[320,320],gold:0},
+  // 城の地下。影の王は、仲間が多くても全員に届く闇をまき（白魔道士Lv8〜で防げる）、傷もふさがる
+  shade:{n:'影の兵',hp:150,atk:30,def:10,xp:30,elem:[12,16],gold:0},
+  shadeb:{n:'影のけもの',hp:110,atk:28,def:6,swift:true,hits:2,xp:30,elem:[12,16],gold:0},
+  shadowk:{n:'影の王',hp:2900,atk:45,def:12,hits:2,aura:6,regen:20,boss:true,xp:400,elem:[500,500],gold:0},
   catfish:{n:'沼の主',hp:180,atk:15,def:6,swift:true,leech:true,boss:true,aura:4,xp:120,elem:[200,200],gold:0},
 };
-for(const id of ['rat','bat','shroom','lizard','golem','bigrat','king','boss'])MON[id].ar=0; for(const id of ['frog','leech','snake','mudhand','bigfrog','leechq','catfish'])MON[id].ar=1; for(const id of ['wdog','bandit','crow','statue','wstatue','dogking','bandk'])MON[id].ar=2; for(const id of ['wolf','wisp','yeti','turtle','yetik','iceq','snowlord'])MON[id].ar=3;
-const ZONE={forest:[['rat',1]],cave:[['bat',.45],['shroom',.35],['rat',.2]],deep:[['lizard',.45],['golem',.25],['bat',.15],['shroom',.15]],marsh:[['frog',.45],['leech',.3],['snake',.25]],bog:[['leech',.35],['snake',.25],['mudhand',.25],['frog',.15]],road:[['wdog',.4],['bandit',.35],['crow',.25]],ruins:[['bandit',.3],['statue',.3],['crow',.2],['wdog',.2]],snow:[['wolf',.4],['wisp',.3],['yeti',.3]],ice:[['turtle',.3],['wisp',.3],['yeti',.25],['wolf',.15]]};
-const DEPTH={y0:1,yhut:2,y1:2,y2:3,y3:4,yboss:5,ycave:3,yshrine:5,k0:1,kinn:2,k1:2,k2:3,k3:4,k4:5,kboss:6,kruin:3,kshrine:6,gate:0,fork:1,spring:2,mouth:2,r1:3,r2:4,hall:5,boss:6,sfork:1,hut:2,s1:2,s2:3,s3:4,sboss:5,lodge:2,drip:4,forge:5,nest:6,reed:2,kura:3,smithy:3,inner:4,deepnest:5};
+for(const id of ['rat','bat','shroom','lizard','golem','bigrat','king','boss'])MON[id].ar=0; for(const id of ['frog','leech','snake','mudhand','bigfrog','leechq','catfish'])MON[id].ar=1; for(const id of ['wdog','bandit','crow','statue','wstatue','dogking','bandk'])MON[id].ar=2; for(const id of ['wolf','wisp','yeti','turtle','yetik','iceq','snowlord'])MON[id].ar=3; for(const id of ['shade','shadeb','shadowk'])MON[id].ar=4;
+const ZONE={under:[['shade',.55],['shadeb',.45]],forest:[['rat',1]],cave:[['bat',.45],['shroom',.35],['rat',.2]],deep:[['lizard',.45],['golem',.25],['bat',.15],['shroom',.15]],marsh:[['frog',.45],['leech',.3],['snake',.25]],bog:[['leech',.35],['snake',.25],['mudhand',.25],['frog',.15]],road:[['wdog',.4],['bandit',.35],['crow',.25]],ruins:[['bandit',.3],['statue',.3],['crow',.2],['wdog',.2]],snow:[['wolf',.4],['wisp',.3],['yeti',.3]],ice:[['turtle',.3],['wisp',.3],['yeti',.25],['wolf',.15]]};
+const DEPTH={z0:1,z1:2,zboss:3,y0:1,yhut:2,y1:2,y2:3,y3:4,yboss:5,ycave:3,yshrine:5,k0:1,kinn:2,k1:2,k2:3,k3:4,k4:5,kboss:6,kruin:3,kshrine:6,gate:0,fork:1,spring:2,mouth:2,r1:3,r2:4,hall:5,boss:6,sfork:1,hut:2,s1:2,s2:3,s3:4,sboss:5,lodge:2,drip:4,forge:5,nest:6,reed:2,kura:3,smithy:3,inner:4,deepnest:5};
 const inA=(S,x)=>x.ar===undefined||x.ar===CA(S);
 const units=S=>EDGES.filter(e=>inA(S,e)&&!e.bossWay&&!e.side).length+Object.values(NODES).filter(n=>inA(S,n)&&n.room&&!n.side).length+Object.values(NODES).filter(n=>inA(S,n)&&n.master).length;
 function newWorld(){return {trips:{},searched:{},searchDay:{},master:{},chest:{},clue:false,cut:false,vein:{},veinG:{},study:{},keysTaken:{},fieldLeft:{}};}
@@ -2219,7 +2273,7 @@ function decide(S,a){
   const block=nid=>masterAlive(S,nid);
   let best=null; const offer=(to,bonus,what,opt)=>{ if(to===id)return; const rt=route(S,id,to,{block,safe:P.safe,...opt}); if(!rt)return; const back=route(S,to,'gate'); if(rt.cost+(back?back.cost:99)+margin+3>left)return; const sc=rt.cost-bonus; if(!best||sc<best.sc)best={sc,rt,what,to}; };
   if(a.behest==='boss'&&S.explore>=100&&!S.bossDown){
-    if(winnableP(S,a,bossMon(S),(P.brave?-1:P.safe?.3:0)+(seenMon(S,bossId(S))?0:.15)))offer(AREAS[S.area].bossNode,50,'boss',{boss:true});
+    if((a.quest||{}).k==='final'||winnableP(S,a,bossMon(S),(P.brave?-1:P.safe?.3:0)+(seenMon(S,bossId(S))?0:.15)))offer(AREAS[S.area].bossNode,50,'boss',{boss:true});
     else if(!a.rep.shy){for(const x of M){x.rep.shy=true; x.rep.shyNote=M.length>1?'組んでも親玉にはまだ勝てそうにないと見て、腕をみがいた':'親玉にはまだ勝てそうにないと見て、腕をみがいた';}}
   }
   const Q=a.quest||{k:'self'}, qBoost=nid=>(Q.n===nid&&(Q.k==='room'||Q.k==='master'||Q.k==='study'))?60:0;
@@ -2276,10 +2330,12 @@ function endDay(S){
     S.builtToday.push(`荒れ地を片づけた：${kinds}（${RES}+${sum}）`); if(fd)S.builtToday.push(`がれきの下から古い宝箱が出てきた（${RES}+${fd}）`); S.clearLog=[];}
   if(S.carpFound)S.builtToday.push(`大工が街で${RES}を${S.carpFound}拾った`);
   const newFound=[]; for(const a of S.advs)if(a.rep&&a.rep.found!=null&&!S.found[a.rep.found]&&!newFound.some(f=>f.ar===a.rep.found)){newFound.push({ar:a.rep.found,danger:dangerOf(S,a.rep.found),by:S.advs.filter(x=>x.rep&&x.rep.found===a.rep.found).map(x=>x.name)});} // 入口の知らせ
-  const won=S.justWon?S.wonAr:null; if(won!=null){S.stones=(S.stones||0)+1; S.chapter=1+S.stones;} // 親玉を倒すと精霊石。石の数で王様の位が上がる
+  const won=S.justWon?S.wonAr:null, fin=won!=null&&!!AREAS[won].final; if(won!=null&&!fin){S.stones=(S.stones||0)+1; S.chapter=1+S.stones;} // 親玉を倒すと精霊石。石の数で王様の位が上がる
+  if(fin)S.ending={day:S.day}; // 影の王を倒した：エンディング
+  const door=won!=null&&!fin&&S.stones>=4&&!S.found[4]; if(door){S.found[4]=true; S.ex[4]=100;} // 4つそろうと、城の地下の扉が開く
   const areaNow=won??S.area;
   const HL=highlights(S); for(const f of newFound)S.found[f.ar]=true; const GN=checkGoals(S), GT=goalsOf(S);
-  S._ar=areaNow; S.lastReport={found:newFound,rank:S.chapter||1,stones:S.stones||0,chapterNow:S.chapter||1,hl:HL,goalsNew:GN,goalsDone:GT.filter(q=>S.goals[q.id]).length,goalsAll:GT.length,day:S.day,area:areaNow,cleared:won!=null?{name:AREAS[won].name,stone:AREAS[won].stone,rank:S.chapter}:null,won:S.justWon,built:S.builtToday.slice(),bossDown:S.bossDown,world:JSON.parse(JSON.stringify(S.world)),worldFrom:S.worldStart||newWorld(),explore:S.ex[areaNow],exploreFrom:(S.exStart||[])[areaNow]||0,elemAfter:S.elem,
+  S._ar=areaNow; S.lastReport={found:newFound,rank:S.chapter||1,stones:S.stones||0,chapterNow:S.chapter||1,hl:HL,goalsNew:GN,goalsDone:GT.filter(q=>S.goals[q.id]).length,goalsAll:GT.length,day:S.day,area:areaNow,cleared:won!=null&&!fin?{name:AREAS[won].name,stone:AREAS[won].stone,rank:S.chapter,door}:null,final:fin,won:S.justWon,built:S.builtToday.slice(),bossDown:S.bossDown,world:JSON.parse(JSON.stringify(S.world)),worldFrom:S.worldStart||newWorld(),explore:S.ex[areaNow],exploreFrom:(S.exStart||[])[areaNow]||0,elemAfter:S.elem,
     advs:S.advs.filter(a=>a.rep).map(a=>({id:a.id,name:a.name,tunic:a.tunic,hair:a.hair,pid:a.pid,k:a.k,lv:a.lv,hp:a.hp,hpMax:a.hpMax,atk:a.atk,def:a.def,morale:a.morale,gold:a.gold,wlv:a.wlv,alv:a.alv,wl:a.wl,al:a.al,own:{...a.own},job:a.job||null,mag:a.mag||0,want:wantOf(S,a),quest:a.rep.quest||null,questDone:!!a.rep.questDone,wTag:a.wTag||null,aTag:a.aTag||null,...a.rep,held:a.gold,expNow:a.exp,ev:a.rep.ev.slice(),ups:a.rep.ups.slice(),bought:a.rep.bought.slice()}))};
   S._ar=undefined; S.area=focusArea(S); S.wonAr=null;
   S.nom={}; // 個別のおふれはその日かぎり
@@ -2322,12 +2378,12 @@ const MOOD={star:'🤩',happy:'😄',ok:'🙂',sad:'😞',ko:'😵',grr:'😤',c
 const names=L=>L.length>2?`${L.slice(0,-1).join('、')}と${L[L.length-1]}`:L.join('と');
 // その日の出来事を重みの大きい順に並べる（報告書のいちばん上に3つまで出す）
 // 王様の位（精霊石の数＋1）で開くもの
-function rankUnlocks(r){const L=r<=4?['お城の改築']:[]; L.push(...Object.keys(BUILD).filter(t=>(BUILD[t].ch||1)===r).map(t=>BUILD[t].name)); if(r===2)L.push('大工の雇い入れ','職業：戦士・白魔道士・黒魔道士'); if(r===3)L.push('職業：盗賊・上級戦士・大魔導士'); if(r===4)L.push('北の山道'); if(ADV_CAP[Math.min(r,ADV_CAP.length-1)]>ADV_CAP[Math.min(r-1,ADV_CAP.length-1)])L.push(`冒険者${ADV_CAP[Math.min(r,ADV_CAP.length-1)]}人まで`); L.push(`立て札${2+r}枚`); return L;}
+function rankUnlocks(r){const L=r<=4?['お城の改築']:[]; L.push(...Object.keys(BUILD).filter(t=>(BUILD[t].ch||1)===r).map(t=>BUILD[t].name)); if(r===2)L.push('大工の雇い入れ','職業：戦士・白魔道士・黒魔道士'); if(r===3)L.push('職業：盗賊・上級戦士・大魔導士'); if(r===4)L.push('北の山道'); if(r===5)L.push('城の地下の扉（最後の戦い）'); if(ADV_CAP[Math.min(r,ADV_CAP.length-1)]>ADV_CAP[Math.min(r-1,ADV_CAP.length-1)])L.push(`冒険者${ADV_CAP[Math.min(r,ADV_CAP.length-1)]}人まで`); L.push(`立て札${2+r}枚`); return L;}
 const DANGER=['の入口を見つけた','を見つけた。危険そうで、いまの腕では厳しい','を見つけた。とても手に負えなさそうだ'];
 function highlights(S){
   const H=[], A=S.advs.filter(a=>a.rep), add=(w,txt,o)=>H.push({w,txt,...o});
   {const seen=new Set(); for(const a of A){const ar=a.rep.found; if(ar==null||seen.has(ar)||S.found[ar])continue; seen.add(ar); const by=A.filter(x=>x.rep.found===ar); const d=dangerOf(S,ar); add(d===0?95:85,`${names(by.map(x=>x.name))}が${AREAS[ar].name}${DANGER[d]}`,{id:by[0].id,big:d===0,bad:d===2});}}
-  const boss=A.filter(a=>a.rep.boss); if(boss.length)add(100,`${names(boss.map(a=>a.name))}が${AREAS[S.wonAr??S.area].name}の親玉を討伐！`,{id:boss[0].id,big:true});
+  const boss=A.filter(a=>a.rep.boss); if(boss.length)add(100,AREAS[S.wonAr??S.area].final?`${names(boss.map(a=>a.name))}が影の王を討ち果たした！`:`${names(boss.map(a=>a.name))}が${AREAS[S.wonAr??S.area].name}の親玉を討伐！`,{id:boss[0].id,big:true});
   const byNode={}; for(const a of A)if(a.rep.masterAt)(byNode[a.rep.masterAt]=byNode[a.rep.masterAt]||[]).push(a);
   for(const id in byNode)add(80,`${names(byNode[id].map(a=>a.name))}が${NODES[id].n}の主を討伐！（${RES}+${byNode[id][0].rep.masterElem||0}）`,{id:byNode[id][0].id,big:true});
   for(const a of A){ const r=a.rep;
@@ -2354,14 +2410,14 @@ function goalsOf(S){
   const G=[], W=S.world, rk=S.chapter||1, A=()=>S.advs.filter(a=>a.rep&&a.rep.dep!==null), A2=()=>S.advs.filter(a=>a.rep&&a.rep.quest);
   const g=(grp,id,name,reward,test,o={})=>{if(o.rank&&rk<o.rank)return; G.push({id:`${grp}:${id}`,g:grp,ar:o.ar??null,name,reward:Math.max(3,Math.round(reward/2)),test,old:o.old||[]});};
   // 冒険の目標
-  AREAS.forEach((Ar,ar)=>{if(areaOpen(S,ar))g('world','found'+ar,`${Ar.dir}のほうでダンジョンを見つける`,ar===0?10:15,()=>S.found[ar]);});
+  AREAS.forEach((Ar,ar)=>{if(areaOpen(S,ar)&&!Ar.final)g('world','found'+ar,`${Ar.dir}のほうでダンジョンを見つける`,ar===0?10:15,()=>S.found[ar]);});
   g('world','dirs','南・東・西の3つの方角をすべて探る',20,()=>S.found[0]&&S.found[1]&&S.found[2]);
   g('world','stone1','精霊石を手に入れる',30,()=>(S.stones||0)>=1);
   g('world','stone2','精霊石を2つ集める',40,()=>(S.stones||0)>=2,{rank:2});
   g('world','stone3','精霊石を3つ集める',50,()=>(S.stones||0)>=3,{rank:3});
   g('world','stone4','精霊石を4つ集める',60,()=>(S.stones||0)>=4,{rank:4});
   // ダンジョンごと（見つけたところだけ）
-  AREAS.forEach((Ar,ar)=>{ if(!S.found[ar]||Ar.stub)return;
+  AREAS.forEach((Ar,ar)=>{ if(!S.found[ar]||Ar.stub||Ar.final)return;
     const past=!!S.down[ar], d=(id,name,reward,test,o={})=>g('d'+ar,id,name,reward,test,{ar,old:[`${ar+1}:${id}`],...o});
     const E=EDGES.filter(e=>e.ar===ar), N=Object.keys(NODES).filter(id=>(NODES[id].ar??-1)===ar), trips=e=>W.trips[e.id]||0;
     for(const id of N){const n=NODES[id]; if(n.boss)continue;
@@ -3896,9 +3952,10 @@ const MAPXY={fork:[92,66],spring:[84,136],mouth:[150,48],r1:[200,78],r2:[236,128
   lodge:[36,98],drip:[238,32],forge:[168,162],nest:[306,42],
   sfork:[78,104],hut:[92,44],s1:[150,140],s2:[206,86],s3:[262,126],sboss:[314,74],
   reed:[100,160],kura:[34,30],smithy:[216,170],inner:[214,26],deepnest:[300,170],
+  z0:[120,70],z1:[210,112],zboss:[296,150],
   y0:[168,128],yhut:[92,114],y1:[244,104],y2:[168,76],y3:[96,48],yboss:[178,20],ycave:[298,64],yshrine:[32,24],
   k0:[256,96],kinn:[262,34],k1:[204,138],k2:[160,74],k3:[110,128],k4:[70,66],kboss:[26,120],kruin:[150,170],kshrine:[40,26]};
-const GATEXY=[[30,36],[22,100],[312,98],[168,160]];
+const GATEXY=[[30,36],[22,100],[312,98],[168,160],[40,30]];
 // 地図の城門は、小さな城の絵で
 const castleIcon=(x,y,k=1)=>`<svg class="castle-ic" x="${x-14*k}" y="${y-19*k}" width="${28*k}" height="${30*k}" viewBox="-14 -22 28 30" overflow="visible"><path d="M0 -15 V-21" stroke="#120a05" stroke-width="1.2"/><path d="M0 -21 l5 1.8 -5 1.8z" fill="#c9a84c" stroke="#120a05" stroke-width=".8"/><rect x="-12" y="-5" width="6" height="11" fill="#efe4c8" stroke="#120a05" stroke-width="1.3"/><rect x="6" y="-5" width="6" height="11" fill="#efe4c8" stroke="#120a05" stroke-width="1.3"/><rect x="-6" y="-8" width="12" height="14" fill="#f6eedb" stroke="#120a05" stroke-width="1.3"/><path d="M-13 -5 L-9 -12 L-5 -5Z M5 -5 L9 -12 L13 -5Z" fill="#1b4332" stroke="#120a05" stroke-width="1.2" stroke-linejoin="round"/><path d="M-7 -8 L0 -16 L7 -8Z" fill="#1b4332" stroke="#120a05" stroke-width="1.2" stroke-linejoin="round"/><path d="M-2.2 6 V2 a2.2 2.2 0 0 1 4.4 0 V6Z" fill="#3a2616"/><path d="M-7 -8 h14" stroke="#c9a84c" stroke-width="1"/></svg>`;
 const MAP_ABOVE=new Set(['k0','kinn','k4','kshrine','gate','fork','mouth','r1','hall','nest','drip','hut','kura','inner','sboss','s2','smithy','deepnest']), MAP_SIDE=new Set(['spring','boss','r2','hall','hut','sboss','s2','s3','lodge','drip','forge','nest','reed','kura','smithy','inner','deepnest']);
@@ -3990,8 +4047,9 @@ function openReport(opts={}){
   sheet.querySelectorAll('[data-go]').forEach(li=>li.addEventListener('click',e=>{e.stopPropagation(); repFast=true; const c=sheet.querySelector(`.rc[data-id="${li.dataset.go}"]`); if(c)c.scrollIntoView({block:'start',behavior:RM?'auto':'smooth'});}));
   playReport(rep,tok,res0,ex0,total).then(()=>{
     if(tok!==repTok)return; sheet.onclick=null;
-    $('reportActions').innerHTML=`<button class="primary" id="next1">${opts.back?'指示にもどる':'あすの指示へ'}</button>`;
-    $('next1').addEventListener('click',()=>{repTok++; transit(()=>openOrders(!opts.back));});
+    const fin=rep.final&&S.ending&&!opts.back;
+    $('reportActions').innerHTML=`<button class="primary" id="next1">${opts.back?'指示にもどる':fin?'エンディングへ':'あすの指示へ'}</button>`;
+    $('next1').addEventListener('click',()=>{repTok++; transit(()=>fin?showEnding():openOrders(!opts.back));});
   });
 }
 // カードが画面に入ったら（または、もう通り過ぎていたら）進む。スクロールは読む人にまかせる
@@ -4097,7 +4155,7 @@ function typeFinish(el){ if(el&&el._typ){clearInterval(el._typ); el._typ=null; e
 // 0. 一日の終わり「今日の活動終了。報告書を受け取った」
 function showDuskCard(){
   const rep=S.lastReport; $('ddSmall').textContent=`${rep?rep.day:S.day}日目 · 日が暮れた`;
-  const say=rep&&rep.cleared?`王様、${rep.cleared.name}の親玉を討ち取りました！ 報告書をどうぞ`:rep&&rep.hl&&rep.hl[0]&&rep.hl[0].big?`王様、きょうは良い知らせがございます。報告書をどうぞ`:(rep&&rep.day===1)?'王様、はじめての報告書です。冒険者ひとりずつの一日が書いてあります':'王様、本日の報告書をお持ちしました';
+  const say=rep&&rep.final?'王様……！ 影の王を、討ち果たしました！ 報告書をどうぞ':rep&&rep.cleared?`王様、${rep.cleared.name}の親玉を討ち取りました！ 報告書をどうぞ`:rep&&rep.hl&&rep.hl[0]&&rep.hl[0].big?`王様、きょうは良い知らせがございます。報告書をどうぞ`:(rep&&rep.day===1)?'王様、はじめての報告書です。冒険者ひとりずつの一日が書いてあります':'王様、本日の報告書をお持ちしました';
   const tl=$('ddTally'); if(rep&&rep.advs){const g=rep.advs.reduce((m,a)=>m+(a.elem||0),0), k=rep.advs.reduce((m,a)=>m+(a.wins||0),0), ex=Math.floor(rep.explore||0), ex0=Math.floor(rep.exploreFrom??ex);
     tl.innerHTML=`<span><i class="shard"></i>${RES}<b>+${g}</b></span><span>討伐<b>${k}</b></span><span>${AREAS[rep.area||0].short}の探索<b>${ex}%</b>${ex>ex0?`<small>（+${ex-ex0}）</small>`:''}</span>`;} else tl.innerHTML='';
   playCard($('duskCard'),null,()=>rep&&rep.cleared&&rep.cleared.stone?showStoneCard(rep):showJoins(()=>openReport()),['#ddSay',say]); // タップで進む（精霊石の日は、その演出をはさむ）
@@ -4122,7 +4180,7 @@ function showStoneCard(rep){
   $('stUnl').innerHTML=rankUnlocks(to).map((t,i)=>`<li style="--i:${i}"><i>開放</i>${t}</li>`).join('');
   let h=''; if(!RM)for(let i=0;i<26;i++){const a=i/26*Math.PI*2, d=120+Math.random()*220; h+=`<i style="--x:${Math.cos(a)*d|0}px;--y:${Math.sin(a)*d|0}px;animation-delay:${(.9+Math.random()*.3).toFixed(2)}s"></i>`;} $('stSpark').innerHTML=h;
   c.querySelectorAll('.st-rays,.st-gem,.st-unl li,.st-spark i').forEach(el=>{el.style.animation='none'; void el.offsetWidth; el.style.animation='';});
-  playCard(c,null,()=>showJoins(()=>openReport()),['#stSay',`王様、おめでとうございます！ 精霊石の力で位が上がり、町でできることが増えました。お城もひと回り立派になりますよ。${Object.keys(BUILD).some(t=>(BUILD[t].ch||1)===to)?'新しく建てられる施設もございます':'立て札にも、もう1枚貼れます'}`]);
+  playCard(c,null,()=>showJoins(()=>openReport()),['#stSay',rep.cleared.door?'王様、4つの精霊石がそろいました！ 石が共鳴して……城の地下で、ずっと閉じていた扉が開きました。奥に、影の王がいます。':`王様、おめでとうございます！ 精霊石の力で位が上がり、町でできることが増えました。お城もひと回り立派になりますよ。${Object.keys(BUILD).some(t=>(BUILD[t].ch||1)===to)?'新しく建てられる施設もございます':'立て札にも、もう1枚貼れます'}`]);
 }
 function showDayCard(){
   const c=$('dayCard');
@@ -4143,7 +4201,7 @@ function openOrders(dawn){
   S.goals=S.goals||{}; const G=goalsOf(S), gd=G.filter(q=>S.goals[q.id]).length;
   const li=q=>`<li class="${S.goals[q.id]?'done':''}"><span>${q.name}</span><em>+${q.reward}</em></li>`;
   const gsec=([key,lab],past)=>{const L=G.filter(q=>q.g===key), left=L.filter(q=>!S.goals[q.id]); if(!L.length||past&&!left.length)return ''; return `<h5 class="gch">${lab}${past?`（やり残し ${left.length}）`:`　${L.length-left.length}/${L.length}`}</h5><ul>${(past?left:L).map(li).join('')}</ul>`;};
-  const gsecs=()=>[gsec(GOAL_GROUPS[0]),...AREAS.map((A,ar)=>S.found[ar]&&!A.stub&&!S.down[ar]?gsec(['d'+ar,A.name]):''),...GOAL_GROUPS.slice(1).map(x=>gsec(x)),...AREAS.map((A,ar)=>S.found[ar]&&!A.stub&&S.down[ar]?gsec(['d'+ar,A.name],true):'')].join('');
+  const gsecs=()=>[gsec(GOAL_GROUPS[0]),...AREAS.map((A,ar)=>S.found[ar]&&!A.stub&&!A.final&&!S.down[ar]?gsec(['d'+ar,A.name]):''),...GOAL_GROUPS.slice(1).map(x=>gsec(x)),...AREAS.map((A,ar)=>S.found[ar]&&!A.stub&&!A.final&&S.down[ar]?gsec(['d'+ar,A.name],true):'')].join('');
   const nomOpts=a=>`<option value="">立て札から</option><option value="rest" ${S.nom[a.id]==='rest'?'selected':''}>休ませる</option>${Object.keys(JOBS).map(j=>{const l=jobLock(S,a,j); return first(S,JOBS[j].school)&&a.job!==j&&(S.chapter||1)>=JOBS[j].rank&&JOBS[j].from.includes(a.job||null)?`<option value="job:${j}" ${S.nom[a.id]==='job:'+j?'selected':''} ${l?'disabled':''}>${JOBS[j].name}に転職${l?`（${l}）`:''}</option>`:'';}).join('')}`;
   $('reportSheet').innerHTML=`
     <h2>${S.day}日目の指示</h2>
@@ -4174,7 +4232,7 @@ function openOrders(dawn){
 function boardEditHTML(){
   if(!first(S,'board'))return '<div class="blk"><h4 class="sec">立て札に貼る依頼</h4><p class="rc-note">立て札がない。</p></div>';
   const av=questsAvail(S), on=S.board, off=av.filter(q=>!on.some(b=>b.id===q.id)), full=on.length>=boardMax(S);
-  const line=q=>`報酬：<em>${rewardOf(q)}G</em>${q.party?'・3人で組む':''}`;
+  const line=q=>`報酬：<em>${rewardOf(q)}G</em>${q.party?'・3人で組む':q.k==='final'?'・全員で挑む':''}`;
   const qAr=q=>q.ar??(q.n?NODES[q.n].ar:null), top=Math.max(1,...S.advs.map(a=>a.lv));
   const risk=q=>{const ar=qAr(q); return ar==null||q.k==='field'||!S.found[ar]?0:dangerOf(S,ar);};
   const qTitle=q=>{const ar=qAr(q), d=risk(q); return QK[q.k].name(q).replace(/【(.+?)】$/,'<i class="q-ar">$1</i>')+(d?`<i class="q-warn${d>1?' hi':''}">⚠ ${d>1?'かなり危険':'ちょっと危険'}</i>`:'');};
@@ -4185,12 +4243,28 @@ function boardEditHTML(){
         <div class="qboard">${on.map(row).join('')||'<p class="rc-note">まだ何も貼っていない。</p>'}</div>
     ${off.length?`<h4 class="sec" style="margin-top:12px">出せる依頼</h4><div class="qboard">${off.map(cand).join('')}</div>`:''}</div>`;
 }
+// エンディング：影の王を倒した日の報告書のあと。物語と、この王国の記録が流れて、タイトルへ
+function showEnding(){
+  $('reportModal').hidden=true; const c=$('endCard'), roll=$('ecRoll'), d=S.ending?S.ending.day:S.day-1;
+  const homes=count(S,'house'), shops=S.b.filter(b=>b.type!=='house'&&b.type!=='board').length, kinds=Object.keys(S.know).filter(k=>S.know[k].seen||S.know[k].scouted).length, top=S.advs.slice().sort((x,y)=>y.lv-x.lv)[0];
+  const story=['影の王は、光の粒になって消えていった。','城の上で、4つの精霊石がいっせいに輝く。','百年つづいた長い夜が、ほんとうに明けた。',`荒れ地だった城下には、いま${homes}軒の家と${shops}つの施設が並んでいる。`,'冒険者たちは今夜も酒場で、きょうの武勇伝を語りあうだろう。','王様は戦わない。','けれど、この町を建て、冒険者を送り出したのは、王様だ。'];
+  roll.innerHTML=`<div class="ec-gap"></div>${story.map(t=>`<p>${t}</p>`).join('')}<div class="ec-gap"></div>
+    <h3>冒険者たち</h3><div class="ec-cast">${S.advs.map(a=>`<figure><img src="${faceURL(a)}" alt=""><b>${a.name}</b><small>Lv${a.lv} · ${jobName(a)}</small></figure>`).join('')}</div>
+    <h3>この王国の記録</h3><dl class="ec-stats"><dt>かかった日数</dt><dd>${d}日</dd><dt>冒険者</dt><dd>${S.advs.length}人</dd><dt>民家</dt><dd>${homes}軒</dd><dt>施設</dt><dd>${shops}つ</dd><dt>記録した魔物</dt><dd>${kinds}種</dd>${top?`<dt>いちばんの腕きき</dt><dd>${top.name}（Lv${top.lv}）</dd>`:''}</dl>
+    <div class="ec-gap"></div><div class="ec-end"><div class="ec-big">Tiny Crown Town</div><p>おしまい</p><p style="font-size:12px;opacity:.75">遊んでくれて、ありがとう。<br>© Fuch.io</p><button class="primary" id="ecTitle">タイトルへ</button></div>`;
+  c.hidden=false; c.querySelectorAll('.ec-sky,.ec-sun,.ec-stars,.ec-gems i').forEach(el=>{el.style.animation='none'; void el.offsetWidth; el.style.animation='';});
+  let y=0, last=performance.now(), fast=false, done=false; const end=()=>roll.scrollHeight-innerHeight*.15;
+  const stepF=now=>{ if(done||c.hidden)return; const dt=Math.min(.1,(now-last)/1000); last=now; y=Math.min(end(),y+dt*(fast?260:RM?1e5:42)); roll.style.transform=`translateY(${-y}px)`; if(y<end())requestAnimationFrame(stepF); else {done=true; $('ecSkip').hidden=true; $('ecTitle').focus();} };
+  roll.style.transform='translateY(0)'; $('ecSkip').hidden=false; requestAnimationFrame(t=>{last=t; setTimeout(()=>requestAnimationFrame(stepF),RM?0:2600);});
+  $('ecSkip').onclick=()=>{fast=true;};
+  $('ecTitle').onclick=()=>{ saveGame(); transit(()=>{ try{location.reload();}catch(e){} }); };
+}
 // 指示画面から報告書を見返す（閉じると指示に戻る）
 function openReportOnly(){openReport({instant:true,back:true});}
 
 /* ---------- ループ ---------- */
 let GFX=null, panelClock=0, wasPhase=S.phase;
-const _cover=['reportModal','dayCard','duskCard','stoneCard','joinCard','lineModal','bookModal'].map(id=>document.getElementById(id));
+const _cover=['reportModal','dayCard','duskCard','stoneCard','joinCard','endCard','lineModal','bookModal'].map(id=>document.getElementById(id));
 function townHidden(){for(const e of _cover)if(e&&!e.hidden)return true;return false;}
 function loop(now){
   const dt=Math.min(.1,(now-lastT)/1000); lastT=now;
@@ -4222,6 +4296,7 @@ const TIPS=[ // [id, 出す条件, せりふ]。一度出したら二度は出�
   ['item', ()=>Object.keys(S.items||{}).length>0, '品が手に入りました。店の「必要アイテム」に☑️が付いた系統は、次の段階を入荷できます。'],
   ['book', ()=>Object.values(S.know).some(K=>TRAITS.some(([t])=>K[t])), '魔物の特徴がわかると、冒険者はそれに合わせて武器や防具を持ち替えます。わかったことは、メニューの「魔物の記録帳」に書きとめてあります。'],
   ['scout', ()=>questsAvail(S).some(q=>q.k==='scout'), '親玉の間の手前まで来ました。「親玉のようすを探れ」で、挑む前に強さや特徴を探っておけます。'],
+  ['final', ()=>questsAvail(S).some(q=>q.k==='final'), '4つの精霊石が共鳴して、城の地下の扉が開きました。いちばん奥に「影の王」がいます。「影の王を討て（総力戦）」を貼ると、出かけられる冒険者が全員そろって挑みます。負けても、あすまた挑めますよ。'],
   ['boss', ()=>questsAvail(S).some(q=>q.k==='boss'), '探索が終わり、親玉の間が開きました。「親玉に挑め」を貼れます。'],
   ['tavern', ()=>first(S,'tavern'), '酒場ができました。主や親玉の討伐を「3人で組んで」出せます。受けた者は10時に酒場で待ち合わせます。'],
   ['dojo', ()=>first(S,'dojo'), '訓練場ができました。「訓練場で鍛えよ」を貼ると、外に出ずに経験値を稼げます。冒険者の欄で「戦士に転職」を選ぶこともできますよ。'],
@@ -4383,7 +4458,7 @@ function loadGame(d){
   for(const a of L.advs){ if(a.own&&a.own.staff===undefined)a.own.staff=0; if(!a.own){a.own={sword:a.wlv||0,axe:0,dagger:0,staff:0,mail:a.alv||0,cloth:0}; a.wl='sword'; a.al='mail'; a.tags={};} }
   areaAcc(L); migrateGoals(L); return L;
 }
-{const d=readSave(); $('startBtn').classList.toggle('main',!d); if(d){$('contBtn').hidden=false; $('contBtn').classList.add('main'); $('contBtn').innerHTML=`続きから<small>${d.day}日目・精霊石${Math.max(0,(d.ch||1)-1)}つ</small>`; $('startBtn').textContent='はじめから';
+{const d0=readSave(), done=d0&&d0.S&&d0.S.ending, d=done?null:d0; $('startBtn').classList.toggle('main',!d); if(done){$('startBtn').textContent='はじめから'; $('saveNote').hidden=false; $('saveNote').textContent=`前の王国は、${d0.S.ending.day}日目に影の王を討ちました。「はじめから」で、新しい王国をはじめられます。`;} if(d){$('contBtn').hidden=false; $('contBtn').classList.add('main'); $('contBtn').innerHTML=`続きから<small>${d.day}日目・精霊石${Math.max(0,(d.ch||1)-1)}つ</small>`; $('startBtn').textContent='はじめから';
   $('saveNote').hidden=false; $('saveNote').textContent='「はじめから」や「南の洞窟を攻略したところから」を選ぶと、いまの保存は上書きされます。';}}
 $('contBtn').addEventListener('click',()=>{transit(()=>{const d=readSave(); if(!d)return; S=loadGame(d); sel=null; planning=false; baseDirty=true; wasPhase=S.phase; $('titleModal').hidden=true; updateHud(); renderPanel(); openReport();});});
 addEventListener('pagehide',saveGame); document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')saveGame();});
@@ -4402,7 +4477,7 @@ $('ch2Btn').addEventListener('click',()=>{transit(()=>{S=autoCh1(CH2_SEED); S.we
 // 開発用：コンソールやテストから日を早送りする  __tct.skip(3) で3日進めて報告書を開く
 if(DEV)window.__sel=v=>{sel=v; renderPanel();};
 if(DEV)window.__orders=()=>openOrders();
-if(DEV)window.__tct={joins:n=>showJoins(n||(()=>{})),carp:i=>{carpLine(S.carps[i||0],performance.now()); return $("voice").textContent;},sds:()=>secDayStart(),rep:()=>openReport(),stone:r=>showStoneCard(r||S.lastReport),dusk:()=>showDuskCard(),dawn:()=>showDayCard(),map:r=>mapHTML(r),say:(t,o)=>secSay(t,o||{pri:3}),menu:()=>secMenu(),ask:k=>secAnswer(k),get S(){return S;},skip(n=1){for(let i=0;i<n;i++){if(S.phase!=='day')startDay(S); tick(S,2000);} wasPhase=S.phase; $('titleModal').hidden=true; $('dayCard').hidden=true; $('duskCard').hidden=true; openReport({instant:true});}};
+if(DEV)window.__tct={end:()=>showEnding(),joins:n=>showJoins(n||(()=>{})),carp:i=>{carpLine(S.carps[i||0],performance.now()); return $("voice").textContent;},sds:()=>secDayStart(),rep:()=>openReport(),stone:r=>showStoneCard(r||S.lastReport),dusk:()=>showDuskCard(),dawn:()=>showDayCard(),map:r=>mapHTML(r),say:(t,o)=>secSay(t,o||{pri:3}),menu:()=>secMenu(),ask:k=>secAnswer(k),get S(){return S;},skip(n=1){for(let i=0;i<n;i++){if(S.phase!=='day')startDay(S); tick(S,2000);} wasPhase=S.phase; $('titleModal').hidden=true; $('dayCard').hidden=true; $('duskCard').hidden=true; openReport({instant:true});}};
 updateHud(); renderPanel(); requestAnimationFrame(loop);
 initGfx().then(g=>{GFX=g; if(DEV)window.__gfx=g;}).catch(e=>{console.error(e); $('glfail').hidden=false;});
 </script>
